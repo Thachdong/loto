@@ -1,0 +1,1974 @@
+openapi: 3.1.0
+info:
+  title: Lô Tô Online API
+  version: 0.1.0
+  summary: Các thao tác ghi (write path) của Lô Tô Online — Next.js Server Actions trên Firebase App Hosting.
+  description: |
+    Nguồn: `specs/ui-ux/wireframe.md` mục 4 (bảng thao tác), `idea/business.md` (BR, ma trận Actor × BIZ),
+    `idea/business-flows.md` (FLOW, SUP, NFR), `specs/database.md` (TBL-01..TBL-08), `specs/tech-stack.md`
+    (ADR-03, ADR-05, ADR-06, ADR-07, ADR-09, ADR-12, ADR-14), `idea/_qa-log.md` (Q-045..Q-052 ghi đè quyết định cũ).
+    Cập nhật: 2026-11-18.
+
+    ## Phạm vi
+    - Theo ADR-03: **mọi thao tác ghi** đi qua các operation trong file này. Client **chỉ đọc** Firestore bằng
+      realtime listener (`users/{uid}`, `rooms/{roomId}` gồm `called_numbers`, `invite_code`, `last_event`;
+      `tickets`, `games`, `games/*/players`, `messages`) và tự ghi node presence của mình trên RTDB (ADR-06),
+      tự tải ảnh lên `avatars/{uid}/…` trên Storage (ADR-12). Các thao tác đó ghi `— (realtime)` / `— (client)` ở
+      cột operationId của wireframe, **không có operation**.
+    - Ngoại lệ đọc qua server: `getInvite` (trang `/join/{code}` render ở server, công khai, có Open Graph – ADR-09).
+    - **Không có endpoint danh sách** (tin nhắn, lịch sử ván, người trong phòng đều đọc bằng listener) nên không có
+      phân trang. Nếu sau này cần, quy ước là cursor: query `cursor` (opaque) + `limit` (1–100, mặc định 50),
+      response `{items, nextCursor}`. (Q-050)
+    - **Không có hẹn giờ phía server (Q-051, ADR-05):** mọi việc theo thời gian do client gọi API khi tới giờ —
+      rao số (`drawNumber`, host + 2 player dự phòng), đóng cửa sổ đồng kinh (`closeClaimWindow`), hết hạn phòng
+      (`expireRoom`). Server luôn kiểm thời điểm bằng giờ server nên client không làm nhanh/chậm được, và mọi
+      thao tác trên phòng đều tự áp dụng hết hạn trước (lazy expiry, BR-04). Việc nền duy nhất còn lại là thống kê
+      ngày (`x-background-tasks`).
+
+    ## Transport (ADR-03)
+    - Mỗi operation được hiện thực bằng **Server Action** `<operationId>Action(input)` trả
+      `ActionResult<T>` = `{ok: true, data: <response 2xx>}` | `{ok: false, error: Error}`.
+      `input` = gộp path params + body (vd `startGameAction({roomId, gameId})`). Response `204` ↔ `data: null`.
+    - Path/method/status trong file này là dạng REST tương đương, dùng khi cần expose thành Route Handler `/api/*`
+      và để thống nhất ngữ nghĩa mã lỗi (HTTP status ↔ `error.code`).
+    - Mỗi action: xác thực phiên → validate Zod (schema ở đây) → kiểm BR trong **Firestore transaction**
+      bằng `firebase-admin` → ghi `rooms.last_event` (SUP-01) khi có sự kiện phòng.
+
+    ## Xác thực (ADR-07)
+    - Client đăng nhập Firebase Auth (Google: redirect trên điện thoại, popup trên máy tính), gọi `createSession`
+      với Firebase ID token để nhận session cookie `__session` (httpOnly, secure, sameSite=lax, 14 ngày).
+    - Mọi operation khác dùng cookie `__session`; server `verifySessionCookie(cookie, checkRevoked = true)`.
+    - Quyền trong phòng (NFR-09):
+      - **Thành viên phòng** = `users.current_room_id == roomId` (Q-047). Không phải → `403 NOT_ROOM_MEMBER`.
+      - **Host** = `rooms.host_uid == uid`, cố định suốt đời phòng (BR-21, Q-048). Không phải → `403 NOT_ROOM_HOST`.
+      - **Player của ván** = có doc `rooms/{roomId}/games/{current}/players/{uid}` (tạo khi lấy vé – Q-047).
+
+    ## Quy ước
+    - JSON `camelCase` (DB `snake_case`). Thời gian ISO-8601 UTC (`date-time`); client hiển thị GMT+7 (NFR-16).
+    - Không lộ: `users.email` của người khác (NFR-10), `chat_recent_at`, `expire_at`,
+      `blocked_uids`, `profile_customized` của người khác.
+    - `400 VALIDATION_FAILED` = sai cấu trúc / kiểu (Zod). `422` = vi phạm quy tắc nghiệp vụ về dữ liệu.
+      `409` = xung đột trạng thái (ván/phòng/vé). Mọi lỗi dùng schema `Error`.
+    - Thao tác trên ván nhận `gameId` trong path; nếu khác `rooms.current_game_id` → `409 GAME_STALE`
+      (client đang xem trạng thái cũ).
+    - Mỗi operation có `x-business`, `x-screens`, `x-roles`; khi có: `x-supporting`, `x-nfr`, `x-errors`,
+      `x-last-event` (giá trị `rooms.last_event.type` được ghi).
+
+    ## Bảng mã lỗi nghiệp vụ
+    | code | HTTP | Ý nghĩa | Ref |
+    |---|---|---|---|
+    | VALIDATION_FAILED | 400 | Request sai cấu trúc / kiểu | — |
+    | GOOGLE_TOKEN_INVALID | 401 | ID token Google/Firebase sai hoặc hết hạn khi tạo phiên | BR-01, ADR-07 |
+    | UNAUTHENTICATED | 401 | Thiếu / sai / bị thu hồi session cookie | SUP-05, ADR-07 |
+    | NOT_ROOM_MEMBER | 403 | Không (còn) ở phòng này: đã rời, bị kick, phòng đã đóng | BR-02, Q-047, Q-039 |
+    | NOT_ROOM_HOST | 403 | "Chỉ host được thực hiện thao tác này" | BR-21, NFR-09 |
+    | BLOCKED_FROM_ROOM | 403 | "Bạn không thể vào phòng này" (đã bị kick) | BR-06 |
+    | NOT_TICKET_HOLDER | 403 | Bấm Kinh cho vé không thuộc mình / không tham gia ván | BIZ-08 E1, BR-22 |
+    | INVITE_INVALID | 404 | Mã mời không tồn tại | BR-05, NFR-09 |
+    | TICKET_NOT_FOUND | 404 | `ticketId` không thuộc bộ vé | BR-08 |
+    | PLAYER_NOT_FOUND | 404 | Người đích không phải player của ván hiện tại hoặc không còn trong phòng | BIZ-10 (Q-048), BR-13 |
+    | ALREADY_IN_ROOM | 409 | Đang ở phòng khác; `details[0].currentRoomId` để nút "Về phòng hiện tại" | BR-02 |
+    | INVITE_EXPIRED | 410 | "Link không còn hiệu lực" — quá hạn hoặc phòng đã đóng / chờ đóng | BR-05, BR-04 |
+    | ROOM_FULL | 409 | "Phòng đã đầy" (16 người) | BR-03 |
+    | HOST_CANNOT_LEAVE | 409 | Host không rời phòng được | BR-21, Q-048 |
+    | GAME_IN_PROGRESS | 409 | Ván đang diễn ra: không đăng xuất / rời phòng được | BR-21, Q-052 |
+    | DRAW_TOO_EARLY | 409 | Chưa tới `next_call_at` (trả kèm `nextCallAt` để client đồng bộ lại) | BR-15, Q-051 |
+    | CLAIM_WINDOW_OPEN | 409 | Cửa sổ đồng kinh chưa hết 5 giây | BR-18, Q-051 |
+    | ROOM_NOT_EXPIRED | 409 | Phòng chưa tới `expires_at` | BR-04, Q-051 |
+    | ROOM_CLOSING | 409 | Phòng đã đến hạn (chờ đóng) — không bắt đầu ván mới | BR-04, BR-14 |
+    | GAME_STALE | 409 | `gameId` không phải ván hiện tại | BR-07 |
+    | GAME_NOT_WAITING | 409 | Ván không ở Chờ bắt đầu (lấy/bỏ vé, tạo bộ vé, thu hồi, bắt đầu) | BR-10, BR-12, BR-13 |
+    | GAME_NOT_RUNNING | 409 | Tạm dừng khi ván không Đang quay | BIZ-06 |
+    | GAME_NOT_PAUSED | 409 | Tiếp tục khi ván không Tạm dừng | BIZ-06 |
+    | GAME_NOT_AWAITING_CONFIRM | 409 | Xác nhận khi ván chưa tới bước Chờ host xác nhận | BR-28 |
+    | CLAIMS_CLOSED | 409 | Ván không nhận Kinh (chờ bắt đầu, chờ xác nhận, đã kết thúc) | BR-28, BIZ-08 |
+    | TICKET_ALREADY_WON | 409 | Vé này đã được ghi thắng trong ván | BR-18 |
+    | TICKET_TAKEN | 409 | "Vé đã có người giữ" | BR-09 |
+    | TICKET_NOT_HELD | 409 | Bỏ vé mình không giữ | BR-09 |
+    | TICKETS_STILL_HELD | 409 | Còn người giữ vé — không tạo được bộ vé mới; `details[]` liệt kê người giữ + online | BR-12 |
+    | TARGET_ONLINE | 409 | Thu hồi vé người đang online | BR-13 |
+    | NO_TICKETS_HELD | 422 | Chưa có vé nào được giữ — không bắt đầu được | BR-14 |
+    | TICKET_LIMIT_REACHED | 422 | Đã giữ 2 vé | BR-09 |
+    | CANNOT_TARGET_SELF | 422 | Host tự kick / tự thu hồi vé của mình | BIZ-10 E1 |
+    | ROOM_NAME_INVALID | 422 | Tên phòng rỗng sau trim hoặc > 50 ký tự | ENT-02 |
+    | DRAW_INTERVAL_INVALID | 422 | Nhịp quay ngoài 3–15 giây | BR-15 |
+    | DISPLAY_NAME_INVALID | 422 | Tên hiển thị ngoài 2–30 ký tự | BR-27 |
+    | AVATAR_INVALID | 422 | Ảnh không thuộc `avatars/{uid}/`, không tồn tại, sai định dạng / > 5 MB, hoặc avatar có sẵn không tồn tại | BR-27, ADR-12 |
+    | MESSAGE_EMPTY | 422 | Tin rỗng sau trim | BR-23 |
+    | MESSAGE_TOO_LONG | 422 | Tin > 500 ký tự | BR-23 |
+    | RATE_LIMITED | 429 | "Bạn gửi quá nhanh" — > 5 tin / 10 giây | BR-23, SUP-07 |
+    | INTERNAL_ERROR | 500 | Lỗi hệ thống | NFR-17 |
+  contact:
+    name: Lô Tô Online team
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+  x-background-tasks:
+    description: |
+      Việc nền duy nhất (Cloud Scheduler, ADR-11). Mọi hẹn giờ theo phòng/ván đã chuyển xuống client (Q-051, ADR-05):
+      `gameTick` → `drawNumber`; `claimWindowClose` → `closeClaimWindow`; `roomExpiryWarn` → client tự hiện cảnh báo
+      từ `rooms.expires_at`; `roomClose` → `expireRoom` + lazy expiry.
+    tasks:
+      - name: aggregateDailyStats
+        kind: schedule
+        schedule: '10 0 * * * (Asia/Ho_Chi_Minh)'
+        effect: Ghi `stats/{yyyy-mm-dd}` của ngày trước bằng aggregation query (ADR-11).
+        x-supporting: [SUP-09]
+        x-nfr: [NFR-17]
+servers:
+  - url: https://{host}/api
+    description: Firebase App Hosting (domain thật chốt khi deploy) (Q-050)
+    variables:
+      host:
+        default: loto.example.com
+  - url: http://localhost:3000/api
+    description: Local (Next.js dev + Firebase Emulator Suite)
+security:
+  - sessionCookie: []
+tags:
+  - name: Auth
+    description: Phiên đăng nhập Google (BIZ-01, SUP-05)
+  - name: Profile
+    description: Hồ sơ của tôi (BIZ-16, SUP-08)
+  - name: Rooms
+    description: Tạo phòng, nhịp quay (BIZ-02, BIZ-06)
+  - name: Invites
+    description: Link mời & vào phòng (BIZ-03, SUP-06)
+  - name: Members
+    description: Rời phòng, kick, thu hồi vé (BIZ-04, BIZ-10, BIZ-11)
+  - name: Tickets
+    description: Lấy / bỏ vé, tạo lại bộ vé (BIZ-04, BIZ-05)
+  - name: Games
+    description: Điều khiển ván, báo Kinh, xác nhận kết thúc (BIZ-06, BIZ-08)
+  - name: Messages
+    description: Chat trong phòng (BIZ-12, SUP-07)
+
+paths:
+  # ───────────────────────────── Auth ─────────────────────────────
+  /sessions:
+    post:
+      tags: [Auth]
+      operationId: createSession
+      summary: Đăng nhập với Google, tạo phiên
+      description: |
+        Client đã đăng nhập Firebase Auth bằng Google và gửi ID token. Server `verifyIdToken`, tạo session cookie
+        `__session` (14 ngày, `Set-Cookie`) và:
+        - Lần đầu: tạo `users/{uid}` với `email`, `google_name`, `google_photo_url`, `display_name = google_name`,
+          `photo_url = google_photo_url`, `profile_customized = false`.
+        - Đã có: cập nhật `google_name`, `google_photo_url`, `last_active_at`; nếu `profile_customized = false`
+          thì đồng bộ `display_name`, `photo_url` theo Google (FLOW-01 A3).
+        Trả `currentRoomId` để client điều hướng: có `returnTo` (link mời, client tự giữ) → SCR-03; đang ở phòng →
+        SCR-04; còn lại → SCR-02. Nhận diện trình duyệt in-app (SCR-01.A2) làm ở client, không thuộc API.
+      x-business: [BIZ-01]
+      x-screens: [SCR-01.A1]
+      x-roles: [ACT-01, ACT-04]
+      x-supporting: [SUP-05, SUP-09]
+      x-nfr: [NFR-13]
+      x-errors: [VALIDATION_FAILED, GOOGLE_TOKEN_INVALID]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+            example:
+              idToken: eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...
+      responses:
+        '200':
+          description: 'Đã tạo phiên. Header `Set-Cookie: __session=…; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600`.'
+          headers:
+            Set-Cookie:
+              description: Session cookie `__session`
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResult'
+              examples:
+                inRoom:
+                  summary: Đang ở một phòng → vào thẳng SCR-04
+                  value:
+                    me:
+                      uid: u_7Hq2Lx
+                      email: an.nguyen@gmail.com
+                      displayName: An Nguyễn
+                      photoUrl: https://lh3.googleusercontent.com/a/abc
+                      googleName: An Nguyễn
+                      googlePhotoUrl: https://lh3.googleusercontent.com/a/abc
+                      profileCustomized: false
+                      currentRoomId: r_9fK2mQ
+                    isNewUser: false
+                firstTime:
+                  summary: Lần đầu đăng nhập
+                  value:
+                    me:
+                      uid: u_2Mn8Rt
+                      email: binh.tran@gmail.com
+                      displayName: Bình Trần
+                      photoUrl: https://lh3.googleusercontent.com/a/xyz
+                      googleName: Bình Trần
+                      googlePhotoUrl: https://lh3.googleusercontent.com/a/xyz
+                      profileCustomized: false
+                      currentRoomId: null
+                    isNewUser: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sessions/current:
+    delete:
+      tags: [Auth]
+      operationId: deleteCurrentSession
+      summary: Đăng xuất
+      description: |
+        Đăng xuất = **thoát phòng** (Q-051, Q-052):
+        - Đang ở phòng mà ván hiện tại đang diễn ra (`running`/`paused`/`claim_window`/`awaiting_confirm`) →
+          `409 GAME_IN_PROGRESS`, không đổi gì (client khóa nút đăng xuất).
+        - **Player** (không phải host), ván `waiting` → trong cùng transaction làm đúng như `leaveRoom`.
+        - **Host**, ván `waiting` → **đóng phòng cho mọi người**: ván `waiting` → `cancelled`, phòng `closed`,
+          `close_reason = host_left`, `last_event = room_closed`, `users.current_room_id = null` cho mọi người trong phòng,
+          xóa RTDB presence của phòng (BR-21, Q-052).
+        - Không ở phòng nào → chỉ hủy phiên.
+        - Sau đó xóa cookie `__session` và `revokeRefreshTokens(uid)`. Client gọi thêm `signOut()` của Firebase Auth.
+      x-business: [BIZ-01]
+      x-screens: [SCR-02.A3, SCR-10.A4]
+      x-roles: [ACT-01, ACT-02, ACT-03]
+      x-supporting: [SUP-05, SUP-01]
+      x-errors: [UNAUTHENTICATED, GAME_IN_PROGRESS]
+      x-last-event: [member_left, room_closed]
+      responses:
+        '204':
+          description: Đã kết thúc phiên (và đã rời phòng nếu đang ở phòng)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Profile ─────────────────────────────
+  /me/profile:
+    patch:
+      tags: [Profile]
+      operationId: updateProfile
+      summary: Cập nhật tên hiển thị / ảnh đại diện
+      description: |
+        Ghi `users.display_name` và/hoặc `users.photo_url`, đặt `profile_customized = true`.
+        - Ảnh tải lên: client đã thu nhỏ về 256×256 WebP và upload `avatars/{uid}/{uuid}.webp` (Storage Rules ≤ 5 MB,
+          `image/*`); server kiểm `storagePath` thuộc `uid` và file tồn tại, rồi xóa ảnh cũ trong `avatars/{uid}/` (ADR-12).
+        - Avatar có sẵn: `presetId` trỏ file `public/avatars/{presetId}.png`.
+        Nếu đang ở phòng và đã là player của ván hiện tại (`waiting`): cập nhật `display_name`, `photo_url` của doc
+        player đó (database-design §4). Tên trong `messages` cũ giữ nguyên (chép lúc gửi). Client tự ghi lại tên/ảnh
+        vào node presence RTDB của mình (ADR-06).
+      x-business: [BIZ-16]
+      x-screens: [SCR-10.A1, SCR-10.A2]
+      x-roles: [ACT-01, ACT-02, ACT-03]
+      x-supporting: [SUP-08, SUP-01]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, DISPLAY_NAME_INVALID, AVATAR_INVALID]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+            examples:
+              rename:
+                summary: Đổi tên
+                value:
+                  displayName: An lô tô
+              upload:
+                summary: Ảnh tải lên
+                value:
+                  avatar:
+                    kind: upload
+                    storagePath: avatars/u_7Hq2Lx/8b1f0c2e-4d7a-4b9e-9f3a-2c6d1e5f7a90.webp
+              preset:
+                summary: Avatar có sẵn
+                value:
+                  avatar:
+                    kind: preset
+                    presetId: cat-03
+      responses:
+        '200':
+          description: Hồ sơ sau khi cập nhật
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+              example:
+                uid: u_7Hq2Lx
+                email: an.nguyen@gmail.com
+                displayName: An lô tô
+                photoUrl: https://firebasestorage.googleapis.com/v0/b/loto.appspot.com/o/avatars%2Fu_7Hq2Lx%2F8b1f.webp?alt=media
+                googleName: An Nguyễn
+                googlePhotoUrl: https://lh3.googleusercontent.com/a/abc
+                profileCustomized: true
+                currentRoomId: r_9fK2mQ
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /me/profile/reset:
+    post:
+      tags: [Profile]
+      operationId: resetProfile
+      summary: Khôi phục tên/ảnh theo Google
+      description: |
+        `display_name = google_name`, `photo_url = google_photo_url`, `profile_customized = false`; xóa ảnh trong
+        `avatars/{uid}/`. Cập nhật doc player của ván hiện tại như `updateProfile`.
+      x-business: [BIZ-16]
+      x-screens: [SCR-10.A3]
+      x-roles: [ACT-01, ACT-02, ACT-03]
+      x-supporting: [SUP-08]
+      x-errors: [UNAUTHENTICATED]
+      responses:
+        '200':
+          description: Hồ sơ sau khi khôi phục
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+              example:
+                uid: u_7Hq2Lx
+                email: an.nguyen@gmail.com
+                displayName: An Nguyễn
+                photoUrl: https://lh3.googleusercontent.com/a/abc
+                googleName: An Nguyễn
+                googlePhotoUrl: https://lh3.googleusercontent.com/a/abc
+                profileCustomized: false
+                currentRoomId: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Rooms ─────────────────────────────
+  /rooms:
+    post:
+      tags: [Rooms]
+      operationId: createRoom
+      summary: Tạo phòng
+      description: |
+        Transaction (BR-02: `users.current_room_id` phải rỗng):
+        - `rooms/{roomId}`: `name` (mặc định "Phòng của {display_name}"), `host_uid = created_by = uid`, `status = active`,
+          `member_count = 1`, `invite_code` 22 ký tự base62 ngẫu nhiên (`crypto`), `expires_at = invite_expires_at =
+          now + 8h`, `draw_interval_sec = 5`, `called_numbers = []`, `game_count = 1`, `ticket_set_no = 1`.
+        - `games/{gameId}` ván 1 `waiting` (BR-07); `rooms.current_game_id = gameId`.
+        - 16 doc `tickets/{color}_{side}` sinh bằng `generateTicketSet` (BR-08, ADR-14).
+        - `users.current_room_id = roomId`; RTDB `presence_access/{roomId}/{uid} = true`.
+        - Mọi doc trong phòng có `expire_at = created_at + 31 ngày` (NFR-11).
+        Không hẹn giờ phía server (Q-051): client tự cảnh báo khi còn 15 phút và gọi `expireRoom` khi tới `expires_at`.
+        Host **chưa** là player tới khi lấy vé.
+      x-business: [BIZ-02]
+      x-screens: [SCR-02.A1]
+      x-roles: [ACT-01]
+      x-supporting: [SUP-03, SUP-09]
+      x-nfr: [NFR-08, NFR-09]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, ALREADY_IN_ROOM, ROOM_NAME_INVALID]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+            example:
+              name: Lô tô Tết nhà Ngoại
+      responses:
+        '201':
+          description: Phòng đã tạo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomCreated'
+              example:
+                roomId: r_9fK2mQ
+                name: Lô tô Tết nhà Ngoại
+                inviteCode: 4kT9xQ2LmB7vRz1NcP8sWd
+                inviteUrl: https://loto.example.com/join/4kT9xQ2LmB7vRz1NcP8sWd
+                currentGameId: g_01
+                drawIntervalSec: 5
+                expiresAt: '2026-11-18T20:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    patch:
+      tags: [Rooms]
+      operationId: updateRoom
+      summary: Đổi nhịp quay (host)
+      description: |
+        Ghi `rooms.draw_interval_sec` (3–15, BR-15). Đổi được ở mọi trạng thái ván; có hiệu lực từ số kế tiếp vì
+        Nhịp mới áp dụng từ lần `drawNumber` kế tiếp (`next_call_at` tính lúc rao số – ADR-05). Tên phòng chỉ đặt khi tạo (ENT-02) nên không sửa ở đây.
+      x-business: [BIZ-06]
+      x-screens: [SCR-11.A3]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01]
+      x-nfr: [NFR-09]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, DRAW_INTERVAL_INVALID]
+      x-last-event: [interval_changed]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomUpdate'
+            example:
+              drawIntervalSec: 8
+      responses:
+        '200':
+          description: Cài đặt phòng sau khi đổi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomSettings'
+              example:
+                roomId: r_9fK2mQ
+                drawIntervalSec: 8
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Invites ─────────────────────────────
+  /invites/{inviteCode}:
+    parameters:
+      - $ref: '#/components/parameters/InviteCode'
+    get:
+      tags: [Invites]
+      operationId: getInvite
+      summary: Xem thông tin lời mời (trang /join/{code})
+      description: |
+        Đọc ở server khi render trang `/join/[code]` (SSR + `generateMetadata` Open Graph – ADR-09, SUP-06); **không
+        cần đăng nhập** để crawler Zalo/Messenger/Telegram đọc được. Hiện thực là hàm server dùng chung cho
+        `page.tsx` và `generateMetadata`, không phải Server Action; có thể expose Route Handler GET nếu cần.
+        Chỉ trả tên phòng, tên/ảnh host, số người, hạn — không dữ liệu cá nhân khác (NFR-10).
+        `status`: `valid` · `expired` (quá `invite_expires_at` hoặc phòng `closing`) · `closed` · `full` (16 người).
+        Nếu có cookie hợp lệ, trả thêm `viewer` để SCR-03 chọn nút (Vào phòng / Về phòng hiện tại / bị chặn / tự chuyển
+        vào phòng khi `inThisRoom`).
+      x-business: [BIZ-03]
+      x-screens: [SCR-03.A0]
+      x-roles: [ACT-04, ACT-01]
+      x-supporting: [SUP-06]
+      x-nfr: [NFR-04, NFR-09, NFR-10]
+      x-errors: [INVITE_INVALID]
+      x-transport: ssr
+      security:
+        - {}
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Thông tin lời mời
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitePreview'
+              examples:
+                valid:
+                  summary: Mã hợp lệ, khách đã đăng nhập, chưa ở phòng nào
+                  value:
+                    status: valid
+                    room:
+                      name: Lô tô Tết nhà Ngoại
+                      hostName: An Nguyễn
+                      hostPhotoUrl: https://lh3.googleusercontent.com/a/abc
+                      memberCount: 7
+                      maxMembers: 16
+                      expiresAt: '2026-11-18T20:00:00Z'
+                    viewer:
+                      inThisRoom: false
+                      currentRoomId: null
+                      blocked: false
+                anonymousFull:
+                  summary: Chưa đăng nhập, phòng đầy
+                  value:
+                    status: full
+                    room:
+                      name: Lô tô Tết nhà Ngoại
+                      hostName: An Nguyễn
+                      hostPhotoUrl: https://lh3.googleusercontent.com/a/abc
+                      memberCount: 16
+                      maxMembers: 16
+                      expiresAt: '2026-11-18T20:00:00Z'
+                    viewer: null
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/join:
+    post:
+      tags: [Invites]
+      operationId: joinRoom
+      summary: Vào phòng bằng mã mời
+      description: |
+        Transaction (Q-047, database-design §4): query `rooms where invite_code == code` →
+        1. Không có → `404 INVITE_INVALID`.
+        2. Đã ở chính phòng này → `200 alreadyMember = true`, không đổi gì (FLOW-03 A1).
+        3. `status ≠ active` hoặc quá `invite_expires_at` → `410 INVITE_EXPIRED` (BR-05, BR-04).
+        4. `uid ∈ blocked_uids` → `403 BLOCKED_FROM_ROOM` (BR-06).
+        5. `users.current_room_id` là phòng khác → `409 ALREADY_IN_ROOM` (BR-02).
+        6. `member_count ≥ 16` → `409 ROOM_FULL` (BR-03).
+        Hợp lệ: `users.current_room_id = roomId`, `rooms.member_count + 1`, `last_event = member_joined`,
+        RTDB `presence_access/{roomId}/{uid} = true`. **Không** tạo player; người từng tự rời vào lại như mới, không
+        được trả vé cũ (BR-25). Vào khi ván đang chạy: chỉ xem, lấy vé ở ván sau (FLOW-03 A3, BR-10).
+      x-business: [BIZ-03]
+      x-screens: [SCR-03.A1]
+      x-roles: [ACT-01, ACT-04]
+      x-supporting: [SUP-01, SUP-05, SUP-09]
+      x-nfr: [NFR-04, NFR-09]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, INVITE_INVALID, INVITE_EXPIRED, BLOCKED_FROM_ROOM, ALREADY_IN_ROOM, ROOM_FULL]
+      x-last-event: [member_joined]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRoomRequest'
+            example:
+              inviteCode: 4kT9xQ2LmB7vRz1NcP8sWd
+      responses:
+        '200':
+          description: Đã ở trong phòng (vào mới hoặc đã là thành viên)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRoomResult'
+              examples:
+                joined:
+                  summary: Vào mới
+                  value:
+                    roomId: r_9fK2mQ
+                    alreadyMember: false
+                already:
+                  summary: Đã là thành viên
+                  value:
+                    roomId: r_9fK2mQ
+                    alreadyMember: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Members ─────────────────────────────
+  /rooms/{roomId}/leave:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [Members]
+      operationId: leaveRoom
+      summary: Rời phòng (không phải host)
+      description: |
+        Host không có nút rời (`409 HOST_CANNOT_LEAVE`); host thoát phòng bằng đăng xuất → đóng phòng (BR-21, Q-052).
+        Ván đang diễn ra → `409 GAME_IN_PROGRESS` (Q-052). Transaction (ván `waiting`):
+        - `users.current_room_id = null`, `rooms.member_count − 1`, `last_event = member_left`.
+        - Xóa doc player của mình → vé trống ngay (BR-22).
+        - Xóa RTDB `presence/{roomId}/{uid}` và `presence_access/{roomId}/{uid}`.
+      x-business: [BIZ-11]
+      x-screens: [SCR-04.A8]
+      x-roles: [ACT-03]
+      x-supporting: [SUP-01]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, HOST_CANNOT_LEAVE, GAME_IN_PROGRESS]
+      x-last-event: [member_left]
+      responses:
+        '204':
+          description: Đã rời phòng; client điều hướng về SCR-02
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/players/{uid}/kick:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/TargetUid'
+    post:
+      tags: [Members]
+      operationId: kickPlayer
+      summary: Kick player (host)
+      description: |
+        Chỉ host (BR-21). Đích phải là **player của ván hiện tại** (có doc `players/{uid}`), còn trong phòng
+        (`users.current_room_id == roomId`) và không phải host (Q-048, BIZ-10 E1). Transaction:
+        - `rooms.blocked_uids` thêm `uid` (BR-06), `member_count − 1`, `last_event = member_kicked` (`target_uid`).
+        - `users/{uid}.current_room_id = null` → người đó mất quyền đọc phòng và về SCR-02.
+        - Ván `waiting`: xóa doc player → vé trống ngay. Ván đang diễn ra: giữ doc player, người bị kick không Kinh
+          được, vé trống ở ván sau (BR-22).
+        - Xóa RTDB `presence/{roomId}/{uid}`, `presence_access/{roomId}/{uid}`.
+        (Q-050) Người bị kick không đọc được `rooms.last_event` nữa nên client của họ chỉ thấy `current_room_id`
+        chuyển null mà không do mình rời → hiện thông báo chung "Bạn không còn ở phòng" (DB không có field lý do).
+      x-business: [BIZ-10]
+      x-screens: [SCR-07.A1]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01]
+      x-nfr: [NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, CANNOT_TARGET_SELF, PLAYER_NOT_FOUND]
+      x-last-event: [member_kicked]
+      responses:
+        '200':
+          description: Đã kick
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KickResult'
+              example:
+                uid: u_2Mn8Rt
+                ticketsFreedNow: false
+                gameStatus: running
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/players/{uid}/reclaim-tickets:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/TargetUid'
+    post:
+      tags: [Members]
+      operationId: reclaimPlayerTickets
+      summary: Thu hồi vé của người offline (host)
+      description: |
+        Chỉ host, ván hiện tại `waiting` (BR-13). Đích có doc player ở ván hiện tại và đang **offline** theo RTDB
+        `presence/{roomId}/{uid}` (`online = false` hoặc không có node) — server đọc RTDB bằng Admin SDK
+        (ADR-06, Q-048). Xóa doc player của họ → vé trống; `last_event = tickets_reclaimed` (`target_uid`).
+        Người bị thu hồi vẫn ở phòng (FLOW-04 A1, A2). Dùng trước `renewTicketSet` khi chỉ còn người offline giữ vé.
+      x-business: [BIZ-04]
+      x-screens: [SCR-07.A2, SCR-05.A4]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-04, SUP-01]
+      x-nfr: [NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, CANNOT_TARGET_SELF, PLAYER_NOT_FOUND, GAME_NOT_WAITING, TARGET_ONLINE]
+      x-last-event: [tickets_reclaimed]
+      responses:
+        '200':
+          description: Đã thu hồi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReclaimResult'
+              example:
+                uid: u_2Mn8Rt
+                releasedTicketIds: [red_a, blue_b]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Tickets ─────────────────────────────
+  /rooms/{roomId}/tickets/{ticketId}/take:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/TicketId'
+    post:
+      tags: [Tickets]
+      operationId: takeTicket
+      summary: Lấy vé
+      description: |
+        Transaction trên ván `rooms.current_game_id`:
+        - Ván phải `waiting` (BR-10).
+        - Vé chưa có chủ: query `players where ticket_ids array-contains ticketId` rỗng (BR-09). Hai người cùng lấy →
+          người commit trước được, người sau `409 TICKET_TAKEN`.
+        - Mình giữ < 2 vé (BR-09).
+        Tạo (nếu chưa có) `players/{uid}` với `display_name`, `photo_url`, `joined_at`, rồi thêm `ticketId` vào
+        `ticket_ids` (Q-047). Không ghi `last_event` (cả phòng thấy qua listener `players` – SUP-01). (Q-050)
+      x-business: [BIZ-05]
+      x-screens: [SCR-05.A1]
+      x-roles: [ACT-03, ACT-02]
+      x-supporting: [SUP-01]
+      x-nfr: [NFR-02]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, TICKET_NOT_FOUND, GAME_NOT_WAITING, TICKET_TAKEN, TICKET_LIMIT_REACHED]
+      responses:
+        '200':
+          description: Vé mình đang giữ sau khi lấy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyTickets'
+              example:
+                gameId: g_01
+                ticketIds: [red_a]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/tickets/{ticketId}/release:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/TicketId'
+    post:
+      tags: [Tickets]
+      operationId: releaseTicket
+      summary: Bỏ vé
+      description: |
+        Ván hiện tại phải `waiting` (BR-10); `ticketId` phải nằm trong `players/{uid}.ticket_ids` của mình.
+        Bỏ khỏi `ticket_ids` (doc có thể còn `[]`; sẽ bị xóa khi host Bắt đầu – Q-047).
+      x-business: [BIZ-05]
+      x-screens: [SCR-05.A2]
+      x-roles: [ACT-03, ACT-02]
+      x-supporting: [SUP-01]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, TICKET_NOT_FOUND, GAME_NOT_WAITING, TICKET_NOT_HELD]
+      responses:
+        '200':
+          description: Vé mình đang giữ sau khi bỏ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyTickets'
+              example:
+                gameId: g_01
+                ticketIds: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/ticket-set/renew:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [Tickets]
+      operationId: renewTicketSet
+      summary: Tạo bộ vé mới (host)
+      description: |
+        Chỉ host. Ván hiện tại `waiting` và **không còn ai giữ vé** (mọi player của ván có `ticket_ids` rỗng) (BR-12).
+        Còn người giữ → `409 TICKETS_STILL_HELD` kèm danh sách người giữ và trạng thái online để host nhắc họ bỏ vé
+        hoặc thu hồi người offline bằng `reclaimPlayerTickets` (FLOW-04 A1, E2). (Q-050) Không tự thu hồi trong
+        cùng thao tác.
+        Hợp lệ: `generateTicketSet` (ADR-14) ghi đè `grid`, `set_no` của 16 doc `tickets`, `rooms.ticket_set_no + 1`,
+        `last_event = ticket_set_renewed`.
+      x-business: [BIZ-04]
+      x-screens: [SCR-05.A3]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01, SUP-04]
+      x-nfr: [NFR-08, NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_NOT_WAITING, TICKETS_STILL_HELD]
+      x-last-event: [ticket_set_renewed]
+      responses:
+        '200':
+          description: Bộ vé mới đã hiện hành
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketSetRenewed'
+              example:
+                ticketSetNo: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Games ─────────────────────────────
+  /rooms/{roomId}/games/{gameId}/start:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: startGame
+      summary: Bắt đầu ván (host)
+      description: |
+        Chỉ host. Ván phải là ván hiện tại (`GAME_STALE`), `waiting`; phòng `active` và chưa quá `expires_at`
+        (`ROOM_CLOSING`, BR-14). Transaction:
+        1. Xóa các player có `ticket_ids` rỗng hoặc không còn trong phòng (`users.current_room_id ≠ roomId`) (Q-047).
+        2. Còn 0 player → `422 NO_TICKETS_HELD` (BR-14), không đổi gì (rollback).
+        3. Chép `display_name`, `photo_url` hiện tại vào từng player; `games.player_count`, `started_at`.
+        4. `games.status = running`, `last_event = game_started`; **server rao ngay số đầu tiên**: `rooms.called_numbers =
+           [crypto.randomInt(1..90)]` (Q-046, Q-052), `next_call_at = now + N`.
+        Client phát tiếng rao số đầu; từ số thứ hai host (và dự phòng) gọi `drawNumber` khi tới `next_call_at` (ADR-05).
+      x-business: [BIZ-06]
+      x-screens: [SCR-04.A4]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01, SUP-03, SUP-09]
+      x-nfr: [NFR-08, NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_WAITING, ROOM_CLOSING, NO_TICKETS_HELD]
+      x-last-event: [game_started]
+      responses:
+        '200':
+          description: Trạng thái ván sau khi bắt đầu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+              example:
+                gameId: g_01
+                seqNo: 1
+                status: running
+                playerCount: 6
+                startedAt: '2026-11-18T13:05:00Z'
+                nextCallAt: '2026-11-18T13:05:05Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/games/{gameId}/pause:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: pauseGame
+      summary: Tạm dừng ván (host)
+      description: |
+        Chỉ host; ván `running` (BR-16). `status = paused`, `pause_reason = host`, `next_call_at = null` (mọi
+        `drawNumber` đang chờ sẽ bị từ chối vì ván không `running`), `last_event = game_paused`. Host offline **không** tự tạm dừng (Q-048).
+      x-business: [BIZ-06]
+      x-screens: [SCR-04.A5]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01, SUP-03]
+      x-nfr: [NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_RUNNING]
+      x-last-event: [game_paused]
+      responses:
+        '200':
+          description: Trạng thái ván sau khi tạm dừng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+              example:
+                gameId: g_01
+                seqNo: 1
+                status: paused
+                playerCount: 6
+                startedAt: '2026-11-18T13:05:00Z'
+                nextCallAt: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/games/{gameId}/resume:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: resumeGame
+      summary: Tiếp tục ván (host)
+      description: |
+        Chỉ host; ván `paused`. `status = running`, `pause_reason = null`, `next_call_at = now + N`,
+        `last_event = game_resumed`; client tiếp tục gọi `drawNumber` khi tới `next_call_at`.
+        Phòng đang `closing` vẫn tiếp tục được (ván đang diễn ra – BR-04).
+      x-business: [BIZ-06]
+      x-screens: [SCR-04.A6]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01, SUP-03]
+      x-nfr: [NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_PAUSED]
+      x-last-event: [game_resumed]
+      responses:
+        '200':
+          description: Trạng thái ván sau khi tiếp tục
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+              example:
+                gameId: g_01
+                seqNo: 1
+                status: running
+                playerCount: 6
+                startedAt: '2026-11-18T13:05:00Z'
+                nextCallAt: '2026-11-18T13:12:08Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/games/{gameId}/claims:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: createClaim
+      summary: Báo Kinh cho một vé
+      description: |
+        Transaction (database-design §4, Q-046):
+        - Người báo còn trong phòng (`NOT_ROOM_MEMBER`); ván hiện tại (`GAME_STALE`) ở `running`, `paused` hoặc
+          `claim_window` — khác → `409 CLAIMS_CLOSED` (BR-28: chờ xác nhận không nhận Kinh; Q-029: tạm dừng vẫn nhận).
+        - `ticketId ∈ players/{uid}.ticket_ids` của ván (`403 NOT_TICKET_HOLDER`, FLOW-08 E1, BR-22).
+        - Vé đã có trong `winners` → `409 TICKET_ALREADY_WON`.
+        - So `tickets/{ticketId}.grid` với `rooms.called_numbers` **lúc bấm**: có hàng mà 5 số đều đã rao → đúng (BR-17).
+        Kết quả:
+        - **Hụt:** `last_event = claim_miss` (tên người báo); trạng thái ván giữ nguyên (đang quay thì quay tiếp,
+          tạm dừng thì vẫn tạm dừng – FLOW-08 A1, E3). Không lưu lượt hụt (Q-031).
+        - **Đúng, đầu tiên** (`running`/`paused`): append `winners`, `status = claim_window` (dừng quay – BR-16),
+          `next_call_at = null`, `claim_window_ends_at = now + 5s`, `last_event = claim_win`. Hết 5 giây client gọi
+          `closeClaimWindow` (BR-18, Q-051).
+        - **Đúng, trong cửa sổ** (`claim_window`): append `winners` (đồng thắng – BR-18).
+        `row` của winner = chỉ số hàng đủ số nhỏ nhất nếu nhiều hàng cùng đủ. (Q-050)
+        Thời gian xử lý ≤ 1 giây P95 (NFR-03). Thông tin vé thắng/hàng thắng cả phòng thấy qua listener `games`.
+      x-business: [BIZ-08]
+      x-screens: [SCR-04.A3]
+      x-roles: [ACT-03, ACT-02]
+      x-supporting: [SUP-01, SUP-02, SUP-03]
+      x-nfr: [NFR-03, NFR-08]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_TICKET_HOLDER, GAME_STALE, CLAIMS_CLOSED, TICKET_ALREADY_WON]
+      x-last-event: [claim_miss, claim_win]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimCreate'
+            example:
+              ticketId: green_b
+      responses:
+        '200':
+          description: Kết quả kiểm Kinh
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResult'
+              examples:
+                win:
+                  summary: Kinh đúng đầu tiên → mở cửa sổ đồng kinh
+                  value:
+                    result: win
+                    ticketId: green_b
+                    row: 4
+                    gameStatus: claim_window
+                    claimWindowEndsAt: '2026-11-18T13:20:05Z'
+                miss:
+                  summary: Kinh hụt
+                  value:
+                    result: miss
+                    ticketId: green_b
+                    row: null
+                    gameStatus: running
+                    claimWindowEndsAt: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/games/{gameId}/draw:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: drawNumber
+      summary: Rao số kế tiếp (client điều nhịp)
+      description: |
+        Thay task `gameTick` (Q-051, ADR-05). Gọi bởi **host** đúng lúc `next_call_at`. **Dự phòng (Q-052):** các player của
+        ván (trừ host) xếp theo **vé nhỏ nhất họ giữ** theo thứ tự vé cố định (Đỏ A, Đỏ B, Cam A, … Hồng B); dự phòng thứ k
+        gọi ở `next_call_at + 5k giây` nếu vẫn chưa thấy số mới — lần lượt tới player cuối. Server **tự chọn số**, client
+        chỉ báo "đã tới giờ". Transaction:
+        1. Lazy expiry phòng (BR-04). Ván phải là ván hiện tại (`GAME_STALE`) và `running`, ngược lại `409 GAME_NOT_RUNNING`.
+        2. `seq ≠ len(rooms.called_numbers)` → **200 `drawn: false`** kèm trạng thái hiện tại (lượt gọi trùng/cũ – không lỗi).
+        3. `now < next_call_at − 300ms` → `409 DRAW_TOO_EARLY` (kèm `nextCallAt`) — chống gọi sớm để đẩy nhanh ván (NFR-08).
+        4. `crypto.randomInt` một số trong 1–90 chưa có trong `called_numbers`, append; `next_call_at = now + draw_interval_sec`
+           (nhịp mới áp dụng từ đây – BR-15).
+        5. Đã đủ 90 số → ván `finished`, `result = no_winner`, `ended_at`, `last_event = game_finished`; phòng `active` thì
+           tạo ván mới `waiting` + chép player còn trong phòng (BR-19, BR-07, BR-11); phòng `closing` thì đóng phòng.
+        Chỉ host và player của ván được gọi (`403 NOT_ROOM_MEMBER` nếu không phải) để ván chạy tiếp khi host offline (Q-048).
+      x-business: [BIZ-07]
+      x-screens: [SCR-04.A10]
+      x-roles: [ACT-02, ACT-03]
+      x-supporting: [SUP-03]
+      x-nfr: [NFR-01, NFR-08]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, GAME_STALE, GAME_NOT_RUNNING, DRAW_TOO_EARLY]
+      x-last-event: [game_finished]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DrawRequest'
+            example:
+              seq: 22
+      responses:
+        '200':
+          description: Kết quả rao số (`drawn = false` khi lượt gọi trùng)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawResult'
+              example:
+                drawn: true
+                number: 47
+                seq: 23
+                nextCallAt: '2026-11-18T13:12:08Z'
+                gameStatus: running
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/games/{gameId}/claim-window/close:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: closeClaimWindow
+      summary: Đóng cửa sổ đồng kinh (client gọi khi hết 5 giây)
+      description: |
+        Thay task `claimWindowClose` (Q-051). Mọi thành viên đang thấy ván `claim_window` gọi khi đồng hồ tới
+        `claim_window_ends_at`; idempotent. Transaction:
+        - Ván không còn `claim_window` → 200 trạng thái hiện tại (đã có người đóng trước).
+        - `now < claim_window_ends_at` → `409 CLAIM_WINDOW_OPEN`.
+        - Ngược lại `status = awaiting_confirm` (BR-28). Phòng `closing` (đã quá hạn) → ván tự `finished` với `winners`
+          đã có rồi đóng phòng (BR-04, Q-042, Q-048).
+      x-business: [BIZ-08, BIZ-14]
+      x-screens: [SCR-09.A2]
+      x-roles: [ACT-02, ACT-03]
+      x-supporting: [SUP-03]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, GAME_STALE, CLAIM_WINDOW_OPEN]
+      responses:
+        '200':
+          description: Trạng thái ván sau khi đóng cửa sổ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/expire:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [Rooms]
+      operationId: expireRoom
+      summary: Áp dụng hết hạn phòng (client gọi khi đếm ngược về 0)
+      description: |
+        Thay task `roomClose` (Q-051). Thành viên gọi khi `now ≥ rooms.expires_at` (client đếm ngược; mở app thấy phòng
+        đã quá hạn cũng gọi). Idempotent; cùng logic với **lazy expiry** chạy đầu mọi thao tác trên phòng:
+        - `now < expires_at` → `409 ROOM_NOT_EXPIRED`.
+        - Ván `waiting` → `cancelled` (`result = cancelled`), phòng `closed` ngay.
+        - Ván `running`/`paused`/`claim_window` → phòng `closing`, `last_event = room_closing`; đóng khi ván kết thúc.
+        - Ván `awaiting_confirm` → ván tự `finished` với `winners` đã có rồi đóng phòng.
+        - Đóng phòng: `status = closed`, `closed_at`, `close_reason = expired`, `member_count = 0`,
+          `users.current_room_id = null` cho mọi người có `current_room_id == roomId`, xóa RTDB `presence/{roomId}`,
+          `presence_access/{roomId}` (Q-039).
+        Cảnh báo "còn 15 phút" do client tự hiện từ `expires_at`, không cần API.
+      x-business: [BIZ-14]
+      x-screens: [SCR-04.A11]
+      x-roles: [ACT-02, ACT-03]
+      x-supporting: [SUP-01, SUP-03]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, ROOM_NOT_EXPIRED]
+      x-last-event: [room_closing]
+      responses:
+        '200':
+          description: Trạng thái phòng sau khi áp dụng hết hạn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomExpireResult'
+              example:
+                roomStatus: closing
+                gameStatus: running
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rooms/{roomId}/games/{gameId}/confirm:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: confirmGame
+      summary: Xác nhận kết thúc ván (host)
+      description: |
+        Chỉ host; ván `awaiting_confirm` (BR-28 — host không bác bỏ được; host tự kinh vẫn tự xác nhận). Transaction:
+        - Ván: `status = finished`, `result = won`, `ended_at`, `confirmed_by = uid`, `last_event = game_finished`.
+        - Phòng `active`: tạo ván mới `waiting` (`seq_no = game_count + 1`), `rooms.current_game_id`, `game_count + 1`;
+          chép sang ván mới các player **còn trong phòng** cùng `ticket_ids` (BR-07, BR-11). `called_numbers` giữ tới khi
+          ván mới Bắt đầu (Q-046).
+        - Phòng `closing` (đã quá hạn): không tạo ván mới, đóng phòng như `expireRoom` (BR-04) → `nextGameId = null`.
+      x-business: [BIZ-08, BIZ-13]
+      x-screens: [SCR-09.A1]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01, SUP-02, SUP-09]
+      x-nfr: [NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_AWAITING_CONFIRM]
+      x-last-event: [game_finished]
+      responses:
+        '200':
+          description: Ván đã kết thúc
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameConfirmResult'
+              example:
+                finishedGameId: g_01
+                result: won
+                winners:
+                  - uid: u_2Mn8Rt
+                    displayName: Bình Trần
+                    ticketId: green_b
+                    color: green
+                    row: 4
+                    claimedAt: '2026-11-18T13:20:00Z'
+                nextGameId: g_02
+                roomStatus: active
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ───────────────────────────── Messages ─────────────────────────────
+  /rooms/{roomId}/messages:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+    post:
+      tags: [Messages]
+      operationId: sendMessage
+      summary: Gửi tin nhắn chat
+      description: |
+        Người gửi còn trong phòng. `text` được trim, 1–500 ký tự (BR-23). Chống spam (SUP-07): trong transaction đọc
+        `users.chat_recent_at`, nếu đã có 5 mốc trong 10 giây gần nhất → `429 RATE_LIMITED` (giữ nội dung ở ô nhập –
+        FLOW-12 E2); ngược lại thêm mốc now, giữ tối đa 5.
+        Tạo `messages/{id}` với `sender_uid`, `sender_name`, `sender_photo_url` (chép lúc gửi), `text`, `created_at`.
+        Không sửa/xóa (BR-23). Không ghi `last_event` (cả phòng thấy qua listener `messages`).
+      x-business: [BIZ-12]
+      x-screens: [SCR-06.A1]
+      x-roles: [ACT-03, ACT-02]
+      x-supporting: [SUP-07, SUP-01]
+      x-nfr: [NFR-02]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, MESSAGE_EMPTY, MESSAGE_TOO_LONG, RATE_LIMITED]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+            example:
+              text: Chờ 1 số nữa thôi 😆
+      responses:
+        '201':
+          description: Tin đã gửi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              example:
+                id: m_5tRq1Z
+                senderUid: u_7Hq2Lx
+                senderName: An Nguyễn
+                senderPhotoUrl: https://lh3.googleusercontent.com/a/abc
+                text: Chờ 1 số nữa thôi 😆
+                createdAt: '2026-11-18T13:18:42Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __session
+      description: |
+        Firebase session cookie (14 ngày) tạo bởi `createSession`; server `verifySessionCookie(cookie, checkRevoked = true)`
+        (ADR-07, SUP-05).
+
+  parameters:
+    RoomId:
+      name: roomId
+      in: path
+      required: true
+      description: id phòng (`rooms/{roomId}`)
+      schema:
+        $ref: '#/components/schemas/RoomId'
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      description: id ván; phải bằng `rooms.current_game_id`, nếu không → `409 GAME_STALE`
+      schema:
+        $ref: '#/components/schemas/GameId'
+    TicketId:
+      name: ticketId
+      in: path
+      required: true
+      description: id vé `{color}_{side}` (TBL-03)
+      schema:
+        $ref: '#/components/schemas/TicketId'
+    TargetUid:
+      name: uid
+      in: path
+      required: true
+      description: uid người đích (player của ván hiện tại)
+      schema:
+        $ref: '#/components/schemas/Uid'
+    InviteCode:
+      name: inviteCode
+      in: path
+      required: true
+      description: mã mời `rooms.invite_code` (ADR-09)
+      schema:
+        $ref: '#/components/schemas/InviteCode'
+
+  responses:
+    BadRequest:
+      description: '`VALIDATION_FAILED` — request sai cấu trúc / kiểu'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: VALIDATION_FAILED
+            message: Dữ liệu gửi lên không hợp lệ
+            details:
+              - field: ticketId
+                code: invalid_string
+                message: Mã vé không đúng định dạng
+    Unauthorized:
+      description: '`UNAUTHENTICATED` · `GOOGLE_TOKEN_INVALID`'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: UNAUTHENTICATED
+            message: Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại
+    Forbidden:
+      description: '`NOT_ROOM_MEMBER` · `NOT_ROOM_HOST` · `BLOCKED_FROM_ROOM` · `NOT_TICKET_HOLDER`'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            notHost:
+              summary: NFR-09, BR-21
+              value:
+                code: NOT_ROOM_HOST
+                message: Chỉ host được thực hiện thao tác này
+            blocked:
+              summary: BR-06
+              value:
+                code: BLOCKED_FROM_ROOM
+                message: Bạn không thể vào phòng này
+            notHolder:
+              summary: BIZ-08 E1
+              value:
+                code: NOT_TICKET_HOLDER
+                message: Vé này không phải của bạn trong ván này
+    NotFound:
+      description: '`INVITE_INVALID` · `TICKET_NOT_FOUND` · `PLAYER_NOT_FOUND`'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: INVITE_INVALID
+            message: Link mời không tồn tại
+    Conflict:
+      description: Xung đột trạng thái nghiệp vụ (xem bảng mã lỗi, HTTP 409)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            alreadyInRoom:
+              summary: BR-02
+              value:
+                code: ALREADY_IN_ROOM
+                message: Bạn đang ở một phòng khác, hãy rời phòng đó trước
+                details:
+                  - code: current_room
+                    currentRoomId: r_3Lp8Vw
+            roomFull:
+              summary: BR-03
+              value:
+                code: ROOM_FULL
+                message: Phòng đã đầy
+            ticketTaken:
+              summary: BR-09
+              value:
+                code: TICKET_TAKEN
+                message: Vé đã có người giữ
+            stillHeld:
+              summary: BR-12
+              value:
+                code: TICKETS_STILL_HELD
+                message: Còn người đang giữ vé
+                details:
+                  - code: holder
+                    uid: u_2Mn8Rt
+                    displayName: Bình Trần
+                    ticketIds: [red_a]
+                    online: true
+                  - code: holder
+                    uid: u_8Qw3Ez
+                    displayName: Cúc Lê
+                    ticketIds: [blue_b, pink_a]
+                    online: false
+            claimsClosed:
+              summary: BR-28
+              value:
+                code: CLAIMS_CLOSED
+                message: Ván đang chờ host xác nhận, không nhận thêm Kinh
+            hostCannotLeave:
+              summary: BR-21
+              value:
+                code: HOST_CANNOT_LEAVE
+                message: Host không thể rời phòng; phòng sẽ tự đóng khi hết hạn
+    Gone:
+      description: '`INVITE_EXPIRED` — link không còn hiệu lực'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: INVITE_EXPIRED
+            message: Link không còn hiệu lực
+    UnprocessableEntity:
+      description: Vi phạm quy tắc nghiệp vụ về dữ liệu (HTTP 422)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            ticketLimit:
+              summary: BR-09
+              value:
+                code: TICKET_LIMIT_REACHED
+                message: Mỗi người giữ tối đa 2 vé
+            noTickets:
+              summary: BR-14
+              value:
+                code: NO_TICKETS_HELD
+                message: Chưa có ai lấy vé, chưa thể bắt đầu
+            displayName:
+              summary: BR-27
+              value:
+                code: DISPLAY_NAME_INVALID
+                message: Tên hiển thị phải từ 2 đến 30 ký tự
+                details:
+                  - field: displayName
+                    code: too_short
+            messageTooLong:
+              summary: BR-23
+              value:
+                code: MESSAGE_TOO_LONG
+                message: Tin nhắn tối đa 500 ký tự
+    TooManyRequests:
+      description: '`RATE_LIMITED` — vượt 5 tin / 10 giây (SUP-07)'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: RATE_LIMITED
+            message: Bạn gửi quá nhanh, chờ một chút nhé
+            details:
+              - code: retry_after
+                retryAfter: '2026-11-18T13:18:50Z'
+    InternalError:
+      description: '`INTERNAL_ERROR`'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: INTERNAL_ERROR
+            message: Có lỗi xảy ra, vui lòng thử lại
+
+  schemas:
+    # ── Kiểu cơ bản ──
+    Uid:
+      type: string
+      minLength: 1
+      maxLength: 128
+      description: uid Firebase Auth
+    RoomId:
+      type: string
+      minLength: 1
+      maxLength: 64
+    GameId:
+      type: string
+      minLength: 1
+      maxLength: 64
+    TicketColor:
+      type: string
+      enum: [red, orange, yellow, green, teal, blue, purple, pink]
+      description: 8 màu vé (BR-08)
+    TicketId:
+      type: string
+      pattern: '^(red|orange|yellow|green|teal|blue|purple|pink)_(a|b)$'
+      description: '`{color}_{side}`; hai vé cùng màu gộp đủ 1–90 (BR-08)'
+    InviteCode:
+      type: string
+      pattern: '^[0-9A-Za-z]{22}$'
+      description: 22 ký tự base62 ngẫu nhiên (~128 bit), không đoán được (NFR-09, ADR-09)
+    RoomStatus:
+      type: string
+      enum: [active, closing, closed]
+      description: Vòng đời ENT-02 (TBL-02)
+    GameStatus:
+      type: string
+      enum: [waiting, running, paused, claim_window, awaiting_confirm, finished, cancelled]
+      description: Vòng đời ENT-05 (TBL-05)
+    GameResult:
+      type: string
+      enum: [won, no_winner, cancelled]
+
+    # ── Lỗi ──
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Mã lỗi nghiệp vụ (xem bảng trong `info.description`)
+          examples: [TICKET_TAKEN]
+        message:
+          type: string
+          description: Thông báo tiếng Việt hiển thị được cho người dùng
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+    ErrorDetail:
+      type: object
+      required: [code]
+      properties:
+        field:
+          type: string
+          description: Trường lỗi (với lỗi validation)
+        code:
+          type: string
+        message:
+          type: string
+      additionalProperties: true
+
+    # ── Auth / Profile ──
+    SessionCreate:
+      type: object
+      required: [idToken]
+      additionalProperties: false
+      properties:
+        idToken:
+          type: string
+          minLength: 1
+          description: Firebase ID token sau khi đăng nhập Google (BR-01)
+    SessionResult:
+      type: object
+      required: [me, isNewUser]
+      properties:
+        me:
+          $ref: '#/components/schemas/Me'
+        isNewUser:
+          type: boolean
+          description: Lần đầu đăng nhập (vừa tạo `users/{uid}`)
+    Me:
+      type: object
+      description: Hồ sơ của chính mình (TBL-01). Không gồm `chat_recent_at`, `last_active_at`.
+      required: [uid, email, displayName, photoUrl, googleName, googlePhotoUrl, profileCustomized, currentRoomId]
+      properties:
+        uid:
+          $ref: '#/components/schemas/Uid'
+        email:
+          type: string
+          format: email
+          description: Chỉ trả cho chính chủ (NFR-10)
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        photoUrl:
+          type: [string, 'null']
+          format: uri
+        googleName:
+          type: string
+        googlePhotoUrl:
+          type: [string, 'null']
+          format: uri
+        profileCustomized:
+          type: boolean
+        currentRoomId:
+          type: [string, 'null']
+          description: Phòng đang ở (BR-02); null nếu không ở phòng nào
+    ProfileUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 30
+          description: Tên hiển thị, đã trim (BR-27)
+        avatar:
+          $ref: '#/components/schemas/AvatarInput'
+    AvatarInput:
+      description: Ảnh đại diện mới (BR-27, ADR-12)
+      oneOf:
+        - type: object
+          title: AvatarUpload
+          required: [kind, storagePath]
+          additionalProperties: false
+          properties:
+            kind:
+              const: upload
+            storagePath:
+              type: string
+              pattern: '^avatars/[^/]+/[0-9a-fA-F-]{36}\.webp$'
+              description: Đường dẫn Storage đã upload; phần `{uid}` phải là uid người gọi
+        - type: object
+          title: AvatarPreset
+          required: [kind, presetId]
+          additionalProperties: false
+          properties:
+            kind:
+              const: preset
+            presetId:
+              type: string
+              pattern: '^[a-z0-9-]{1,32}$'
+              description: Tên file trong `public/avatars/` (không đuôi)
+      discriminator:
+        propertyName: kind
+
+    # ── Rooms / Invites ──
+    RoomCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Tên phòng, đã trim; bỏ trống → "Phòng của {display_name}"
+    RoomCreated:
+      type: object
+      required: [roomId, name, inviteCode, inviteUrl, currentGameId, drawIntervalSec, expiresAt]
+      properties:
+        roomId:
+          $ref: '#/components/schemas/RoomId'
+        name:
+          type: string
+        inviteCode:
+          $ref: '#/components/schemas/InviteCode'
+        inviteUrl:
+          type: string
+          format: uri
+          description: '`https://{host}/join/{inviteCode}` (SUP-06)'
+        currentGameId:
+          $ref: '#/components/schemas/GameId'
+        drawIntervalSec:
+          type: integer
+          minimum: 3
+          maximum: 15
+        expiresAt:
+          type: string
+          format: date-time
+          description: created_at + 8 giờ (BR-04, BR-05)
+    RoomUpdate:
+      type: object
+      required: [drawIntervalSec]
+      additionalProperties: false
+      properties:
+        drawIntervalSec:
+          type: integer
+          minimum: 3
+          maximum: 15
+          description: Nhịp quay (giây/số) (BR-15)
+    RoomSettings:
+      type: object
+      required: [roomId, drawIntervalSec]
+      properties:
+        roomId:
+          $ref: '#/components/schemas/RoomId'
+        drawIntervalSec:
+          type: integer
+          minimum: 3
+          maximum: 15
+    InvitePreview:
+      type: object
+      required: [status, room, viewer]
+      properties:
+        status:
+          type: string
+          enum: [valid, expired, closed, full]
+          description: |
+            `valid` vào được · `expired` link quá hạn / phòng chờ đóng · `closed` phòng đã đóng · `full` đủ 16 người
+        room:
+          type: object
+          required: [name, hostName, hostPhotoUrl, memberCount, maxMembers, expiresAt]
+          properties:
+            name:
+              type: string
+            hostName:
+              type: string
+            hostPhotoUrl:
+              type: [string, 'null']
+              format: uri
+            memberCount:
+              type: integer
+              minimum: 0
+              maximum: 16
+            maxMembers:
+              type: integer
+              const: 16
+            expiresAt:
+              type: string
+              format: date-time
+        viewer:
+          description: Chỉ có khi có session cookie hợp lệ; null nếu chưa đăng nhập
+          oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/InviteViewer'
+    InviteViewer:
+      type: object
+      required: [inThisRoom, currentRoomId, blocked]
+      properties:
+        inThisRoom:
+          type: boolean
+          description: Đã ở chính phòng này → client tự chuyển SCR-04
+        currentRoomId:
+          type: [string, 'null']
+          description: Phòng đang ở (nếu ở phòng khác → nút "Về phòng hiện tại", BR-02)
+        blocked:
+          type: boolean
+          description: Đã bị kick khỏi phòng này (BR-06)
+    JoinRoomRequest:
+      type: object
+      required: [inviteCode]
+      additionalProperties: false
+      properties:
+        inviteCode:
+          $ref: '#/components/schemas/InviteCode'
+    JoinRoomResult:
+      type: object
+      required: [roomId, alreadyMember]
+      properties:
+        roomId:
+          $ref: '#/components/schemas/RoomId'
+        alreadyMember:
+          type: boolean
+
+    # ── Members ──
+    KickResult:
+      type: object
+      required: [uid, ticketsFreedNow, gameStatus]
+      properties:
+        uid:
+          $ref: '#/components/schemas/Uid'
+        ticketsFreedNow:
+          type: boolean
+          description: true nếu ván `waiting` (vé trống ngay); false nếu ván đang diễn ra (vé trống ở ván sau – BR-22)
+        gameStatus:
+          $ref: '#/components/schemas/GameStatus'
+    ReclaimResult:
+      type: object
+      required: [uid, releasedTicketIds]
+      properties:
+        uid:
+          $ref: '#/components/schemas/Uid'
+        releasedTicketIds:
+          type: array
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/TicketId'
+
+    # ── Tickets ──
+    MyTickets:
+      type: object
+      required: [gameId, ticketIds]
+      properties:
+        gameId:
+          $ref: '#/components/schemas/GameId'
+        ticketIds:
+          type: array
+          maxItems: 2
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/TicketId'
+          description: Vé mình đang giữ ở ván hiện tại (BR-09)
+    TicketSetRenewed:
+      type: object
+      required: [ticketSetNo]
+      properties:
+        ticketSetNo:
+          type: integer
+          minimum: 2
+
+    # ── Games ──
+    DrawRequest:
+      type: object
+      required: [seq]
+      additionalProperties: false
+      properties:
+        seq:
+          type: integer
+          minimum: 0
+          maximum: 89
+          description: Số lượng số đã rao mà client đang thấy (`len(rooms.called_numbers)`); dùng để khử trùng
+    DrawResult:
+      type: object
+      required: [drawn, number, seq, nextCallAt, gameStatus]
+      properties:
+        drawn:
+          type: boolean
+          description: false khi lượt gọi trùng/cũ (đã có người rao số này)
+        number:
+          type: [integer, 'null']
+          minimum: 1
+          maximum: 90
+        seq:
+          type: integer
+          minimum: 0
+          maximum: 90
+        nextCallAt:
+          type: [string, 'null']
+          format: date-time
+        gameStatus:
+          $ref: '#/components/schemas/GameStatus'
+    RoomExpireResult:
+      type: object
+      required: [roomStatus, gameStatus]
+      properties:
+        roomStatus:
+          type: string
+          enum: [active, closing, closed]
+        gameStatus:
+          $ref: '#/components/schemas/GameStatus'
+    GameState:
+      type: object
+      required: [gameId, seqNo, status, playerCount, startedAt, nextCallAt]
+      properties:
+        gameId:
+          $ref: '#/components/schemas/GameId'
+        seqNo:
+          type: integer
+          minimum: 1
+        status:
+          $ref: '#/components/schemas/GameStatus'
+        playerCount:
+          type: integer
+          minimum: 0
+          maximum: 16
+        startedAt:
+          type: [string, 'null']
+          format: date-time
+        nextCallAt:
+          type: [string, 'null']
+          format: date-time
+          description: Thời điểm dự kiến rao số kế tiếp (client hiện đếm ngược)
+    ClaimCreate:
+      type: object
+      required: [ticketId]
+      additionalProperties: false
+      properties:
+        ticketId:
+          $ref: '#/components/schemas/TicketId'
+    ClaimResult:
+      type: object
+      required: [result, ticketId, row, gameStatus, claimWindowEndsAt]
+      properties:
+        result:
+          type: string
+          enum: [win, miss]
+          description: Kinh đúng / Kinh hụt (BR-17)
+        ticketId:
+          $ref: '#/components/schemas/TicketId'
+        row:
+          type: [integer, 'null']
+          minimum: 0
+          maximum: 8
+          description: Hàng thắng (0–8, từ trên xuống); null khi hụt
+        gameStatus:
+          $ref: '#/components/schemas/GameStatus'
+        claimWindowEndsAt:
+          type: [string, 'null']
+          format: date-time
+          description: Hết cửa sổ đồng kinh 5 giây (BR-18); null khi hụt
+    Winner:
+      type: object
+      description: Phần tử `games.winners` (TBL-05, Q-046)
+      required: [uid, displayName, ticketId, color, row, claimedAt]
+      properties:
+        uid:
+          $ref: '#/components/schemas/Uid'
+        displayName:
+          type: string
+        ticketId:
+          $ref: '#/components/schemas/TicketId'
+        color:
+          $ref: '#/components/schemas/TicketColor'
+        row:
+          type: integer
+          minimum: 0
+          maximum: 8
+        claimedAt:
+          type: string
+          format: date-time
+    GameConfirmResult:
+      type: object
+      required: [finishedGameId, result, winners, nextGameId, roomStatus]
+      properties:
+        finishedGameId:
+          $ref: '#/components/schemas/GameId'
+        result:
+          $ref: '#/components/schemas/GameResult'
+        winners:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Winner'
+        nextGameId:
+          type: [string, 'null']
+          description: Ván mới `waiting`; null nếu phòng đang chờ đóng nên đã đóng luôn (BR-04)
+        roomStatus:
+          $ref: '#/components/schemas/RoomStatus'
+
+    # ── Messages ──
+    MessageCreate:
+      type: object
+      required: [text]
+      additionalProperties: false
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Text/emoji, trim trước khi kiểm độ dài (BR-23)
+    Message:
+      type: object
+      required: [id, senderUid, senderName, senderPhotoUrl, text, createdAt]
+      properties:
+        id:
+          type: string
+        senderUid:
+          $ref: '#/components/schemas/Uid'
+        senderName:
+          type: string
+        senderPhotoUrl:
+          type: [string, 'null']
+          format: uri
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time

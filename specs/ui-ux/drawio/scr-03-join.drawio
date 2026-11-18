@@ -1,0 +1,99 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="scr-03-a" name="Lời mời hợp lệ (đã đăng nhập)">
+    <mxGraphModel dx="1280" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageWidth="435" pageHeight="872" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c2" value="SCR-03 · Lời mời — hợp lệ, đã đăng nhập" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=13;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="0" y="8" width="375" height="24" as="geometry"/></mxCell>
+        <mxCell id="c3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="812" as="geometry"/></mxCell>
+        <mxCell id="c4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=#999999;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="56" as="geometry"/></mxCell>
+        <mxCell id="c5" value="LÔ TÔ" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=18;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="46" width="120" height="44" as="geometry"/></mxCell>
+        <mxCell id="c6" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="90" y="48" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c7" value="Ảnh host" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;dashed=1;strokeColor=#999999;fontColor=#999999;fontSize=11;" vertex="1" parent="1"><mxGeometry x="147.5" y="136" width="80" height="80" as="geometry"/></mxCell>
+        <mxCell id="c8" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="227.5" y="130" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c9" value="Bình mời bạn chơi lô tô" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=20;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="228" width="343" height="32" as="geometry"/></mxCell>
+        <mxCell id="c10" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="232" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c11" value="“Lô tô Tết nhà Bình”" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1"><mxGeometry x="16" y="262" width="343" height="26" as="geometry"/></mxCell>
+        <mxCell id="c12" value="4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="264" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c13" value="Link hết hạn lúc 23:40" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="292" width="343" height="22" as="geometry"/></mxCell>
+        <mxCell id="c14" value="5" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="292" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c15" value="Vào phòng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontSize=14;align=center;verticalAlign=middle;fontColor=#ffffff;spacingLeft=6;spacingRight=6;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="340" width="343" height="48" as="geometry"/></mxCell>
+        <mxCell id="c16" value="6" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="332" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c17" value="Phòng chơi giải trí, không có tiền cược." style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#888888;" vertex="1" parent="1"><mxGeometry x="16" y="400" width="343" height="20" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="scr-03-b" name="Chưa đăng nhập">
+    <mxGraphModel dx="1280" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageWidth="435" pageHeight="872" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c2" value="SCR-03 · Lời mời — chưa đăng nhập" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=13;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="0" y="8" width="375" height="24" as="geometry"/></mxCell>
+        <mxCell id="c3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="812" as="geometry"/></mxCell>
+        <mxCell id="c4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=#999999;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="56" as="geometry"/></mxCell>
+        <mxCell id="c5" value="LÔ TÔ" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=18;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="46" width="120" height="44" as="geometry"/></mxCell>
+        <mxCell id="c6" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="90" y="48" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c7" value="Ảnh host" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;dashed=1;strokeColor=#999999;fontColor=#999999;fontSize=11;" vertex="1" parent="1"><mxGeometry x="147.5" y="136" width="80" height="80" as="geometry"/></mxCell>
+        <mxCell id="c8" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="227.5" y="130" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c9" value="Bình mời bạn chơi lô tô" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=20;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="228" width="343" height="32" as="geometry"/></mxCell>
+        <mxCell id="c10" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="232" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c11" value="“Lô tô Tết nhà Bình”" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1"><mxGeometry x="16" y="262" width="343" height="26" as="geometry"/></mxCell>
+        <mxCell id="c12" value="4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="264" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c13" value="Link hết hạn lúc 23:40" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="292" width="343" height="22" as="geometry"/></mxCell>
+        <mxCell id="c14" value="5" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="292" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c15" value="Đăng nhập để vào phòng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontSize=14;align=center;verticalAlign=middle;fontColor=#ffffff;spacingLeft=6;spacingRight=6;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="340" width="343" height="48" as="geometry"/></mxCell>
+        <mxCell id="c16" value="6" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="332" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c17" value="Sau khi đăng nhập bạn sẽ quay lại trang này." style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#888888;" vertex="1" parent="1"><mxGeometry x="16" y="396" width="343" height="20" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="scr-03-c" name="Link lỗi">
+    <mxGraphModel dx="1280" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageWidth="435" pageHeight="872" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c2" value="SCR-03 · Lời mời — link không dùng được (4 biến thể)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=13;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="0" y="8" width="375" height="24" as="geometry"/></mxCell>
+        <mxCell id="c3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="812" as="geometry"/></mxCell>
+        <mxCell id="c4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=#999999;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="56" as="geometry"/></mxCell>
+        <mxCell id="c5" value="LÔ TÔ" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=18;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="46" width="120" height="44" as="geometry"/></mxCell>
+        <mxCell id="c6" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="90" y="48" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c7" value="⚠" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontSize=28;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;arcSize=50;" vertex="1" parent="1"><mxGeometry x="155.5" y="140" width="64" height="64" as="geometry"/></mxCell>
+        <mxCell id="c8" value="Link không còn hiệu lực" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=20;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="220" width="343" height="32" as="geometry"/></mxCell>
+        <mxCell id="c9" value="Phòng đã đóng hoặc link đã hết hạn." style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=13;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="254" width="343" height="22" as="geometry"/></mxCell>
+        <mxCell id="c10" value="7" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="220" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c11" value="Về trang chủ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=14;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="16" y="300" width="343" height="48" as="geometry"/></mxCell>
+        <mxCell id="c12" value="Biến thể của 7 (cùng bố cục):&lt;br&gt;• INVITE_EXPIRED / INVITE_EXPIRED: &quot;Link không còn hiệu lực&quot;&lt;br&gt;• ROOM_FULL: &quot;Phòng đã đầy&quot; – &quot;Phòng đã đủ 16 người.&quot;&lt;br&gt;• BLOCKED_FROM_ROOM: &quot;Bạn không thể vào phòng này&quot;&lt;br&gt;• Mã không tồn tại: như hết hiệu lực" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;verticalAlign=top;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="16" y="380" width="343" height="110" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="scr-03-d" name="Đang ở phòng khác">
+    <mxGraphModel dx="1280" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageWidth="435" pageHeight="872" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="c2" value="SCR-03 · Lời mời — bạn đang ở phòng khác" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=13;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="0" y="8" width="375" height="24" as="geometry"/></mxCell>
+        <mxCell id="c3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="812" as="geometry"/></mxCell>
+        <mxCell id="c4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=#999999;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="56" as="geometry"/></mxCell>
+        <mxCell id="c5" value="LÔ TÔ" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=18;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="46" width="120" height="44" as="geometry"/></mxCell>
+        <mxCell id="c6" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="90" y="48" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c7" value="Ảnh host" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f5f5f5;dashed=1;strokeColor=#999999;fontColor=#999999;fontSize=11;" vertex="1" parent="1"><mxGeometry x="147.5" y="136" width="80" height="80" as="geometry"/></mxCell>
+        <mxCell id="c8" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="227.5" y="130" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c9" value="Bình mời bạn chơi lô tô" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=20;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="228" width="343" height="32" as="geometry"/></mxCell>
+        <mxCell id="c10" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="232" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c11" value="“Lô tô Tết nhà Bình”" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1"><mxGeometry x="16" y="262" width="343" height="26" as="geometry"/></mxCell>
+        <mxCell id="c12" value="4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="264" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c13" value="Link hết hạn lúc 23:40" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#666666;" vertex="1" parent="1"><mxGeometry x="16" y="292" width="343" height="22" as="geometry"/></mxCell>
+        <mxCell id="c14" value="5" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="292" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c15" value="Vào phòng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontSize=14;align=center;verticalAlign=middle;fontColor=#ffffff;spacingLeft=6;spacingRight=6;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="16" y="340" width="343" height="48" as="geometry"/></mxCell>
+        <mxCell id="c16" value="6" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="345" y="332" width="20" height="20" as="geometry"/></mxCell>
+        <mxCell id="c17" value="" style="rounded=0;html=1;fillColor=#000000;opacity=35;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="0" y="40" width="375" height="812" as="geometry"/></mxCell>
+        <mxCell id="c18" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=12;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;shadow=1;arcSize=6;" vertex="1" parent="1"><mxGeometry x="24" y="300" width="327" height="220" as="geometry"/></mxCell>
+        <mxCell id="c19" value="Bạn đang ở phòng khác" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=16;fontColor=#333333;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="312" width="295" height="28" as="geometry"/></mxCell>
+        <mxCell id="c20" value="Bạn đang ở &quot;Phòng của An&quot;. Mỗi người chỉ ở 1 phòng — hãy rời phòng đó trước khi vào phòng mới." style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontSize=13;fontColor=#444444;" vertex="1" parent="1"><mxGeometry x="40" y="342" width="295" height="120" as="geometry"/></mxCell>
+        <mxCell id="c21" value="Đóng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=13;align=center;verticalAlign=middle;fontColor=#333333;spacingLeft=6;spacingRight=6;" vertex="1" parent="1"><mxGeometry x="40.0" y="464" width="141.5" height="44" as="geometry"/></mxCell>
+        <mxCell id="c22" value="Về phòng hiện tại" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontSize=13;align=center;verticalAlign=middle;fontColor=#ffffff;spacingLeft=6;spacingRight=6;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="193.5" y="464" width="141.5" height="44" as="geometry"/></mxCell>
+        <mxCell id="c23" value="8" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6666;fontColor=#ffffff;strokeColor=none;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="341" y="292" width="20" height="20" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
