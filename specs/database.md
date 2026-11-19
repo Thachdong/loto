@@ -51,7 +51,8 @@ Quy ước chung cho TBL-02..TBL-06: có `expire_at` (timestamp) = `rooms.create
 | status | string | NO | `active` | enum | Vòng đời ENT-02 |
 | member_count | int | NO | 1 | 0–16 | Số người có `current_room_id` = phòng này (BR-03, Q-047) |
 | blocked_uids | array<string> | NO | [] | | BR-06 |
-| invite_code | string | NO | | 22 ký tự base62, duy nhất | Tạo cùng phòng (Q-046, ADR-09) |
+| invite_code | string | NO | | 22 ký tự base62, duy nhất | Mã trong link mời; tạo cùng phòng (Q-046, ADR-09) |
+| join_code | string | NO | | 6 ký tự trong `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (bỏ O/0/I/1), duy nhất trong các phòng `active`/`closing` | Mã phòng gõ tay ở Home (BR-30, Q-056); hết hiệu lực cùng `invite_expires_at` |
 | invite_expires_at | timestamp | NO | = expires_at | | BR-05 |
 | expires_at | timestamp | NO | created_at + 8h | | BR-04 |
 | draw_interval_sec | int | NO | 5 | 3–15 | BR-15 |
@@ -69,7 +70,8 @@ Quy ước chung cho TBL-02..TBL-06: có `expire_at` (timestamp) = `rooms.create
 **Indexes**
 | Tên | Cột | Loại | Lý do |
 |---|---|---|---|
-| — | invite_code | single (tự có) | `joinRoom(code)` |
+| — | invite_code | single (tự có) | `joinRoom({inviteCode})` |
+| — | join_code | single (tự có) | `joinRoom({roomCode})`; kiểm trùng lúc tạo phòng (Q-056) |
 | — | created_at | single | Thống kê |
 | — | called_numbers, last_event | tắt index | Giảm chi phí ghi |
 
@@ -83,8 +85,8 @@ Quy ước chung cho TBL-02..TBL-06: có `expire_at` (timestamp) = `rooms.create
 | Cột | Giá trị | Ý nghĩa |
 |---|---|---|
 | status | `active` / `closing` / `closed` | Hoạt động / chờ ván chạy xong rồi đóng / đã đóng |
-| close_reason | `expired` / `host_left` | BIZ-14 hết hạn / host đăng xuất khi ván chờ (Q-052) |
-| last_event.type | `member_joined`, `member_left`, `member_kicked`, `ticket_set_renewed`, `tickets_reclaimed`, `game_started`, `game_paused`, `game_resumed`, `interval_changed`, `claim_miss`, `claim_win`, `game_finished`, `room_expiring`, `room_closing`, `room_closed` | |
+| close_reason | `expired` / `host_left` | BIZ-14 hết hạn / host rời phòng hoặc đăng xuất, kể cả giữa ván (Q-052, Q-057) |
+| last_event.type | `member_joined`, `member_left`, `member_kicked`, `ticket_set_renewed`, `tickets_reclaimed`, `game_started`, `game_paused`, `game_resumed`, `interval_changed`, `claim_submitted`, `claims_rejected`, `game_finished`, `game_cancelled`, `room_expiring`, `room_closing`, `room_closed` | |
 
 **Rules đọc (cả cây con):** `get(/databases/$(db)/documents/users/$(request.auth.uid)).data.current_room_id == roomId`. Trang `/join/{code}` đọc qua server.
 
@@ -132,8 +134,10 @@ Người giữ vé **không** lưu ở đây (A1): xem `games/{current}/players.
 | status | string | NO | `waiting` | enum | Vòng đời ENT-05 |
 | pause_reason | string | YES | | `host` | BR-16 (host offline không tạm dừng – Q-048) |
 | next_call_at | timestamp | YES | | | Thời điểm được phép rao số kế: client host/dự phòng gọi `drawNumber`, server kiểm (ADR-05, Q-051); client hiện đếm ngược |
-| claim_window_ends_at | timestamp | YES | | = Kinh đúng đầu + 5 giây | BR-18 |
-| winners | array<{uid, display_name, ticket_id, color, row, claimed_at}> | NO | [] | | Tên người kinh (Q-046) |
+| ~~claim_window_ends_at~~ | | | | | (đã loại – Q-055: bỏ cửa sổ đồng kinh) |
+| claims | array<{uid, display_name, ticket_id, color, result, row, claimed_at}> | NO | [] | `result` ∈ `win` \| `miss` (gợi ý của hệ thống); mỗi `ticket_id` tối đa 1 phần tử | Lượt Kinh đang chờ host duyệt (ENT-11, Q-055). Làm rỗng khi host bác bỏ |
+| resume_status | string | YES | | `running` \| `paused` | Trạng thái trước khi có Kinh, để quay về khi host bác bỏ (FLOW-08 A1, A6) |
+| winners | array<{uid, display_name, ticket_id, color, row, claimed_at}> | NO | [] | | = các `claims` có `result = win` lúc host xác nhận / ván tự kết thúc (Q-046, Q-055) |
 | result | string | YES | | `won` \| `no_winner` \| `cancelled` | BIZ-13 |
 | player_count | int | NO | 0 | | Ghi lúc Bắt đầu; thống kê |
 | started_at | timestamp | YES | | | |
@@ -141,12 +145,12 @@ Người giữ vé **không** lưu ở đây (A1): xem `games/{current}/players.
 | confirmed_by | string | YES | | → TBL-01 | BR-28 |
 | created_at | timestamp | NO | now | | |
 
-**Enum status:** `waiting` (chờ bắt đầu, lấy/bỏ vé được) · `running` · `paused` · `claim_window` (5 giây đồng kinh) · `awaiting_confirm` (chờ host) · `finished` · `cancelled`.
+**Enum status:** `waiting` (chờ bắt đầu, lấy/bỏ vé được) · `running` · `paused` · ~~`claim_window`~~ (đã loại – Q-055) · `awaiting_confirm` (**Chờ host duyệt**: có ≥ 1 lượt Kinh, dừng quay, vẫn nhận Kinh – BR-28) · `finished` · `cancelled` (phòng hết hạn khi chờ, hoặc host rời/đăng xuất – Q-057).
 
 ---
 
 ## TBL-06 `rooms/{roomId}/games/{gameId}/players/{uid}`
-**Mô tả:** Người lấy vé ở ván. Tạo khi user lấy vé đầu tiên ở ván `waiting`; bỏ vé chỉ sửa `ticket_ids`. Host Bắt đầu → server xóa player có `ticket_ids` rỗng hoặc đã rời phòng (Q-047). Ván kết thúc → chép player còn trong phòng sang ván mới. Không đổi khi ván đang chạy. · **ENT:** ENT-03, ENT-07 · **Dùng bởi BIZ:** BIZ-04, BIZ-05, BIZ-06, BIZ-08, BIZ-13
+**Mô tả:** Người lấy vé ở ván. Tạo khi user lấy vé đầu tiên ở ván `waiting`; bỏ vé chỉ sửa `ticket_ids`. Host Bắt đầu → server xóa player có `ticket_ids` rỗng hoặc đã rời phòng (Q-047). Ván kết thúc → chép sang ván mới player **còn trong phòng và đang online** (RTDB `presence/{roomId}/{uid}.online = true`); người offline không được chép → vé trống (BR-29, Q-058). Không đổi khi ván đang chạy. · **ENT:** ENT-03, ENT-07 · **Dùng bởi BIZ:** BIZ-04, BIZ-05, BIZ-06, BIZ-08, BIZ-13
 
 | Cột | Kiểu | Null | Default | Ràng buộc | Mô tả / BR |
 |---|---|---|---|---|---|

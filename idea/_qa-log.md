@@ -331,3 +331,27 @@
 - **Trả lời:** Đồng ý, viết chi tiết task.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** backlog/backlog.md, backlog/_draft/slices.md
+
+## Q-055 · idea-to-specs · 2026-11-19
+- **Hỏi:** Đối chiếu `specs/actions.md` (action 11–12 và yêu cầu bỏ cửa sổ đồng kinh 5 giây): host duyệt lượt Kinh thế nào?
+- **Trả lời:** Bỏ cửa sổ đồng kinh 5 giây. **Mọi** lượt Kinh (đúng hay hụt) đều dừng ván, cả phòng được báo, ván chuyển **Chờ host duyệt**. Hệ thống tự kiểm từng vé và hiện gợi ý đúng/hụt kèm hàng thắng. Trong lúc chờ host duyệt, player khác **vẫn Kinh được bất cứ lúc nào**. Có ≥ 1 vé đúng → host chỉ bấm được "Xác nhận kết thúc ván" (người thắng = mọi vé đúng). Mọi vé đều hụt → host chỉ bấm được "Bác bỏ", ván quay tiếp. Host không làm trái kết quả hệ thống. Thay thế BR-18 và phần cửa sổ đồng kinh trong Q-007, Q-013, Q-024, Q-035, Q-042, Q-051.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-16, ~~BR-18~~, BR-28, BIZ-07, BIZ-08, FLOW-07, FLOW-08, ENT-05, ENT-11, SUP-03, ADR-05, TBL-02, api-contract (createClaim, ~~closeClaimWindow~~, confirmGameEnd, rejectClaims), SCR-04, SCR-09
+
+## Q-056 · idea-to-specs · 2026-11-19
+- **Hỏi:** Action 1 và 3 cần copy mã phòng và nhập mã ở Home; specs hiện chỉ cho vào bằng link (mã 22 ký tự).
+- **Trả lời:** Hai cách vào phòng: (1) **link mời** — dùng được cho cả người đã có và chưa có tài khoản; (2) **mã phòng** 6 ký tự (chữ in hoa + số, bỏ O/0/I/1) — cho người đã có tài khoản: ở Home bấm "Vào phòng" → nhập mã → vào thẳng phòng, kiểm tra như vào bằng link. Sheet Mời có "Copy link" và "Copy mã". Giữ link 22 ký tự. Mã hết hạn cùng phòng. Thay thế Q-022 (chỉ vào bằng link).
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-05, BR-30, BIZ-03, FLOW-03, ENT-04, TBL-02, api-contract (joinRoom), SCR-02, SCR-04
+
+## Q-057 · idea-to-specs · 2026-11-19
+- **Hỏi:** Action 7–8 (bản sửa): rời phòng / đăng xuất khi ván đang diễn ra; host rời giữa ván thì sao?
+- **Trả lời:** Không khóa nút nữa. Ván đang diễn ra → hiện dialog cảnh báo "đang chơi"; xác nhận thì **vé đang chơi bị hủy** khỏi ván (bị khóa, không Kinh được, trả về bộ khi ván kết thúc – BR-22). Player: rời phòng. Host: rời phòng hoặc đăng xuất = **đóng phòng ngay** — ván bị hủy (không ai thắng), mọi người về trang chủ. Host có nút Rời phòng (= đóng phòng). Giải quyết action 6 "player tự giải tán" khi ván treo do host offline. Thay thế phần khóa nút trong Q-052 và "host không có nút rời phòng" trong Q-048.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-21, BR-22, BIZ-01, BIZ-11, BIZ-14, FLOW-01, FLOW-11, FLOW-14, ENT-05, api-contract (leaveRoom, deleteCurrentSession), SCR-04, SCR-10
+
+## Q-058 · idea-to-specs · 2026-11-19
+- **Hỏi:** Action 10 (mới): player mất kết nối, ván kết thúc thì vé của họ ra sao?
+- **Trả lời:** Khi ván kết thúc (có người thắng, hết 90 số hoặc bị hủy), vé của mọi player đang **offline** tự trả về bộ vé; player vẫn là thành viên phòng, quay lại thì lấy vé mới. [ASSUMED] Offline = không có kết nối tại thời điểm ván kết thúc (theo trạng thái online/offline của phòng). Bổ sung cho BR-11, BR-13.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-11, BR-29, BIZ-08, FLOW-07, FLOW-08, ENT-07, api-contract (confirmGameEnd, drawNumber), SCR-05, SCR-07

@@ -20,7 +20,7 @@ info:
       phân trang. Nếu sau này cần, quy ước là cursor: query `cursor` (opaque) + `limit` (1–100, mặc định 50),
       response `{items, nextCursor}`. (Q-050)
     - **Không có hẹn giờ phía server (Q-051, ADR-05):** mọi việc theo thời gian do client gọi API khi tới giờ —
-      rao số (`drawNumber`, host + 2 player dự phòng), đóng cửa sổ đồng kinh (`closeClaimWindow`), hết hạn phòng
+      rao số (`drawNumber`, host + player dự phòng), hết hạn phòng
       (`expireRoom`). Server luôn kiểm thời điểm bằng giờ server nên client không làm nhanh/chậm được, và mọi
       thao tác trên phòng đều tự áp dụng hết hạn trước (lazy expiry, BR-04). Việc nền duy nhất còn lại là thống kê
       ngày (`x-background-tasks`).
@@ -70,19 +70,22 @@ info:
     | ALREADY_IN_ROOM | 409 | Đang ở phòng khác; `details[0].currentRoomId` để nút "Về phòng hiện tại" | BR-02 |
     | INVITE_EXPIRED | 410 | "Link không còn hiệu lực" — quá hạn hoặc phòng đã đóng / chờ đóng | BR-05, BR-04 |
     | ROOM_FULL | 409 | "Phòng đã đầy" (16 người) | BR-03 |
-    | HOST_CANNOT_LEAVE | 409 | Host không rời phòng được | BR-21, Q-048 |
-    | GAME_IN_PROGRESS | 409 | Ván đang diễn ra: không đăng xuất / rời phòng được | BR-21, Q-052 |
+    | ~~HOST_CANNOT_LEAVE~~ | — | (đã loại – Q-057: host rời = đóng phòng) | — |
+    | ~~GAME_IN_PROGRESS~~ | — | (đã loại – Q-057: rời/đăng xuất giữa ván được, client cảnh báo) | — |
+    | ROOM_CODE_INVALID | 404 | "Mã phòng không đúng hoặc đã hết hạn" — không có phòng mở với `join_code` này | BR-30, Q-056 |
     | DRAW_TOO_EARLY | 409 | Chưa tới `next_call_at` (trả kèm `nextCallAt` để client đồng bộ lại) | BR-15, Q-051 |
-    | CLAIM_WINDOW_OPEN | 409 | Cửa sổ đồng kinh chưa hết 5 giây | BR-18, Q-051 |
+    | ~~CLAIM_WINDOW_OPEN~~ | — | (đã loại – Q-055) | — |
     | ROOM_NOT_EXPIRED | 409 | Phòng chưa tới `expires_at` | BR-04, Q-051 |
     | ROOM_CLOSING | 409 | Phòng đã đến hạn (chờ đóng) — không bắt đầu ván mới | BR-04, BR-14 |
     | GAME_STALE | 409 | `gameId` không phải ván hiện tại | BR-07 |
     | GAME_NOT_WAITING | 409 | Ván không ở Chờ bắt đầu (lấy/bỏ vé, tạo bộ vé, thu hồi, bắt đầu) | BR-10, BR-12, BR-13 |
     | GAME_NOT_RUNNING | 409 | Tạm dừng khi ván không Đang quay | BIZ-06 |
     | GAME_NOT_PAUSED | 409 | Tiếp tục khi ván không Tạm dừng | BIZ-06 |
-    | GAME_NOT_AWAITING_CONFIRM | 409 | Xác nhận khi ván chưa tới bước Chờ host xác nhận | BR-28 |
-    | CLAIMS_CLOSED | 409 | Ván không nhận Kinh (chờ bắt đầu, chờ xác nhận, đã kết thúc) | BR-28, BIZ-08 |
-    | TICKET_ALREADY_WON | 409 | Vé này đã được ghi thắng trong ván | BR-18 |
+    | GAME_NOT_AWAITING_CONFIRM | 409 | Xác nhận / bác bỏ khi ván không ở Chờ host duyệt | BR-28 |
+    | CLAIMS_CLOSED | 409 | Ván không nhận Kinh (chờ bắt đầu, đã kết thúc, đã hủy) | BR-28, BIZ-08 |
+    | TICKET_ALREADY_CLAIMED | 409 | Vé này đã có lượt Kinh đang chờ duyệt | BR-28, Q-055 |
+    | CLAIM_HAS_WIN | 409 | Bác bỏ khi có vé được hệ thống gợi ý đúng | BR-28, Q-055 |
+    | NO_WINNING_CLAIM | 409 | Xác nhận kết thúc khi không có vé đúng | BR-28, Q-055 |
     | TICKET_TAKEN | 409 | "Vé đã có người giữ" | BR-09 |
     | TICKET_NOT_HELD | 409 | Bỏ vé mình không giữ | BR-09 |
     | TICKETS_STILL_HELD | 409 | Còn người giữ vé — không tạo được bộ vé mới; `details[]` liệt kê người giữ + online | BR-12 |
@@ -106,7 +109,7 @@ info:
   x-background-tasks:
     description: |
       Việc nền duy nhất (Cloud Scheduler, ADR-11). Mọi hẹn giờ theo phòng/ván đã chuyển xuống client (Q-051, ADR-05):
-      `gameTick` → `drawNumber`; `claimWindowClose` → `closeClaimWindow`; `roomExpiryWarn` → client tự hiện cảnh báo
+      `gameTick` → `drawNumber`; `claimWindowClose` → (đã loại – Q-055); `roomExpiryWarn` → client tự hiện cảnh báo
       từ `rooms.expires_at`; `roomClose` → `expireRoom` + lazy expiry.
     tasks:
       - name: aggregateDailyStats
@@ -226,11 +229,11 @@ paths:
       operationId: deleteCurrentSession
       summary: Đăng xuất
       description: |
-        Đăng xuất = **thoát phòng** (Q-051, Q-052):
-        - Đang ở phòng mà ván hiện tại đang diễn ra (`running`/`paused`/`claim_window`/`awaiting_confirm`) →
-          `409 GAME_IN_PROGRESS`, không đổi gì (client khóa nút đăng xuất).
-        - **Player** (không phải host), ván `waiting` → trong cùng transaction làm đúng như `leaveRoom`.
-        - **Host**, ván `waiting` → **đóng phòng cho mọi người**: ván `waiting` → `cancelled`, phòng `closed`,
+        Đăng xuất = **thoát phòng** (Q-051, Q-052, Q-057). Ván đang diễn ra (`running`/`paused`/`awaiting_confirm`)
+        **không** chặn: client hiện dialog cảnh báo "đang chơi, vé sẽ bị hủy" trước khi gọi.
+        - **Player** (không phải host) → trong cùng transaction làm đúng như `leaveRoom`.
+        - **Host** → **đóng phòng cho mọi người** như `leaveRoom` của host: ván hiện tại chưa kết thúc → `cancelled`
+          (`result = cancelled`, không ai thắng), phòng `closed`,
           `close_reason = host_left`, `last_event = room_closed`, `users.current_room_id = null` cho mọi người trong phòng,
           xóa RTDB presence của phòng (BR-21, Q-052).
         - Không ở phòng nào → chỉ hủy phiên.
@@ -239,7 +242,7 @@ paths:
       x-screens: [SCR-02.A3, SCR-10.A4]
       x-roles: [ACT-01, ACT-02, ACT-03]
       x-supporting: [SUP-05, SUP-01]
-      x-errors: [UNAUTHENTICATED, GAME_IN_PROGRESS]
+      x-errors: [UNAUTHENTICATED]
       x-last-event: [member_left, room_closed]
       responses:
         '204':
@@ -365,6 +368,7 @@ paths:
           now + 8h`, `draw_interval_sec = 5`, `called_numbers = []`, `game_count = 1`, `ticket_set_no = 1`.
         - `games/{gameId}` ván 1 `waiting` (BR-07); `rooms.current_game_id = gameId`.
         - 16 doc `tickets/{color}_{side}` sinh bằng `generateTicketSet` (BR-08, ADR-14).
+        - `join_code` 6 ký tự (`RoomCode`) sinh ngẫu nhiên, kiểm trùng với phòng `active`/`closing`, trùng thì sinh lại (BR-30, Q-056).
         - `users.current_room_id = roomId`; RTDB `presence_access/{roomId}/{uid} = true`.
         - Mọi doc trong phòng có `expire_at = created_at + 31 ngày` (NFR-11).
         Không hẹn giờ phía server (Q-051): client tự cảnh báo khi còn 15 phút và gọi `expireRoom` khi tới `expires_at`.
@@ -395,6 +399,7 @@ paths:
                 name: Lô tô Tết nhà Ngoại
                 inviteCode: 4kT9xQ2LmB7vRz1NcP8sWd
                 inviteUrl: https://loto.example.com/join/4kT9xQ2LmB7vRz1NcP8sWd
+                roomCode: K7M2QX
                 currentGameId: g_01
                 drawIntervalSec: 5
                 expiresAt: '2026-11-18T20:00:00Z'
@@ -525,10 +530,13 @@ paths:
     post:
       tags: [Invites]
       operationId: joinRoom
-      summary: Vào phòng bằng mã mời
+      summary: Vào phòng bằng mã mời (link) hoặc mã phòng (gõ tay)
       description: |
-        Transaction (Q-047, database-design §4): query `rooms where invite_code == code` →
-        1. Không có → `404 INVITE_INVALID`.
+        Body có đúng 1 trong 2 (Q-056): `inviteCode` (từ link `/join/{code}`, SCR-03) hoặc `roomCode` (mã 6 ký tự nhập ở
+        Home, SCR-02 – chuẩn hóa in hoa, bỏ khoảng trắng). Transaction (Q-047, database-design §4):
+        query `rooms where invite_code == inviteCode` hoặc `rooms where join_code == roomCode and status == active` →
+        1. Không có → `404 INVITE_INVALID` (link) / `404 ROOM_CODE_INVALID` (mã phòng; cũng dùng khi phòng hết hạn/đóng –
+           không phân biệt để khó dò mã).
         2. Đã ở chính phòng này → `200 alreadyMember = true`, không đổi gì (FLOW-03 A1).
         3. `status ≠ active` hoặc quá `invite_expires_at` → `410 INVITE_EXPIRED` (BR-05, BR-04).
         4. `uid ∈ blocked_uids` → `403 BLOCKED_FROM_ROOM` (BR-06).
@@ -538,11 +546,11 @@ paths:
         RTDB `presence_access/{roomId}/{uid} = true`. **Không** tạo player; người từng tự rời vào lại như mới, không
         được trả vé cũ (BR-25). Vào khi ván đang chạy: chỉ xem, lấy vé ở ván sau (FLOW-03 A3, BR-10).
       x-business: [BIZ-03]
-      x-screens: [SCR-03.A1]
+      x-screens: [SCR-03.A1, SCR-02.A4]
       x-roles: [ACT-01, ACT-04]
       x-supporting: [SUP-01, SUP-05, SUP-09]
       x-nfr: [NFR-04, NFR-09]
-      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, INVITE_INVALID, INVITE_EXPIRED, BLOCKED_FROM_ROOM, ALREADY_IN_ROOM, ROOM_FULL]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, INVITE_INVALID, ROOM_CODE_INVALID, INVITE_EXPIRED, BLOCKED_FROM_ROOM, ALREADY_IN_ROOM, ROOM_FULL]
       x-last-event: [member_joined]
       requestBody:
         required: true
@@ -550,8 +558,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/JoinRoomRequest'
-            example:
-              inviteCode: 4kT9xQ2LmB7vRz1NcP8sWd
+            examples:
+              byLink:
+                summary: Từ link mời
+                value:
+                  inviteCode: 4kT9xQ2LmB7vRz1NcP8sWd
+              byRoomCode:
+                summary: Nhập mã phòng ở Home
+                value:
+                  roomCode: K7M2QX
       responses:
         '200':
           description: Đã ở trong phòng (vào mới hoặc đã là thành viên)
@@ -592,19 +607,23 @@ paths:
     post:
       tags: [Members]
       operationId: leaveRoom
-      summary: Rời phòng (không phải host)
+      summary: Rời phòng (player rời; host rời = đóng phòng)
       description: |
-        Host không có nút rời (`409 HOST_CANNOT_LEAVE`); host thoát phòng bằng đăng xuất → đóng phòng (BR-21, Q-052).
-        Ván đang diễn ra → `409 GAME_IN_PROGRESS` (Q-052). Transaction (ván `waiting`):
-        - `users.current_room_id = null`, `rooms.member_count − 1`, `last_event = member_left`.
-        - Xóa doc player của mình → vé trống ngay (BR-22).
+        (Q-057) Không chặn khi ván đang diễn ra; client hiện dialog cảnh báo trước. Transaction:
+        - **Player:** `users.current_room_id = null`, `rooms.member_count − 1`, `last_event = member_left`.
+          Ván `waiting` → xóa doc player → vé trống ngay. Ván `running`/`paused`/`awaiting_confirm` → giữ doc player
+          (vé **bị hủy**: người out không Kinh được – `createClaim` từ chối; ván mới không chép → vé trống) (BR-22).
+          Lượt Kinh của họ đã nằm trong `claims` vẫn giữ (FLOW-08 E3).
+        - **Host:** đóng phòng ngay (BR-21): ván hiện tại chưa kết thúc → `cancelled` (`result = cancelled`, `ended_at`),
+          phòng `closed`, `close_reason = host_left`, `last_event = room_closed`, `users.current_room_id = null` cho mọi
+          người trong phòng, xóa RTDB presence của phòng.
         - Xóa RTDB `presence/{roomId}/{uid}` và `presence_access/{roomId}/{uid}`.
       x-business: [BIZ-11]
       x-screens: [SCR-04.A8]
-      x-roles: [ACT-03]
+      x-roles: [ACT-03, ACT-02]
       x-supporting: [SUP-01]
-      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, HOST_CANNOT_LEAVE, GAME_IN_PROGRESS]
-      x-last-event: [member_left]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER]
+      x-last-event: [member_left, room_closed]
       responses:
         '204':
           description: Đã rời phòng; client điều hướng về SCR-02
@@ -973,26 +992,26 @@ paths:
       description: |
         Transaction (database-design §4, Q-046):
         - Người báo còn trong phòng (`NOT_ROOM_MEMBER`); ván hiện tại (`GAME_STALE`) ở `running`, `paused` hoặc
-          `claim_window` — khác → `409 CLAIMS_CLOSED` (BR-28: chờ xác nhận không nhận Kinh; Q-029: tạm dừng vẫn nhận).
+          `awaiting_confirm` — khác → `409 CLAIMS_CLOSED` (Q-055: chờ host duyệt **vẫn nhận** Kinh; Q-029: tạm dừng vẫn nhận).
         - `ticketId ∈ players/{uid}.ticket_ids` của ván (`403 NOT_TICKET_HOLDER`, FLOW-08 E1, BR-22).
-        - Vé đã có trong `winners` → `409 TICKET_ALREADY_WON`.
-        - So `tickets/{ticketId}.grid` với `rooms.called_numbers` **lúc bấm**: có hàng mà 5 số đều đã rao → đúng (BR-17).
-        Kết quả:
-        - **Hụt:** `last_event = claim_miss` (tên người báo); trạng thái ván giữ nguyên (đang quay thì quay tiếp,
-          tạm dừng thì vẫn tạm dừng – FLOW-08 A1, E3). Không lưu lượt hụt (Q-031).
-        - **Đúng, đầu tiên** (`running`/`paused`): append `winners`, `status = claim_window` (dừng quay – BR-16),
-          `next_call_at = null`, `claim_window_ends_at = now + 5s`, `last_event = claim_win`. Hết 5 giây client gọi
-          `closeClaimWindow` (BR-18, Q-051).
-        - **Đúng, trong cửa sổ** (`claim_window`): append `winners` (đồng thắng – BR-18).
-        `row` của winner = chỉ số hàng đủ số nhỏ nhất nếu nhiều hàng cùng đủ. (Q-050)
+        - Vé đã có trong `claims` → `409 TICKET_ALREADY_CLAIMED`.
+        - So `tickets/{ticketId}.grid` với `rooms.called_numbers` **lúc bấm**: có hàng mà 5 số đều đã rao → gợi ý `win`,
+          ngược lại `miss` (BR-17).
+        Kết quả (Q-055 — mọi lượt đều chờ host duyệt, không còn cửa sổ đồng kinh):
+        - Append `claims` `{uid, display_name, ticket_id, color, result, row, claimed_at}`.
+        - Ván `running`/`paused` → `resume_status = status`, `status = awaiting_confirm`, `next_call_at = null`
+          (dừng quay – BR-16). Ván đã `awaiting_confirm` → chỉ append.
+        - `last_event = claim_submitted` ("<tên> KINH!"). Cả phòng thấy danh sách `claims` kèm gợi ý qua listener `games`;
+          host duyệt bằng `confirmGame` / `rejectClaims` (BR-28).
+        `row` = chỉ số hàng đủ số nhỏ nhất nếu nhiều hàng cùng đủ. (Q-050)
         Thời gian xử lý ≤ 1 giây P95 (NFR-03). Thông tin vé thắng/hàng thắng cả phòng thấy qua listener `games`.
       x-business: [BIZ-08]
       x-screens: [SCR-04.A3]
       x-roles: [ACT-03, ACT-02]
       x-supporting: [SUP-01, SUP-02, SUP-03]
       x-nfr: [NFR-03, NFR-08]
-      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_TICKET_HOLDER, GAME_STALE, CLAIMS_CLOSED, TICKET_ALREADY_WON]
-      x-last-event: [claim_miss, claim_win]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_TICKET_HOLDER, GAME_STALE, CLAIMS_CLOSED, TICKET_ALREADY_CLAIMED]
+      x-last-event: [claim_submitted]
       requestBody:
         required: true
         content:
@@ -1010,21 +1029,19 @@ paths:
                 $ref: '#/components/schemas/ClaimResult'
               examples:
                 win:
-                  summary: Kinh đúng đầu tiên → mở cửa sổ đồng kinh
+                  summary: Gợi ý đúng → chờ host duyệt
                   value:
                     result: win
                     ticketId: green_b
                     row: 4
-                    gameStatus: claim_window
-                    claimWindowEndsAt: '2026-11-18T13:20:05Z'
+                    gameStatus: awaiting_confirm
                 miss:
-                  summary: Kinh hụt
+                  summary: Gợi ý hụt → vẫn chờ host duyệt (host bác bỏ thì quay tiếp)
                   value:
                     result: miss
                     ticketId: green_b
                     row: null
-                    gameStatus: running
-                    claimWindowEndsAt: null
+                    gameStatus: awaiting_confirm
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1055,7 +1072,8 @@ paths:
         4. `crypto.randomInt` một số trong 1–90 chưa có trong `called_numbers`, append; `next_call_at = now + draw_interval_sec`
            (nhịp mới áp dụng từ đây – BR-15).
         5. Đã đủ 90 số → ván `finished`, `result = no_winner`, `ended_at`, `last_event = game_finished`; phòng `active` thì
-           tạo ván mới `waiting` + chép player còn trong phòng (BR-19, BR-07, BR-11); phòng `closing` thì đóng phòng.
+           tạo ván mới `waiting` + chép player còn trong phòng **và đang online** (BR-19, BR-07, BR-11, BR-29 – Q-058);
+           phòng `closing` thì đóng phòng.
         Chỉ host và player của ván được gọi (`403 NOT_ROOM_MEMBER` nếu không phải) để ván chạy tiếp khi host offline (Q-048).
       x-business: [BIZ-07]
       x-screens: [SCR-04.A10]
@@ -1096,41 +1114,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /rooms/{roomId}/games/{gameId}/claim-window/close:
-    parameters:
-      - $ref: '#/components/parameters/RoomId'
-      - $ref: '#/components/parameters/GameId'
-    post:
-      tags: [Games]
-      operationId: closeClaimWindow
-      summary: Đóng cửa sổ đồng kinh (client gọi khi hết 5 giây)
-      description: |
-        Thay task `claimWindowClose` (Q-051). Mọi thành viên đang thấy ván `claim_window` gọi khi đồng hồ tới
-        `claim_window_ends_at`; idempotent. Transaction:
-        - Ván không còn `claim_window` → 200 trạng thái hiện tại (đã có người đóng trước).
-        - `now < claim_window_ends_at` → `409 CLAIM_WINDOW_OPEN`.
-        - Ngược lại `status = awaiting_confirm` (BR-28). Phòng `closing` (đã quá hạn) → ván tự `finished` với `winners`
-          đã có rồi đóng phòng (BR-04, Q-042, Q-048).
-      x-business: [BIZ-08, BIZ-14]
-      x-screens: [SCR-09.A2]
-      x-roles: [ACT-02, ACT-03]
-      x-supporting: [SUP-03]
-      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, GAME_STALE, CLAIM_WINDOW_OPEN]
-      responses:
-        '200':
-          description: Trạng thái ván sau khi đóng cửa sổ
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GameState'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+  # /rooms/{roomId}/games/{gameId}/claim-window/close — `closeClaimWindow` đã loại (Q-055: bỏ cửa sổ đồng kinh 5 giây).
 
   /rooms/{roomId}/expire:
     parameters:
@@ -1144,8 +1128,9 @@ paths:
         đã quá hạn cũng gọi). Idempotent; cùng logic với **lazy expiry** chạy đầu mọi thao tác trên phòng:
         - `now < expires_at` → `409 ROOM_NOT_EXPIRED`.
         - Ván `waiting` → `cancelled` (`result = cancelled`), phòng `closed` ngay.
-        - Ván `running`/`paused`/`claim_window` → phòng `closing`, `last_event = room_closing`; đóng khi ván kết thúc.
-        - Ván `awaiting_confirm` → ván tự `finished` với `winners` đã có rồi đóng phòng.
+        - Ván `running`/`paused` → phòng `closing`, `last_event = room_closing`; đóng khi ván kết thúc.
+        - Ván `awaiting_confirm` → ván tự `finished`: `winners` = `claims` có `result = win` (`result = won`), không có
+          thì `result = no_winner`; rồi đóng phòng (BR-04, Q-042, Q-055).
         - Đóng phòng: `status = closed`, `closed_at`, `close_reason = expired`, `member_count = 0`,
           `users.current_room_id = null` cho mọi người có `current_room_id == roomId`, xóa RTDB `presence/{roomId}`,
           `presence_access/{roomId}` (Q-039).
@@ -1175,6 +1160,50 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /rooms/{roomId}/games/{gameId}/claims/reject:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
+      - $ref: '#/components/parameters/GameId'
+    post:
+      tags: [Games]
+      operationId: rejectClaims
+      summary: Bác bỏ các lượt Kinh đang chờ duyệt (host)
+      description: |
+        (Q-055) Chỉ host; ván `awaiting_confirm`. Transaction:
+        - Có phần tử `claims[].result = win` → `409 CLAIM_HAS_WIN` (host không làm trái gợi ý – BR-28; phải dùng `confirmGame`).
+        - Ngược lại: `claims = []`, `status = resume_status` (`running` → `next_call_at = now + draw_interval_sec`;
+          `paused` → giữ `pause_reason = host`), `resume_status = null`, `last_event = claims_rejected`
+          (text liệt kê "<tên> kinh hụt"). Client phát tiếng kinh hụt (SUP-02). Không lưu lượt hụt (Q-031).
+      x-business: [BIZ-08]
+      x-screens: [SCR-09.A3]
+      x-roles: [ACT-02]
+      x-supporting: [SUP-01, SUP-02]
+      x-nfr: [NFR-09]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_AWAITING_CONFIRM, CLAIM_HAS_WIN]
+      x-last-event: [claims_rejected]
+      responses:
+        '200':
+          description: Trạng thái ván sau khi bác bỏ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+              example:
+                gameId: g_01
+                seqNo: 1
+                status: running
+                playerCount: 6
+                startedAt: '2026-11-18T13:05:00Z'
+                nextCallAt: '2026-11-18T13:20:10Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /rooms/{roomId}/games/{gameId}/confirm:
     parameters:
       - $ref: '#/components/parameters/RoomId'
@@ -1184,10 +1213,13 @@ paths:
       operationId: confirmGame
       summary: Xác nhận kết thúc ván (host)
       description: |
-        Chỉ host; ván `awaiting_confirm` (BR-28 — host không bác bỏ được; host tự kinh vẫn tự xác nhận). Transaction:
-        - Ván: `status = finished`, `result = won`, `ended_at`, `confirmed_by = uid`, `last_event = game_finished`.
+        Chỉ host; ván `awaiting_confirm` và có ≥ 1 `claims[].result = win`, ngược lại `409 NO_WINNING_CLAIM` (BR-28 —
+        host không làm trái gợi ý; toàn hụt thì dùng `rejectClaims`; host tự kinh vẫn tự xác nhận – Q-055). Transaction:
+        - Ván: `winners` = `claims` có `result = win`; `status = finished`, `result = won`, `ended_at`, `confirmed_by = uid`,
+          `last_event = game_finished`.
         - Phòng `active`: tạo ván mới `waiting` (`seq_no = game_count + 1`), `rooms.current_game_id`, `game_count + 1`;
-          chép sang ván mới các player **còn trong phòng** cùng `ticket_ids` (BR-07, BR-11). `called_numbers` giữ tới khi
+          chép sang ván mới các player **còn trong phòng và đang online** (đọc RTDB `presence/{roomId}`) cùng `ticket_ids`
+          (BR-07, BR-11). Người offline / đã rời không được chép → vé trống (BR-29, BR-22 – Q-058). `called_numbers` giữ tới khi
           ván mới Bắt đầu (Q-046).
         - Phòng `closing` (đã quá hạn): không tạo ván mới, đóng phòng như `expireRoom` (BR-04) → `nextGameId = null`.
       x-business: [BIZ-08, BIZ-13]
@@ -1195,7 +1227,7 @@ paths:
       x-roles: [ACT-02]
       x-supporting: [SUP-01, SUP-02, SUP-09]
       x-nfr: [NFR-09]
-      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_AWAITING_CONFIRM]
+      x-errors: [UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, GAME_STALE, GAME_NOT_AWAITING_CONFIRM, NO_WINNING_CLAIM]
       x-last-event: [game_finished]
       responses:
         '200':
@@ -1426,12 +1458,12 @@ components:
               summary: BR-28
               value:
                 code: CLAIMS_CLOSED
-                message: Ván đang chờ host xác nhận, không nhận thêm Kinh
-            hostCannotLeave:
-              summary: BR-21
+                message: Ván đã kết thúc, không nhận thêm Kinh
+            claimHasWin:
+              summary: BR-28 (Q-055)
               value:
-                code: HOST_CANNOT_LEAVE
-                message: Host không thể rời phòng; phòng sẽ tự đóng khi hết hạn
+                code: CLAIM_HAS_WIN
+                message: Có vé kinh đúng — hãy xác nhận kết thúc ván
     Gone:
       description: '`INVITE_EXPIRED` — link không còn hiệu lực'
       content:
@@ -1520,14 +1552,18 @@ components:
       type: string
       pattern: '^[0-9A-Za-z]{22}$'
       description: 22 ký tự base62 ngẫu nhiên (~128 bit), không đoán được (NFR-09, ADR-09)
+    RoomCode:
+      type: string
+      pattern: '^[A-HJ-NP-Z2-9]{6}$'
+      description: Mã phòng 6 ký tự, chữ in hoa + số, bỏ O/0/I/1; client chuẩn hóa in hoa trước khi gửi (BR-30, Q-056)
     RoomStatus:
       type: string
       enum: [active, closing, closed]
       description: Vòng đời ENT-02 (TBL-02)
     GameStatus:
       type: string
-      enum: [waiting, running, paused, claim_window, awaiting_confirm, finished, cancelled]
-      description: Vòng đời ENT-05 (TBL-05)
+      enum: [waiting, running, paused, awaiting_confirm, finished, cancelled]
+      description: Vòng đời ENT-05 (TBL-05). `awaiting_confirm` = Chờ host duyệt (Q-055); bỏ `claim_window`.
     GameResult:
       type: string
       enum: [won, no_winner, cancelled]
@@ -1660,7 +1696,7 @@ components:
           description: Tên phòng, đã trim; bỏ trống → "Phòng của {display_name}"
     RoomCreated:
       type: object
-      required: [roomId, name, inviteCode, inviteUrl, currentGameId, drawIntervalSec, expiresAt]
+      required: [roomId, name, inviteCode, inviteUrl, roomCode, currentGameId, drawIntervalSec, expiresAt]
       properties:
         roomId:
           $ref: '#/components/schemas/RoomId'
@@ -1668,6 +1704,8 @@ components:
           type: string
         inviteCode:
           $ref: '#/components/schemas/InviteCode'
+        roomCode:
+          $ref: '#/components/schemas/RoomCode'
         inviteUrl:
           type: string
           format: uri
@@ -1751,12 +1789,20 @@ components:
           type: boolean
           description: Đã bị kick khỏi phòng này (BR-06)
     JoinRoomRequest:
-      type: object
-      required: [inviteCode]
-      additionalProperties: false
-      properties:
-        inviteCode:
-          $ref: '#/components/schemas/InviteCode'
+      description: Đúng 1 trong `inviteCode` (link) hoặc `roomCode` (mã phòng gõ tay – Q-056)
+      oneOf:
+        - type: object
+          required: [inviteCode]
+          additionalProperties: false
+          properties:
+            inviteCode:
+              $ref: '#/components/schemas/InviteCode'
+        - type: object
+          required: [roomCode]
+          additionalProperties: false
+          properties:
+            roomCode:
+              $ref: '#/components/schemas/RoomCode'
     JoinRoomResult:
       type: object
       required: [roomId, alreadyMember]
@@ -1883,12 +1929,12 @@ components:
           $ref: '#/components/schemas/TicketId'
     ClaimResult:
       type: object
-      required: [result, ticketId, row, gameStatus, claimWindowEndsAt]
+      required: [result, ticketId, row, gameStatus]
       properties:
         result:
           type: string
           enum: [win, miss]
-          description: Kinh đúng / Kinh hụt (BR-17)
+          description: Gợi ý của hệ thống — Kinh đúng / Kinh hụt (BR-17); host chốt (BR-28, Q-055)
         ticketId:
           $ref: '#/components/schemas/TicketId'
         row:
@@ -1898,10 +1944,6 @@ components:
           description: Hàng thắng (0–8, từ trên xuống); null khi hụt
         gameStatus:
           $ref: '#/components/schemas/GameStatus'
-        claimWindowEndsAt:
-          type: [string, 'null']
-          format: date-time
-          description: Hết cửa sổ đồng kinh 5 giây (BR-18); null khi hụt
     Winner:
       type: object
       description: Phần tử `games.winners` (TBL-05, Q-046)

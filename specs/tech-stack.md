@@ -16,7 +16,7 @@
 ### Đặc điểm kỹ thuật rút ra từ nghiệp vụ
 | Đặc điểm | Nguồn | Hệ quả kỹ thuật |
 |---|---|---|
-| Vòng quay số theo nhịp 3–15 giây, tạm dừng/tiếp tục, cửa sổ đồng kinh 5 giây | BR-15, BR-16, BR-18, SUP-03 | Client điều nhịp: `startGame` rao số đầu; host + player dự phòng (cách nhau 5 giây) gọi `drawNumber` khi tới `next_call_at`; server chọn số và kiểm thời điểm (ADR-05, Q-051) |
+| Vòng quay số theo nhịp 3–15 giây, tạm dừng/tiếp tục, dừng chờ host duyệt Kinh | BR-15, BR-16, BR-28, SUP-03 | Client điều nhịp: `startGame` rao số đầu; host + player dự phòng (cách nhau 5 giây) gọi `drawNumber` khi tới `next_call_at`; server chọn số và kiểm thời điểm (ADR-05, Q-051) |
 | Công bằng: không ai biết trước số, kết quả Kinh do hệ thống | NFR-08 | Số chọn ngẫu nhiên bằng `crypto` ngay lúc tick; kiểm Kinh ở server (ADR-03, ADR-05) |
 | Realtime: số mới, sự kiện phòng, chat ≤ 1 giây | NFR-01, NFR-02, SUP-01 | Firestore realtime listener (ADR-04) |
 | Online/offline để hiển thị và thu hồi vé | SUP-04, BR-13 | Realtime Database `onDisconnect` (ADR-06) |
@@ -76,7 +76,7 @@ flowchart LR
 
   UI -->|đăng nhập| AUTH
   UI -->|trang| SSR
-  UI -->|ghi; drawNumber /<br/>closeClaimWindow / expireRoom khi tới giờ| SA
+  UI -->|ghi; drawNumber /<br/>expireRoom khi tới giờ| SA
   UI -.->|đọc realtime| FS
   UI <-.->|online/offline| RTDB
   UI -->|upload ảnh| GCS
@@ -92,7 +92,7 @@ flowchart LR
 **Nguyên tắc:**
 1. Client **chỉ đọc** Firestore qua listener, giới hạn bởi Security Rules: chỉ thành viên đang trong phòng đọc được phòng, vé, ván, chat. Số kế tiếp chỉ được chọn lúc tick nên client không thể biết trước.
 2. Mọi thao tác **ghi** đi qua Server Actions: xác thực phiên, validate bằng Zod, kiểm BR trong Firestore transaction.
-3. Mọi việc theo thời gian (rao số, cửa sổ đồng kinh, cảnh báo, đóng phòng) do **client gọi API khi tới giờ**; server luôn quyết định bằng giờ server và tự chọn số, nên client không làm nhanh/chậm hay chọn số được (Q-051).
+3. Mọi việc theo thời gian (rao số, cảnh báo, đóng phòng) do **client gọi API khi tới giờ**; server luôn quyết định bằng giờ server và tự chọn số, nên client không làm nhanh/chậm hay chọn số được (Q-051).
 
 ## 4. Architecture Decision Records
 
@@ -128,13 +128,13 @@ flowchart LR
 
 ### ADR-05 Vòng quay số & hẹn giờ: client điều nhịp, server quyết định
 > Cập nhật Q-051: thay phương án Cloud Tasks (Q-044) bằng client điều nhịp.
-- **Bối cảnh:** Rao một số mỗi N giây (3–15) khi ván Đang quay; tạm dừng/tiếp tục; cửa sổ đồng kinh 5 giây; cảnh báo còn 15 phút, đóng phòng sau 8 giờ. User muốn bỏ hẹn giờ phía server (Q-051).
+- **Bối cảnh:** Rao một số mỗi N giây (3–15) khi ván Đang quay; tạm dừng/tiếp tục; dừng khi có Kinh chờ host duyệt (Q-055); cảnh báo còn 15 phút, đóng phòng sau 8 giờ. User muốn bỏ hẹn giờ phía server (Q-051).
 - **Các phương án:** A. Cloud Tasks hẹn từng tick (Q-044, đã bỏ) · B. Game server Node + Socket.IO · **C. Client điều nhịp, server quyết định**.
 - **Quyết định:** C.
   - **Rao số – `drawNumber({seq})`:** client của **host** gọi đúng lúc `games.next_call_at`. **Dự phòng (Q-052):** player của ván (trừ host) xếp theo vé nhỏ nhất họ giữ theo thứ tự cố định Đỏ A → Hồng B; người thứ k gọi ở `next_call_at + 5k giây` nếu chưa thấy số mới, lần lượt tới player cuối. Người không có vé không gọi. **Số đầu tiên** do `startGame` rao ngay.
   - **Server quyết định:** trong transaction kiểm ván `running`, `seq == len(called_numbers)` (khác → trả `drawn: false`, lượt trùng vô hại), `now ≥ next_call_at − 300ms` (sớm → `DRAW_TOO_EARLY`); chọn số bằng `crypto.randomInt` trong các số chưa rao, append `rooms.called_numbers`, `next_call_at = now + draw_interval_sec`. Client không chọn số, không đẩy nhanh được (NFR-08).
   - **Tạm dừng/Tiếp tục:** `paused` → `drawNumber` bị từ chối; `resumeGame` đặt `next_call_at = now + N`.
-  - **Đồng kinh:** Kinh đúng đầu tiên đặt `claim_window_ends_at = now + 5s`; khi đồng hồ client tới hạn, mọi thành viên đang xem gọi `closeClaimWindow` (idempotent, server kiểm `now ≥ claim_window_ends_at`).
+  - **Duyệt Kinh (Q-055):** bỏ cửa sổ đồng kinh 5 giây và `closeClaimWindow` — không còn hẹn giờ cho Kinh. `createClaim` chuyển ván sang `awaiting_confirm` (`next_call_at = null`, `drawNumber` bị từ chối); host gọi `confirmGame` hoặc `rejectClaims` (`rejectClaims` đặt lại `next_call_at = now + N`).
   - **Hết hạn phòng:** client tự hiện cảnh báo còn 15 phút từ `rooms.expires_at`; tới hạn gọi `expireRoom`. Server **lazy expiry**: mọi thao tác trên phòng (và `joinRoom`, `createRoom` khi `current_room_id` trỏ phòng quá hạn) áp dụng BR-04 trước khi xử lý. Phòng không ai mở sẽ đóng ở lần truy cập kế tiếp — không ảnh hưởng ai.
   - Đồng hồ client lệch → dùng `serverTimeOffset` (tính từ thời gian server trả trong response) khi so `next_call_at`.
 - **Hệ quả:**
@@ -142,7 +142,7 @@ flowchart LR
   - Trình duyệt hãm timer khi tab ẩn/màn hình tắt: host ẩn tab thì dự phòng gánh; **tất cả** cùng ẩn thì ván dừng tới khi có người mở lại — chấp nhận (Q-051). Wake Lock (NFR-15) giảm khả năng này.
   - Nhịp phụ thuộc mạng người gọi: lệch ~0,2–0,5 giây; vẫn trong NFR-01 (đồng bộ ≤ 1 giây do tất cả cùng đọc listener).
   - Thêm ~1–3 request mỗi số (host + dự phòng), ~150 request/ván — không đáng kể.
-- **Ref:** Q-044, Q-051, BR-04, BR-15, BR-16, BR-18, BR-28, NFR-01, NFR-08, NFR-15
+- **Ref:** Q-044, Q-051, Q-055, BR-04, BR-15, BR-16, BR-28, NFR-01, NFR-08, NFR-15
 ### ADR-06 Online/offline bằng Realtime Database
 - **Bối cảnh:** Hiển thị ai đang online trong phòng; host thu hồi vé người offline (BR-13). Host offline **không** tạm dừng ván (Q-048).
 - **Các phương án:** A. RTDB `onDisconnect` · B. Firestore + heartbeat (tốn ghi, trễ) · C. Bỏ presence.
@@ -224,7 +224,7 @@ flowchart LR
 |---|---|
 | SUP-01 Thông báo trong phòng | Firestore listener trên `rooms/{roomId}` (field `last_event` ghi đè mỗi sự kiện: vào/rời, kinh hụt, kick, đổi host…) và ván hiện tại; client hiển thị toast (Q-046) |
 | SUP-02 Phát tiếng rao | ADR-08: file tĩnh AAC + manifest, Web Audio API, chọn ngẫu nhiên câu/số ở client; bật/tắt tiếng lưu localStorage của máy (Q-046) |
-| SUP-03 Hẹn giờ | ADR-05: client điều nhịp — `startGame` rao số đầu, `drawNumber` (host + player dự phòng mỗi 5 giây), `closeClaimWindow`, `expireRoom`; server lazy expiry và kiểm thời điểm; link hết hạn kiểm lúc mở (ADR-09) |
+| SUP-03 Hẹn giờ | ADR-05: client điều nhịp — `startGame` rao số đầu, `drawNumber` (host + player dự phòng mỗi 5 giây), `expireRoom`; server lazy expiry và kiểm thời điểm; link hết hạn kiểm lúc mở (ADR-09) |
 | SUP-04 Online/offline | ADR-06: RTDB `presence` + `onDisconnect`; không trigger |
 | SUP-05 Phiên đăng nhập | ADR-07: Firebase Auth + session cookie `__session`; `returnTo` giữ link mời |
 | SUP-06 Chia sẻ link mời | Web Share API (`navigator.share`) + copy clipboard; trang `/join/{code}` SSR với Open Graph (ADR-09) |

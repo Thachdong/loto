@@ -1,5 +1,7 @@
 # T-006 · Chơi trọn ván ở Phòng chơi (SCR-04): bắt đầu, rao số, dò vé, báo KINH, rời phòng, hết hạn
 
+> ⚠ **Cần cập nhật (2026-11-19, Q-055..Q-058 – đối chiếu specs/actions.md):** `createClaim` không còn cửa sổ đồng kinh: mọi lượt append `games.claims` (gợi ý win/miss), ván → `awaiting_confirm`, vẫn nhận Kinh khi `awaiting_confirm`, lỗi `TICKET_ALREADY_CLAIMED` thay `TICKET_ALREADY_WON` (Q-055); thanh KINH hiện cả khi `awaiting_confirm`; `leaveRoom` không còn `GAME_IN_PROGRESS`/`HOST_CANNOT_LEAVE` — player rời giữa ván (vé bị hủy, dialog cảnh báo), host rời = đóng phòng (Q-057); `drawNumber` hết 90 số chỉ chép player online (BR-29, Q-058); bỏ `claim_window_ends_at`.
+
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | EPIC-05 | M1 | 21 (màn lớn, giữ 1 task – Q-053) | T-005 | TODO |

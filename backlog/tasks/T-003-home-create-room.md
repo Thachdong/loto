@@ -1,5 +1,7 @@
 # T-003 · Trang chủ & tạo phòng (SCR-02)
 
+> ⚠ **Cần cập nhật (2026-11-19, Q-055..Q-058 – đối chiếu specs/actions.md):** `createRoom` sinh thêm `join_code` 6 ký tự (BR-30, Q-056); SCR-02 thêm card "Vào phòng" + dialog nhập mã → `joinRoom({roomCode})` (SCR-02.A4) — hoặc gộp vào T-004; nhãn trạng thái ván bỏ `claim_window`, `awaiting_confirm` = "Chờ host duyệt" (Q-055).
+
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | EPIC-02 | M1 | 8 | T-002 | TODO |

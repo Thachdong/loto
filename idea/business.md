@@ -26,7 +26,8 @@
 | Phòng | Không gian chơi riêng của một nhóm, tối đa 16 thành viên, tồn tại 8 giờ. |
 | Host | Thành viên giữ quyền điều khiển phòng; mặc định là người tạo phòng. |
 | Player | Thành viên của phòng (host cũng là player). |
-| Link mời | Đường link host tạo để mời người khác vào phòng, hạn 8 giờ. |
+| Link mời | Đường link host tạo để mời người khác vào phòng, hạn 8 giờ; dùng được cho cả người chưa có tài khoản. |
+| Mã phòng | Mã 6 ký tự của phòng; người đã có tài khoản nhập ở trang chủ để vào phòng (cập nhật – Q-056). |
 | Ván | Một lần chơi trong phòng, từ khi host bấm Bắt đầu tới khi có người thắng hoặc rao hết số. |
 | Bộ vé | 16 vé của phòng, gồm 8 cặp màu. |
 | Cặp vé | Hai vé cùng màu, không trùng số, gộp lại đủ đúng các số 1–90. |
@@ -38,7 +39,8 @@
 | Auto | Mode hệ thống tự đánh dấu số đã rao trên vé; player vẫn tự bấm Kinh. |
 | Kinh | Báo thắng: vé có một hàng đủ 5 số đều đã được rao. |
 | Kinh hụt | Báo Kinh sai; cả phòng được thông báo, không bị phạt. |
-| Cửa sổ đồng kinh | 5 giây sau lượt Kinh đúng đầu tiên; mọi lượt Kinh đúng trong thời gian này đều thắng. |
+| ~~Cửa sổ đồng kinh~~ | (đã loại – Q-055) |
+| Chờ host duyệt | Trạng thái ván sau khi có người bấm Kinh: ván dừng quay, hệ thống gợi ý đúng/hụt, host xác nhận hoặc bác bỏ; trong lúc này player khác vẫn Kinh được (Q-055). |
 | Thu hồi vé | Host trả vé của một thành viên đang offline về bộ vé. |
 | Kick | Host đưa một thành viên ra khỏi phòng và chặn họ vào lại. |
 | Kho tiếng rao | Bộ audio giọng rao làm sẵn: rao 90 số, câu nối, chúc mừng, kinh hụt. |
@@ -47,7 +49,7 @@
 | ID | Tên | Mô tả | Mục tiêu chính | Quyền/giới hạn |
 |---|---|---|---|---|
 | ACT-01 | Người dùng | Người đã đăng nhập bằng Google, chưa ở trong phòng nào | Tạo phòng hoặc vào phòng bạn bè để chơi | Chỉ ở tối đa 1 phòng tại 1 thời điểm; đang ở phòng thì không tạo phòng mới (Q-023) |
-| ACT-02 | Host (chủ phòng) | Thành viên giữ quyền điều khiển phòng; mặc định là người tạo phòng | Tổ chức ván chơi cho nhóm | Chia sẻ link mời, bắt đầu/tạm dừng/tiếp tục ván, chỉnh nhịp quay, tạo lại bộ vé, kick player. Phòng chỉ có 1 host cố định, không chuyển quyền, host không rời phòng được (cập nhật từ Phase 3 – Q-048). Đồng thời chơi như Player (Q-024) |
+| ACT-02 | Host (chủ phòng) | Thành viên giữ quyền điều khiển phòng; mặc định là người tạo phòng | Tổ chức ván chơi cho nhóm | Chia sẻ link mời và mã phòng, duyệt Kinh (xác nhận / bác bỏ), bắt đầu/tạm dừng/tiếp tục ván, chỉnh nhịp quay, tạo lại bộ vé, kick player. Phòng chỉ có 1 host cố định, không chuyển quyền; host rời phòng hoặc đăng xuất = đóng phòng (cập nhật từ Phase 3 – Q-048; Q-057). Đồng thời chơi như Player (Q-024) |
 | ACT-03 | Player (thành viên phòng) | Người dùng đang ở trong một phòng, có thể có 0–2 vé | Lấy vé, dò số, báo Kinh, giao lưu | Lấy/bỏ vé khi không có ván đang chạy; tối đa 2 vé; chat; tự rời phòng; chọn mode dò, bật/tắt tiếng (Q-005, Q-020) |
 | ACT-04 | Khách được mời | Người mở link mời, chưa đăng nhập hoặc chưa có tài khoản | Vào phòng bạn bè nhanh nhất | Phải đăng nhập/đăng ký bằng Google trước khi vào phòng; sau đó trở thành ACT-03 |
 | ACT-05 | Hệ thống | Tác nhân tự động của sản phẩm | Vận hành ván chơi công bằng | Sinh bộ vé, quay số ngẫu nhiên theo nhịp, phát tiếng rao, kiểm tra Kinh, xử lý hết hạn phòng/link |
@@ -102,16 +104,17 @@ Quan hệ giữa actors:
   | Tiếng rao | Bật / Tắt | Có | Mặc định Bật (Q-020) |
 - **Vòng đời:** `Trong phòng → Đã rời | Bị kick`. Đã rời có thể vào lại bằng link còn hạn nếu phòng chưa đầy (Q-024). Bị kick thì bị chặn khỏi phòng đó (Q-015).
 - **Quan hệ:** thuộc 1 phòng, 1 người dùng; giữ 0–2 vé (ENT-07).
-- **Ai được tạo / xem / sửa / xóa:** Hệ thống tạo khi người dùng vào bằng link hoặc tạo phòng. Mọi thành viên xem danh sách. Người đó tự sửa mode dò/tiếng rao; host đổi vai trò khi chuyển quyền. Kết thúc bằng rời phòng (tự làm) hoặc kick (host).
+- **Ai được tạo / xem / sửa / xóa:** Hệ thống tạo khi người dùng vào bằng link/mã phòng hoặc tạo phòng. Mọi thành viên xem danh sách. Người đó tự sửa mode dò/tiếng rao; host đổi vai trò khi chuyển quyền. Kết thúc bằng rời phòng (tự làm) hoặc kick (host).
 
 ### ENT-04 Link mời
-- **Mô tả:** Đường link host tạo để gửi qua Messenger/Telegram/Zalo...
+- **Mô tả:** Đường link host tạo để gửi qua Messenger/Telegram/Zalo..., kèm **mã phòng** 6 ký tự để người đã có tài khoản nhập ở trang chủ (cập nhật – Q-056).
 - **Thuộc tính nghiệp vụ:**
   | Thuộc tính | Ý nghĩa | Bắt buộc? | Ràng buộc nghiệp vụ |
   |---|---|---|---|
   | Phòng | | Có | |
   | Người tạo | Host lúc tạo | Có | |
   | Thời điểm hết hạn | Tạo + 8 giờ | Có | Q-016; không vượt quá khi phòng đóng |
+  | Mã phòng | 6 ký tự chữ in hoa + số, bỏ O/0/I/1 | Có | Duy nhất trong các phòng đang mở; hết hiệu lực cùng link (BR-30) |
 - **Vòng đời:** `Còn hiệu lực → Hết hạn` (quá 8 giờ hoặc phòng đóng).
 - **Quan hệ:** 1 phòng có nhiều link.
 - **Ai được tạo / xem / sửa / xóa:** Chỉ host tạo (Q-024). Không sửa/xóa; tự hết hạn.
@@ -125,9 +128,9 @@ Quan hệ giữa actors:
   | Các vé tham gia | Vé đang có người giữ lúc bắt đầu | Có | ≥ 1 vé (Q-024) |
   | Dãy số đã rao | Theo thứ tự | — | Không trùng, trong 1–90; chỉ dùng trong lúc ván diễn ra, không lưu lại sau khi ván kết thúc (cập nhật từ Phase 2 – Q-031) |
   | Người thắng | Danh sách vé + người kinh đúng | Không | Có thể nhiều (Q-007, Q-013) |
-  | Lý do tạm dừng | Host bấm / host out / đang kiểm tra Kinh | Không | |
+  | Lý do tạm dừng | Host bấm / có lượt Kinh chờ host duyệt | Không | (cập nhật – Q-055) |
   | Thời điểm bắt đầu, kết thúc | | | |
-- **Vòng đời:** `Chờ bắt đầu → Đang quay ⇄ Tạm dừng → Đang chờ đồng kinh → Chờ host xác nhận → Kết thúc` (cập nhật từ Phase 2 – Q-035); `Chờ bắt đầu → Đã hủy` (phòng hết hạn khi ván chưa bắt đầu (cập nhật từ Phase 3 – Q-048)); `Đang quay → Kết thúc (không ai thắng)` khi rao hết 90 số (Q-024).
+- **Vòng đời:** `Chờ bắt đầu → Đang quay ⇄ Tạm dừng`; `Đang quay / Tạm dừng → Chờ host duyệt` (có người bấm Kinh); `Chờ host duyệt → Đang quay` (host bác bỏ, mọi vé hụt) hoặc `→ Kết thúc` (host xác nhận, có vé đúng) (cập nhật – Q-055); `Đang quay / Tạm dừng / Chờ host duyệt → Đã hủy` (host rời phòng/đăng xuất – Q-057); `Chờ bắt đầu → Đã hủy` (phòng hết hạn khi ván chưa bắt đầu (cập nhật từ Phase 3 – Q-048)); `Đang quay → Kết thúc (không ai thắng)` khi rao hết 90 số (Q-024).
 - **Quan hệ:** thuộc 1 phòng; dùng bộ vé hiện hành; có nhiều lượt báo Kinh (ENT-11).
 - **Ai được tạo / xem / sửa / xóa:** Host tạo/bắt đầu/tạm dừng/tiếp tục. Hệ thống quay số, kết thúc, hủy. Thành viên xem trực tiếp và xem lại trong lịch sử ván (Q-020). Không xóa.
 
@@ -151,7 +154,7 @@ Quan hệ giữa actors:
   | Lưới số | 9 hàng × 9 cột | Có | Mỗi hàng 5 số + 4 ô trống; cột 1: 1–9, cột 2: 10–19, ..., cột 9: 80–90; 45 số/vé không trùng |
   | Người giữ | | Không | Mỗi người tối đa 2 vé |
   | Ô đã đánh dấu | Theo người giữ trong ván | Không | Mode auto tự đánh dấu (Q-005) |
-- **Vòng đời:** `Trống → Đang giữ → Trống` (bỏ vé, thu hồi, rời phòng, bị kick khi không có ván); `Đang giữ → Bị khóa → Trống` (rời/bị kick khi ván đang diễn ra, mở khóa khi ván kết thúc – cập nhật từ Phase 2, làm rõ BR-22). Không đổi người giữ khi ván đang chạy (Q-012).
+- **Vòng đời:** `Trống → Đang giữ → Trống` (bỏ vé, thu hồi, rời phòng, bị kick khi không có ván; người giữ đang offline lúc ván kết thúc – BR-29, Q-058); `Đang giữ → Bị khóa → Trống` (rời/đăng xuất/bị kick khi ván đang diễn ra, mở khóa khi ván kết thúc – cập nhật từ Phase 2, làm rõ BR-22; Q-057). Không đổi người giữ khi ván đang chạy (Q-012).
 - **Quan hệ:** thuộc 1 bộ vé; có 1 vé "cặp" cùng màu; 0–1 người giữ.
 - **Ai được tạo / xem / sửa / xóa:** Hệ thống sinh. Mọi thành viên xem. Player lấy/bỏ. Người giữ đánh dấu ô.
 
@@ -167,9 +170,9 @@ Quan hệ giữa actors:
   | Ván, vé, người báo | | Có | Chỉ người giữ vé |
   | Thời điểm | | Có | |
   | Kết quả | Kinh đúng / Kinh hụt | Có | Đúng khi có 1 hàng đủ 5 số đều đã rao (kể cả rao từ trước – Q-011) |
-- **Vòng đời:** `Đang kiểm tra → Đúng | Hụt`.
+- **Vòng đời:** `Chờ host duyệt (hệ thống gợi ý Đúng | Hụt) → Được xác nhận | Bị bác bỏ` (cập nhật – Q-055).
 - **Quan hệ:** thuộc 1 ván.
-- **Ai được tạo / xem / sửa / xóa:** Player tạo; hệ thống kết luận; cả phòng thấy kết quả (Q-006).
+- **Ai được tạo / xem / sửa / xóa:** Player tạo; hệ thống gợi ý đúng/hụt; host xác nhận hoặc bác bỏ theo đúng gợi ý (Q-055); cả phòng thấy kết quả (Q-006).
 
 ### ENT-09 Tiếng rao
 - **Mô tả:** Kho audio giọng rao lô tô làm sẵn bằng AI (Q-018).
@@ -208,7 +211,7 @@ Quan hệ giữa actors:
 - **Điều kiện sau:** Người dùng đã đăng nhập.
 - **Business rules:** BR-01
 - **Ngoại lệ:** Người dùng hủy đăng nhập Google, quay lại màn đăng nhập. Google lỗi thì báo thử lại. Mở link trong ứng dụng chat không cho đăng nhập Google (Zalo/Messenger...) → hướng dẫn "Mở bằng trình duyệt", giữ nguyên link mời (cập nhật từ Phase 2 – Q-041).
-- **Đăng xuất** (cập nhật từ Phase 3 – Q-052): đăng xuất = **thoát phòng**. Player → rời phòng (như BIZ-11). Host → **đóng phòng cho mọi người** (ván chờ bị hủy, mọi người về trang chủ). Khi ván đang diễn ra thì **không đăng xuất được** (nút bị khóa).
+- **Đăng xuất** (cập nhật từ Phase 3 – Q-052; cập nhật – Q-057): đăng xuất = **thoát phòng**. Player → rời phòng (như BIZ-11). Host → **đóng phòng cho mọi người** (ván hiện tại bị hủy, mọi người về trang chủ). Khi ván đang diễn ra: hiện dialog cảnh báo "đang chơi"; xác nhận thì vé đang chơi bị hủy khỏi ván (BR-22) rồi mới đăng xuất.
 - **Entities liên quan:** ENT-01
 
 ### BIZ-02 Tạo phòng
@@ -229,19 +232,19 @@ Quan hệ giữa actors:
 ### BIZ-03 Mời & tham gia phòng
 - **Mục tiêu:** Host đưa bạn bè vào phòng qua Messenger/Telegram/Zalo...
 - **Actor:** ACT-02 (tạo, chia sẻ link), ACT-04/ACT-01 (mở link, vào phòng)
-- **Trigger:** Host bấm "Mời"; khách mở link.
+- **Trigger:** Host bấm "Mời"; khách mở link; người dùng đã đăng nhập bấm "Vào phòng" ở trang chủ và nhập mã phòng (cập nhật – Q-056).
 - **Điều kiện trước:** Phòng đang hoạt động.
 - **Input (business):**
   | Thông tin | Nguồn | Bắt buộc? |
   |---|---|---|
   | Yêu cầu tạo link | Host | Có |
-  | Kênh chia sẻ | Host chọn (copy link / chia sẻ qua ứng dụng trên máy) | Không |
-  | Link mời | Khách mở | Có |
+  | Kênh chia sẻ | Host chọn (copy link / copy mã phòng / chia sẻ qua ứng dụng trên máy) | Không |
+  | Link mời **hoặc** mã phòng | Khách mở link / nhập mã ở trang chủ (chỉ khi đã đăng nhập) | Có |
   | Đăng nhập | BIZ-01 | Có |
-- **Output (business):** Link mời (ENT-04) hết hạn sau 8 giờ. Khách hợp lệ trở thành thành viên Player (ENT-03); cả phòng thấy người mới vào. Nếu còn vé trống thì khách được lấy vé ở ván chờ; hết vé thì ở lại xem và chờ.
+- **Output (business):** Link mời và mã phòng (ENT-04) hết hạn sau 8 giờ. Khách hợp lệ trở thành thành viên Player (ENT-03); cả phòng thấy người mới vào. Nếu còn vé trống thì khách được lấy vé ở ván chờ; hết vé thì ở lại xem và chờ.
 - **Điều kiện sau:** Khách ở trong phòng.
-- **Business rules:** BR-02, BR-03, BR-05, BR-06, BR-25
-- **Ngoại lệ:** Link hết hạn / phòng đã đóng → báo "Link không còn hiệu lực". Phòng đủ 16 → báo "Phòng đã đầy". Người bị kick → báo không được vào. Khách đang ở phòng khác → báo phải rời phòng đó trước. Khách đã là thành viên → vào thẳng phòng.
+- **Business rules:** BR-02, BR-03, BR-05, BR-06, BR-25, BR-30
+- **Ngoại lệ:** Link hết hạn / phòng đã đóng → báo "Link không còn hiệu lực". Mã phòng sai / hết hiệu lực → báo "Mã phòng không đúng hoặc đã hết hạn" (Q-056). Phòng đủ 16 → báo "Phòng đã đầy". Người bị kick → báo không được vào. Khách đang ở phòng khác → báo phải rời phòng đó trước. Khách đã là thành viên → vào thẳng phòng.
 - **Entities liên quan:** ENT-02, ENT-03, ENT-04
 
 ### BIZ-04 Tạo lại bộ vé
@@ -285,7 +288,7 @@ Quan hệ giữa actors:
   |---|---|---|
   | Lệnh điều khiển | Host | Có |
   | Nhịp quay (giây/số) | Host | Khi đổi nhịp |
-- **Output (business):** Bắt đầu: ván Đang quay, chốt các vé tham gia, khóa lấy/bỏ vé, BIZ-07 chạy. Tạm dừng/Tiếp tục: ván Tạm dừng ⇄ Đang quay, cả phòng thấy trạng thái. Đổi nhịp: áp dụng từ số kế tiếp. Host mất kết nối: ván vẫn chạy bình thường; nếu tới bước chờ host xác nhận mà host chưa quay lại thì ván đứng chờ — chấp nhận (cập nhật từ Phase 3 – Q-048).
+- **Output (business):** Bắt đầu: ván Đang quay, chốt các vé tham gia, khóa lấy/bỏ vé, BIZ-07 chạy. Tạm dừng/Tiếp tục: ván Tạm dừng ⇄ Đang quay, cả phòng thấy trạng thái. Đổi nhịp: áp dụng từ số kế tiếp. Host mất kết nối: ván vẫn chạy bình thường; nếu có người Kinh mà host chưa quay lại thì ván đứng ở Chờ host duyệt — chấp nhận; player tự rời phòng được (cập nhật từ Phase 3 – Q-048; Q-057).
 - **Điều kiện sau:** Trạng thái ván cập nhật cho mọi người.
 - **Business rules:** BR-07, BR-14, BR-15, BR-16
 - **Ngoại lệ:** Không có vé nào được giữ → không cho bắt đầu. Phòng đang Chờ đóng → không cho bắt đầu ván mới.
@@ -305,25 +308,25 @@ Quan hệ giữa actors:
 - **Output (business):** Số mới (chưa rao, 1–90) thêm vào dãy số đã rao; mọi thành viên thấy số mới và toàn bộ số đã rao; phát câu rao cho số đó, xen câu nối giữa các số; vé của player để mode Auto được tự đánh dấu. Người tắt tiếng thì không nghe nhưng vẫn thấy số.
 - **Điều kiện sau:** Dãy số đã rao tăng 1.
 - **Business rules:** BR-15, BR-19, BR-20
-- **Ngoại lệ:** Đã rao đủ 90 số mà không ai kinh đúng → ván Kết thúc không người thắng (BR-19). Đang có lượt Kinh chờ kiểm tra hoặc ván tạm dừng → không quay.
+- **Ngoại lệ:** Đã rao đủ 90 số mà không ai kinh đúng → ván Kết thúc không người thắng (BR-19); vé của người đang offline trả về bộ (BR-29). Ván Chờ host duyệt hoặc tạm dừng → không quay.
 - **Entities liên quan:** ENT-05, ENT-09, ENT-07
 
 ### BIZ-08 Dò số & báo Kinh
 - **Mục tiêu:** Player dò vé và giành chiến thắng.
 - **Actor:** ACT-03 (chính), ACT-05 (kiểm tra, chúc mừng), ACT-02 (xác nhận kết thúc ván – Q-035)
 - **Trigger:** Player đánh dấu ô (mode Tự dò); player bấm "Kinh".
-- **Điều kiện trước:** Ván Đang quay hoặc Đang chờ đồng kinh; player giữ vé tham gia ván và còn trong phòng.
+- **Điều kiện trước:** Ván Đang quay, Tạm dừng hoặc Chờ host duyệt; player giữ vé tham gia ván (chưa bị hủy) và còn trong phòng (cập nhật – Q-055).
 - **Input (business):**
   | Thông tin | Nguồn | Bắt buộc? |
   |---|---|---|
   | Ô đánh dấu | Player (Tự dò) / hệ thống (Auto) | Không |
   | Vé báo Kinh | Player | Có |
-- **Output (business):** Bấm Kinh: ván tạm dừng quay, hệ thống kiểm tra (ENT-11).
-  - Hụt: cả phòng thấy "<tên> kinh hụt", phát tiếng kinh hụt, quay tiếp.
-  - Đúng: mở cửa sổ đồng kinh 5 giây; hết cửa sổ thì ván chuyển Chờ host xác nhận; host thấy danh sách vé/hàng thắng và bấm "Xác nhận kết thúc ván" (cập nhật từ Phase 2 – Q-035). Ván Kết thúc; cả phòng thấy người thắng, vé thắng, hàng thắng; phát tiếng chúc mừng. Hệ thống tạo ván mới ở Chờ bắt đầu; vé vẫn thuộc người giữ.
+- **Output (business):** (cập nhật – Q-055) Bấm Kinh: cả phòng (player + host) thấy "<tên> KINH!", ván dừng quay và chuyển **Chờ host duyệt**; hệ thống kiểm tra vé và gợi ý đúng/hụt kèm hàng thắng (ENT-11). Trong lúc chờ duyệt, player khác vẫn bấm Kinh được; mỗi lượt mới được thêm vào danh sách chờ duyệt.
+  - Mọi lượt đều hụt: host bấm "Bác bỏ"; cả phòng thấy "<tên> kinh hụt", phát tiếng kinh hụt; ván quay tiếp (về trạng thái trước khi Kinh).
+  - Có ≥ 1 lượt đúng: host bấm "Xác nhận kết thúc ván" (cập nhật từ Phase 2 – Q-035). Ván Kết thúc; người thắng là mọi vé đúng; cả phòng thấy người thắng, vé thắng, hàng thắng; phát tiếng chúc mừng. Vé của người đang offline trả về bộ (BR-29). Hệ thống tạo ván mới ở Chờ bắt đầu; vé còn lại vẫn thuộc người giữ — player được bỏ vé, lấy vé mới hoặc rời phòng.
 - **Điều kiện sau:** Ván kết thúc hoặc tiếp tục quay.
-- **Business rules:** BR-17, BR-18, BR-20, BR-07, BR-28
-- **Ngoại lệ:** Bấm Kinh cho vé không thuộc mình hoặc vé không tham gia ván → từ chối. Nhiều người bấm cùng lúc → kiểm tra lần lượt, ai đúng đều thắng nếu trong cửa sổ đồng kinh. Bấm Kinh khi ván tạm dừng do host → (Q-029) vẫn nhận và kiểm tra.
+- **Business rules:** BR-17, BR-20, BR-07, BR-28, BR-29
+- **Ngoại lệ:** Bấm Kinh cho vé không thuộc mình, vé không tham gia ván hoặc vé đã bị hủy (BR-22) → từ chối. Nhiều người bấm cùng lúc → đều vào danh sách chờ duyệt, mọi vé đúng đều thắng. Một vé đã báo Kinh trong lượt chờ duyệt hiện tại → không báo lại. Bấm Kinh khi ván tạm dừng do host → (Q-029) vẫn nhận; nếu bác bỏ thì ván về Tạm dừng.
 - **Entities liên quan:** ENT-05, ENT-07, ENT-11, ENT-09
 
 ### BIZ-09 Chuẩn bị kho tiếng rao
@@ -356,14 +359,14 @@ Quan hệ giữa actors:
 
 ### BIZ-11 Rời phòng
 - **Mục tiêu:** Thành viên chủ động rời phòng để làm việc khác hoặc vào phòng khác.
-- **Actor:** ACT-03 (trừ host – Q-048)
-- **Trigger:** Bấm "Rời phòng".
-- **Điều kiện trước:** Đang trong phòng, không phải host; ván không đang diễn ra (cập nhật từ Phase 3 – Q-052).
-- **Input (business):** Xác nhận rời.
-- **Output (business):** Thành viên Đã rời; vé trả về bộ (ván đang chạy thì khóa tới hết ván); cả phòng thấy.
+- **Actor:** ACT-03, ACT-02 (host rời = đóng phòng – Q-057)
+- **Trigger:** Bấm "Rời phòng" (hoặc đăng xuất – BIZ-01).
+- **Điều kiện trước:** Đang trong phòng (cập nhật – Q-057: không còn khóa khi ván đang diễn ra).
+- **Input (business):** Xác nhận rời; ván đang diễn ra thì xác nhận thêm cảnh báo "Bạn đang chơi, vé của bạn sẽ bị hủy".
+- **Output (business):** Player: thành viên Đã rời; vé trả về bộ (ván đang diễn ra thì vé bị hủy khỏi ván — khóa, không Kinh được — tới hết ván); cả phòng thấy. Host: phòng **đóng ngay** cho mọi người (như BIZ-14, ván hiện tại bị hủy, không ai thắng).
 - **Điều kiện sau:** Người dùng không còn ở phòng nào, có thể tạo/vào phòng khác.
 - **Business rules:** BR-21, BR-22, BR-25
-- **Ngoại lệ:** Host không có nút Rời phòng; host ở phòng tới khi phòng hết hạn (cập nhật từ Phase 3 – Q-048).
+- **Ngoại lệ:** Host rời → dialog "Rời phòng sẽ đóng phòng cho mọi người" (cập nhật – Q-057, thay Q-048). Ván đang Chờ host duyệt mà host offline → player rời bình thường (action 6).
 - **Entities liên quan:** ENT-03, ENT-07, ENT-02
 
 ### BIZ-12 Chat trong phòng
@@ -391,10 +394,10 @@ Quan hệ giữa actors:
 ### BIZ-14 Hết hạn & đóng phòng
 - **Mục tiêu:** Phòng tự kết thúc sau 8 giờ.
 - **Actor:** ACT-05 (chính), ACT-03 (nhận thông báo)
-- **Trigger:** Thời gian — còn 15 phút (thiết bị tự hiện cảnh báo); đến hạn (thiết bị đang mở phòng báo hệ thống, hoặc hệ thống phát hiện ở lần thao tác kế tiếp); ván đang chạy kết thúc khi phòng ở Chờ đóng (cập nhật từ Phase 3 – Q-051).
+- **Trigger:** Thời gian — còn 15 phút (thiết bị tự hiện cảnh báo); đến hạn (thiết bị đang mở phòng báo hệ thống, hoặc hệ thống phát hiện ở lần thao tác kế tiếp); ván đang chạy kết thúc khi phòng ở Chờ đóng (cập nhật từ Phase 3 – Q-051). Host rời phòng / đăng xuất → đóng ngay (Q-057).
 - **Điều kiện trước:** Phòng Đang hoạt động / Chờ đóng.
 - **Input (business):** Thời điểm hết hạn, trạng thái ván hiện tại.
-- **Output (business):** Còn 15 phút: cả phòng thấy cảnh báo và đếm ngược. Đến hạn: nếu ván đang chạy bình thường → phòng Chờ đóng, đợi ván kết thúc rồi đóng; nếu ván Chờ bắt đầu → hủy ván, phòng Đã đóng ngay. Phòng đang Chờ đóng mà ván tới bước Chờ host xác nhận → ván tự Kết thúc với người thắng đã xác định, không cần host (Q-042, Q-048). Đóng phòng: mọi thành viên thấy "Phòng đã hết hạn", được đưa về trang chủ; link mời hết hiệu lực; mọi người được tạo/vào phòng khác.
+- **Output (business):** Còn 15 phút: cả phòng thấy cảnh báo và đếm ngược. Đến hạn: nếu ván đang chạy bình thường → phòng Chờ đóng, đợi ván kết thúc rồi đóng; nếu ván Chờ bắt đầu → hủy ván, phòng Đã đóng ngay. Phòng đang Chờ đóng mà ván ở bước Chờ host duyệt → ván tự Kết thúc: có vé đúng thì người thắng là các vé đúng, không có thì không người thắng; không cần host (Q-042, Q-048, Q-055). Host rời/đăng xuất: ván hiện tại (nếu có) bị hủy, phòng Đã đóng ngay (Q-057). Đóng phòng: mọi thành viên thấy "Phòng đã hết hạn", được đưa về trang chủ; link mời hết hiệu lực; mọi người được tạo/vào phòng khác.
 - **Điều kiện sau:** Phòng Đã đóng, không còn xem được (Q-039).
 - **Business rules:** BR-04, BR-05
 - **Ngoại lệ:** Ván tạm dừng do host bấm (host vẫn online) lúc đến hạn → (Q-029) coi như ván đang chạy, phòng Chờ đóng.
@@ -434,30 +437,32 @@ Quan hệ giữa actors:
 | BR-01 | Chỉ đăng nhập/đăng ký bằng Google. | BIZ-01 |
 | BR-02 | Mỗi người chỉ ở tối đa 1 phòng tại một thời điểm; đang ở phòng thì không tạo/vào phòng khác (Q-023). | BIZ-02, BIZ-03 |
 | BR-03 | Phòng tối đa 16 thành viên, kể cả host (Q-024). | BIZ-03 |
-| BR-04 | Phòng hết hạn sau 8 giờ kể từ khi tạo; cảnh báo trước 15 phút. Đến hạn mà ván đang chạy thì dời đóng tới khi ván kết thúc; ván chưa bắt đầu thì hủy ván và đóng ngay; phòng Chờ đóng mà ván tới bước chờ host xác nhận thì ván tự kết thúc (Q-014, Q-028, Q-042, Q-048). | BIZ-14, BIZ-06 |
-| BR-05 | Link mời tạo sẵn cùng lúc tạo phòng, chỉ host thấy nút chia sẻ; link hết hạn khi phòng đóng (tối đa 8 giờ) (Q-016, Q-024; cập nhật từ Phase 3 – Q-046). | BIZ-03, BIZ-14 |
+| BR-04 | Phòng hết hạn sau 8 giờ kể từ khi tạo; cảnh báo trước 15 phút. Đến hạn mà ván đang chạy thì dời đóng tới khi ván kết thúc; ván chưa bắt đầu thì hủy ván và đóng ngay; phòng Chờ đóng mà ván tới bước chờ host duyệt thì ván tự kết thúc; host rời phòng/đăng xuất thì đóng ngay (Q-014, Q-028, Q-042, Q-048, Q-057). | BIZ-14, BIZ-06 |
+| BR-05 | Link mời và mã phòng tạo sẵn cùng lúc tạo phòng, chỉ host thấy nút chia sẻ/copy; hết hạn khi phòng đóng (tối đa 8 giờ) (Q-016, Q-024; cập nhật từ Phase 3 – Q-046; Q-056). | BIZ-03, BIZ-14 |
 | BR-06 | Người bị kick bị chặn vào lại phòng đó (Q-015). | BIZ-03, BIZ-10 |
 | BR-07 | Mỗi phòng tối đa 1 ván chưa kết thúc. Ván ở Chờ bắt đầu được tạo tự động khi tạo phòng và khi ván trước kết thúc (Q-025). | BIZ-02, BIZ-06, BIZ-08 |
 | BR-08 | Bộ vé có 16 vé, 8 màu × 2 vé. Vé 9 hàng × 9 cột, mỗi hàng 5 số + 4 ô trống; cột 1: 1–9, cột 2: 10–19, ..., cột 9: 80–90. Hai vé cùng màu không trùng số và gộp lại đủ đúng 1–90 (Q-001, Q-008, Q-009). | BIZ-02, BIZ-04 |
 | BR-09 | Mỗi người giữ tối đa 2 vé, tự do chọn (không bắt buộc theo cặp); mỗi vé tối đa 1 người giữ (Q-008). | BIZ-05 |
 | BR-10 | Chỉ lấy/bỏ vé khi ván hiện tại ở Chờ bắt đầu (Q-012). | BIZ-05 |
-| BR-11 | Vé thuộc người giữ qua các ván, tới khi người đó bỏ, rời phòng, bị kick hoặc bị thu hồi (Q-012). | BIZ-05, BIZ-08 |
+| BR-11 | Vé thuộc người giữ qua các ván, tới khi người đó bỏ, rời phòng, bị kick, bị thu hồi hoặc đang offline lúc ván kết thúc (Q-012, BR-29). | BIZ-05, BIZ-08 |
 | BR-12 | Chỉ tạo lại bộ vé khi ván ở Chờ bắt đầu và không còn ai giữ vé. | BIZ-04 |
 | BR-13 | Host được thu hồi vé của thành viên đang offline khi ván ở Chờ bắt đầu (Q-027). | BIZ-04 |
 | BR-14 | Chỉ bắt đầu ván khi có ≥ 1 vé được giữ và phòng chưa đến hạn đóng (Q-024). | BIZ-06 |
 | BR-15 | Khi ván Đang quay, mỗi N giây rao 1 số ngẫu nhiên chưa rao trong 1–90. N do host chỉnh trong 3–15, mặc định 5, áp dụng từ số kế tiếp (Q-004, Q-024). | BIZ-06, BIZ-07 |
-| BR-16 | Ván tạm dừng khi: host bấm tạm dừng; đang kiểm tra Kinh/cửa sổ đồng kinh/chờ host xác nhận. Host mất kết nối không làm tạm dừng ván (Q-010, Q-035, Q-048). | BIZ-06, BIZ-08 |
+| BR-16 | Ván dừng quay khi: host bấm tạm dừng; có lượt Kinh đang chờ host duyệt. Host mất kết nối không làm tạm dừng ván (Q-010, Q-035, Q-048, Q-055). | BIZ-06, BIZ-08 |
 | BR-17 | Kinh đúng khi vé có ít nhất 1 hàng đủ 5 số đều đã rao, kể cả rao từ trước. Kinh sai = "kinh hụt": báo cả phòng, không phạt (Q-002, Q-006, Q-011). | BIZ-08 |
-| BR-18 | Sau kinh đúng đầu tiên, mở cửa sổ 5 giây; mọi lượt kinh đúng trong cửa sổ đều đồng thắng (Q-007, Q-013, Q-024). | BIZ-08 |
+| ~~BR-18~~ | (đã loại – Q-055) Cửa sổ đồng kinh 5 giây. Thay bằng: mọi lượt Kinh đúng trước khi host xác nhận đều đồng thắng (BR-28). | BIZ-08 |
 | BR-19 | Rao hết 90 số mà không ai kinh đúng thì ván kết thúc không người thắng (Q-024). | BIZ-07 |
 | BR-20 | Mỗi player tự chọn mode: Tự dò (mặc định, tự đánh dấu) hoặc Auto (hệ thống tự đánh dấu); cả hai đều phải tự bấm Kinh. Các số đã rao luôn hiển thị cho mọi người. Riêng mode Auto: số vừa rao có trên vé được làm nổi bật, hàng còn thiếu 1 số được đánh dấu "chờ"; mode Tự dò không gợi ý (Q-003, Q-005, Q-034). | BIZ-07, BIZ-08, BIZ-15 |
-| BR-21 | Mỗi phòng có đúng 1 host cố định là người tạo; không chuyển quyền host. Host không có nút rời phòng; host **đăng xuất = đóng phòng** cho mọi người. Player đăng xuất = rời phòng. Khi ván đang diễn ra **không ai đăng xuất hoặc rời phòng được** (Q-048, Q-051, Q-052). | BIZ-01, BIZ-11, BIZ-14 |
-| BR-22 | Rời phòng/bị kick/bị thu hồi: vé trả về bộ. Nếu ván đang chạy, vé bị khóa (không ai kinh được) tới hết ván rồi mới trống (Q-024). | BIZ-10, BIZ-11 |
+| BR-21 | Mỗi phòng có đúng 1 host cố định là người tạo; không chuyển quyền host. Host **rời phòng hoặc đăng xuất = đóng phòng** cho mọi người (ván hiện tại bị hủy). Player đăng xuất = rời phòng. Khi ván đang diễn ra vẫn rời/đăng xuất được, sau dialog cảnh báo "đang chơi"; vé đang chơi bị hủy (BR-22) (Q-048, Q-051, Q-052, Q-057). | BIZ-01, BIZ-11, BIZ-14 |
+| BR-22 | Rời phòng/đăng xuất/bị kick/bị thu hồi: vé trả về bộ. Nếu ván đang diễn ra, vé bị hủy khỏi ván — khóa, không ai Kinh được — tới hết ván rồi mới trống (Q-024, Q-057). | BIZ-10, BIZ-11 |
 | BR-23 | Tin nhắn chat 1–500 ký tự, không sửa/xóa; người vào sau xem được toàn bộ (Q-024). Mỗi người gửi tối đa 5 tin trong 10 giây (cập nhật từ Phase 2 – Q-030). | BIZ-12 |
 | ~~BR-24~~ | (đã loại – Q-048) Chuyển quyền host. Thay bằng: host chỉ kick được player (người đã lấy vé ở ván hiện tại). | BIZ-10 |
 | BR-25 | Người đã tự rời (không bị kick) vào lại được bằng link còn hạn nếu phòng chưa đầy; vào lại không được trả vé cũ (Q-024). | BIZ-03, BIZ-11 |
 | BR-26 | Kho tiếng rao phải có ≥ 1 câu cho mỗi số 1–90, có câu nối, chúc mừng, kinh hụt; mỗi số nhiều câu thì chọn ngẫu nhiên (Q-018, Q-024). | BIZ-07, BIZ-09 |
-| BR-28 | Ván chỉ Kết thúc khi host bấm xác nhận, sau khi hết cửa sổ đồng kinh. Host không bác bỏ được lượt Kinh hệ thống đã xác định đúng; host tự kinh thì vẫn tự xác nhận; host offline thì ván chờ host (chấp nhận ván không kết thúc được – Q-048), trừ khi phòng đã quá hạn (BR-04). Trong lúc chờ xác nhận không nhận thêm lượt Kinh và không quay số (cập nhật từ Phase 2 – Q-035, Q-036, Q-037). | BIZ-08, BIZ-14 |
+| BR-28 | Mọi lượt Kinh đều chờ host duyệt; hệ thống gợi ý đúng/hụt. Có ≥ 1 vé đúng → host chỉ được "Xác nhận kết thúc ván", người thắng là mọi vé đúng; mọi vé hụt → host chỉ được "Bác bỏ", ván quay tiếp. Host không làm trái gợi ý của hệ thống; host tự kinh thì vẫn tự duyệt; host offline thì ván chờ host (chấp nhận ván không kết thúc được – Q-048), trừ khi phòng đã quá hạn (BR-04). Trong lúc chờ duyệt không quay số nhưng **vẫn nhận thêm lượt Kinh** tới khi host bấm (cập nhật từ Phase 2 – Q-035, Q-036, Q-037; Q-055). | BIZ-08, BIZ-14 |
+| BR-29 | Khi ván kết thúc (có người thắng, hết 90 số hoặc bị hủy), vé của mọi người giữ đang offline tự trả về bộ; người đó vẫn là thành viên phòng (Q-058). | BIZ-07, BIZ-08 |
+| BR-30 | Mã phòng 6 ký tự (chữ in hoa + số, bỏ O/0/I/1), duy nhất trong các phòng đang mở; chỉ người đã đăng nhập nhập mã ở trang chủ; kiểm tra như vào bằng link (BR-02, BR-03, BR-06) (Q-056). | BIZ-03 |
 | BR-27 | Tên hiển thị 2–30 ký tự; ảnh đại diện là ảnh JPG/PNG tối đa 5 MB hoặc avatar có sẵn (Q-032). | BIZ-16 |
 
 ## 7. Ma trận Actor × Business
@@ -475,6 +480,7 @@ Quan hệ giữa actors:
 | Loại | Nội dung | Ref |
 |---|---|---|
 | ĐÃ CHỐT (Q-042) | Tên hiển thị 2–30 ký tự; ảnh JPG/PNG ≤ 5 MB. | BR-27 |
-| ĐÃ CHỐT (Q-042) | Trong lúc chờ host xác nhận: không nhận thêm Kinh, không quay số. | BR-28 |
-| ĐÃ CHỐT (Q-042, Q-048) | Phòng quá hạn 8 giờ mà ván ở/tới bước Chờ host xác nhận: ván tự Kết thúc với người thắng đã xác định, rồi đóng phòng. | BR-04, BR-28 |
+| ĐÃ CHỐT (Q-055, thay Q-042) | Trong lúc chờ host duyệt: không quay số, vẫn nhận thêm Kinh. Bỏ cửa sổ đồng kinh 5 giây. | BR-28 |
+| ĐÃ CHỐT (Q-042, Q-048, Q-055) | Phòng quá hạn 8 giờ mà ván ở/tới bước Chờ host duyệt: ván tự Kết thúc với các vé đúng (nếu có), rồi đóng phòng. | BR-04, BR-28 |
+| ASSUMED (Q-058) | "Offline" ở BR-29 = không có kết nối tại thời điểm ván kết thúc. | BR-29 |
 | — | Các giả định khác đã được user xác nhận (Q-024, Q-029). | Q-024, Q-029 |

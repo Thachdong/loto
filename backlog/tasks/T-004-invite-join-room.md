@@ -1,5 +1,7 @@
 # T-004 · Lời mời & vào phòng (SCR-03)
 
+> ⚠ **Cần cập nhật (2026-11-19, Q-055..Q-058 – đối chiếu specs/actions.md):** `joinRoom` nhận `inviteCode` **hoặc** `roomCode` (lỗi mới `ROOM_CODE_INVALID`); Sheet Mời thêm mã phòng + "Copy mã" (Q-056).
+
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | EPIC-03 | M1 | 5 | T-003 | TODO |

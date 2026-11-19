@@ -1,5 +1,7 @@
 # T-011 · Hồ sơ cá nhân & đăng xuất khi ở phòng (SCR-10)
 
+> ⚠ **Cần cập nhật (2026-11-19, Q-055..Q-058 – đối chiếu specs/actions.md):** `deleteCurrentSession` bỏ `GAME_IN_PROGRESS`: đăng xuất giữa ván được sau dialog cảnh báo (vé bị hủy); host đăng xuất giữa ván = hủy ván + đóng phòng (Q-057).
+
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | EPIC-09 | M2 | 5 | T-010 | TODO |

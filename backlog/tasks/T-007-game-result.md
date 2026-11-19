@@ -1,5 +1,7 @@
 # T-007 · Kết quả ván: đồng kinh 5 giây, host xác nhận, chúc mừng và ván mới
 
+> ⚠ **Cần cập nhật (2026-11-19, Q-055..Q-058 – đối chiếu specs/actions.md):** Viết lại task: bỏ cửa sổ đồng kinh 5 giây và `closeClaimWindow`/SCR-09.A2; SCR-09 thành "Chờ host duyệt" (danh sách `claims` + gợi ý), host `confirmGame` (khi có vé đúng, lỗi `NO_WINNING_CLAIM`) hoặc `rejectClaims` mới (SCR-09.A3, khi toàn hụt, lỗi `CLAIM_HAS_WIN`) (Q-055); `confirmGame` chỉ chép player online (BR-29, Q-058).
+
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
 | EPIC-05 | M1 | 8 | T-006 | TODO |

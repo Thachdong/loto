@@ -7,7 +7,7 @@
 |---|---|---|---|---|---|
 | SUP-01 | Thông báo trong phòng (real-time) | notification (in-app) | BIZ-03 (người vào), BIZ-04 (bộ vé mới), BIZ-05 (lấy/bỏ vé), BIZ-06 (trạng thái ván), BIZ-08 (kinh hụt, người thắng), BIZ-10 (kick, đổi host), BIZ-11 (người rời), BIZ-12 (tin nhắn), BIZ-14 (cảnh báo 15 phút, đóng phòng), BIZ-16 (đổi tên/ảnh) | Mọi thành viên đang trong phòng; riêng người bị kick nhận thông báo cá nhân | Hiển thị ngay khi sự kiện xảy ra, không cần tải lại |
 | SUP-02 | Phát tiếng rao | audio | BIZ-07 (rao số, câu nối), BIZ-08 (kinh hụt, chúc mừng) | Thành viên đang bật tiếng | Lấy từ kho tiếng rao (ENT-09); mỗi số nhiều câu thì chọn ngẫu nhiên; thiếu câu thì chỉ hiển thị số (BR-26) |
-| SUP-03 | Hẹn giờ | scheduler (phía thiết bị) | BIZ-07 (mỗi N giây), BIZ-08 (cửa sổ đồng kinh 5 giây), BIZ-14 (còn 15 phút, đến hạn 8 giờ), BIZ-03 (link hết hạn 8 giờ) | Ván, phòng, link mời | Thiết bị người chơi đếm giờ và báo hệ thống; hệ thống kiểm thời điểm bằng giờ của mình (Q-051) |
+| SUP-03 | Hẹn giờ | scheduler (phía thiết bị) | BIZ-07 (mỗi N giây), BIZ-14 (còn 15 phút, đến hạn 8 giờ), BIZ-03 (link hết hạn 8 giờ) | Ván, phòng, link mời | Thiết bị người chơi đếm giờ và báo hệ thống; hệ thống kiểm thời điểm bằng giờ của mình (Q-051) |
 | SUP-04 | Theo dõi online/offline | presence | Mọi thành viên kết nối/mất kết nối | BIZ-04 (thu hồi vé người offline); hiển thị ai online trong phòng | Danh sách thành viên hiển thị trạng thái online/offline |
 | SUP-05 | Phiên đăng nhập | auth | BIZ-01 | Người dùng | Giữ đăng nhập giữa các lần mở; đăng xuất; sau đăng nhập quay về đúng link mời đang mở |
 | SUP-06 | Chia sẻ link mời | share | BIZ-03 | Host; người nhận link trên Messenger/Telegram/Zalo | Nút chia sẻ của thiết bị + copy link; khi dán link vào ứng dụng chat hiện thẻ xem trước (tên phòng, tên host, ảnh) |
@@ -23,7 +23,7 @@
 - SUP-14 Thanh toán / điểm thưởng — Giải trí thuần (Q-019)
 
 ## 2. Flow tổng thể (Overview)
-Hành trình end-to-end: người dùng đăng nhập Google → tạo phòng (thành host) → mời bạn qua link → bạn bè đăng nhập và vào phòng → mọi người lấy vé → host bắt đầu ván → hệ thống quay số và rao → player dò vé, bấm Kinh → hết cửa sổ đồng kinh, host xác nhận → ván kết thúc, ván mới chờ bắt đầu → lặp lại tới khi phòng hết hạn 8 giờ hoặc mọi người rời.
+Hành trình end-to-end: người dùng đăng nhập Google → tạo phòng (thành host) → mời bạn qua link → bạn bè đăng nhập và vào phòng → mọi người lấy vé → host bắt đầu ván → hệ thống quay số và rao → player dò vé, bấm Kinh → ván dừng chờ host duyệt (player khác vẫn Kinh được) → host xác nhận (có vé đúng) hoặc bác bỏ (quay tiếp) → ván kết thúc, ván mới chờ bắt đầu → lặp lại tới khi phòng hết hạn 8 giờ hoặc mọi người rời.
 
 ```mermaid
 flowchart LR
@@ -62,7 +62,7 @@ flowchart LR
   F04 -->|bộ vé mới| F05
   F06 -->|bắt đầu / tiếp tục| F07
   F07 -->|số mới| F08
-  F08 -->|kinh hụt| F07
+  F08 -->|host bác bỏ| F07
   F08 -->|host xác nhận: ván mới chờ| F05
   F07 -->|hết 90 số: ván mới chờ| F05
   F08 -->|ván kết thúc| F13
@@ -107,7 +107,7 @@ flowchart LR
 | FLOW-05 | FLOW-06 | tiên quyết | Có ≥ 1 vé được giữ (BR-14) |
 | FLOW-06 | FLOW-07 | kích hoạt | Host bấm Bắt đầu/Tiếp tục |
 | FLOW-07 | FLOW-08 | kích hoạt | Có số mới, player dò vé |
-| FLOW-08 | FLOW-07 | kích hoạt | Kinh hụt → quay tiếp |
+| FLOW-08 | FLOW-07 | kích hoạt | Host bác bỏ (mọi vé hụt) → quay tiếp |
 | FLOW-08 | FLOW-05 | kích hoạt | Host xác nhận, ván mới Chờ bắt đầu |
 | FLOW-07 | FLOW-05 | kích hoạt | Hết 90 số không ai kinh, ván mới Chờ bắt đầu |
 | FLOW-08 / FLOW-07 | FLOW-13 | kích hoạt | Ván Kết thúc được ghi lịch sử |
@@ -117,9 +117,10 @@ flowchart LR
 | FLOW-10 | — | kết thúc | Player bị kick về trang chủ |
 | FLOW-14 | FLOW-01 / trang chủ | kích hoạt | Phòng đóng, mọi người về trang chủ |
 | FLOW-11 | FLOW-02 / FLOW-03 | tùy chọn | Đã rời, có thể tạo/vào phòng khác |
+| FLOW-11 | FLOW-14 | kích hoạt | Host rời phòng → đóng phòng ngay (Q-057) |
 
 ### Hành trình theo actor
-- **Host (ACT-02):** FLOW-01 Đăng nhập → FLOW-02 Tạo phòng → FLOW-03 Mời → FLOW-05 Lấy vé → FLOW-06 Bắt đầu → (FLOW-07 ⇄ FLOW-08) → FLOW-08 Xác nhận kết thúc → FLOW-06 Bắt đầu ván tiếp… → [FLOW-04 Tạo lại bộ vé] → [FLOW-10 Kick player] → FLOW-14 Hết hạn (host không rời phòng).
+- **Host (ACT-02):** FLOW-01 Đăng nhập → FLOW-02 Tạo phòng → FLOW-03 Mời → FLOW-05 Lấy vé → FLOW-06 Bắt đầu → (FLOW-07 ⇄ FLOW-08) → FLOW-08 Xác nhận kết thúc → FLOW-06 Bắt đầu ván tiếp… → [FLOW-04 Tạo lại bộ vé] → [FLOW-10 Kick player] → FLOW-14 Hết hạn, hoặc FLOW-11 Rời phòng = đóng phòng (Q-057).
 - **Khách → Player (ACT-04 → ACT-03):** Nhận link → FLOW-01 Đăng nhập → FLOW-03 Vào phòng → FLOW-05 Lấy vé (hoặc chờ nếu hết vé) → FLOW-15 Chọn mode/tiếng → FLOW-07 Nghe rao → FLOW-08 Dò & Kinh → FLOW-13 Xem lịch sử → FLOW-12 Chat (suốt quá trình) → FLOW-11 Rời / FLOW-14 Hết hạn.
 - **Hệ thống (ACT-05):** FLOW-02 sinh vé & ván → FLOW-07 quay số → FLOW-08 kiểm tra Kinh → FLOW-14 hết hạn.
 - **Đội phát triển (ACT-07):** FLOW-09 (trước phát hành).
@@ -176,7 +177,7 @@ flowchart TD
   8. Còn lại → trang chủ với nút "Tạo phòng".
 - **Alternative paths:**
   - A1. Đã có phiên đăng nhập còn hiệu lực: bỏ qua bước 1–5, đi thẳng bước 6.
-  - A2. Người dùng đăng xuất (cập nhật từ Phase 3 – Q-052): ván đang diễn ra → nút đăng xuất bị khóa. Player → đồng thời **rời phòng** (như FLOW-11). Host → **đóng phòng** cho mọi người (hủy ván chờ, mọi người về trang chủ).
+  - A2. Người dùng đăng xuất (cập nhật từ Phase 3 – Q-052; Q-057): ván đang diễn ra → dialog cảnh báo "đang chơi, vé sẽ bị hủy"; xác nhận mới đăng xuất. Player → đồng thời **rời phòng** (như FLOW-11). Host → **đóng phòng** cho mọi người (hủy ván hiện tại, mọi người về trang chủ).
   - A3. Người dùng đã tự đổi tên/ảnh (BIZ-16): đăng nhập lại không ghi đè bằng tên/ảnh Google.
 - **Exceptions:**
   - E1. Người dùng hủy ở Google hoặc Google lỗi: báo "Đăng nhập không thành công, thử lại", ở lại màn đăng nhập.
@@ -228,17 +229,18 @@ flowchart TD
 flowchart TD
   subgraph HO["ACT-02 Host"]
     S1["Bấm Mời"]
-    S3["Chia sẻ link qua Messenger/Telegram/Zalo<br/>hoặc copy link<br/>SUP-06"]
+    S3["Chia sẻ link qua Messenger/Telegram/Zalo<br/>hoặc copy link / copy mã phòng<br/>SUP-06"]
   end
   subgraph K["ACT-04 Khách"]
     S4["Mở link mời"]
+    S4c["Trang chủ: bấm Vào phòng,<br/>nhập mã phòng (đã đăng nhập)<br/>BR-30"]
     S6["Đăng nhập Google<br/>(FLOW-01)"]
     S12["Vào phòng, xem bộ vé<br/>lấy vé nếu còn (FLOW-05)"]
   end
   subgraph H["Hệ thống"]
     S2["Tạo link mời hạn 8 giờ<br/>BR-05"]
     S5{"Đã đăng nhập?"}
-    S7{"Link còn hiệu lực<br/>& phòng chưa đóng?<br/>BR-05"}
+    S7{"Link / mã còn hiệu lực<br/>& phòng chưa đóng?<br/>BR-05, BR-30"}
     S8{"Đã là thành viên?"}
     S9{"Bị kick?<br/>BR-06"}
     S10{"Đang ở phòng khác?<br/>BR-02"}
@@ -253,6 +255,7 @@ flowchart TD
   S1 --> S2 --> S3 --> S4 --> S5
   S5 -- Chưa --> S6 --> S7
   S5 -- Rồi --> S7
+  S3 -.-> S4c --> S7
   S7 -- Không --> E1
   S7 -- Có --> S8
   S8 -- Có --> A1
@@ -268,7 +271,7 @@ flowchart TD
 - **Happy path:**
   1. Host bấm "Mời".
   2. Hệ thống hiện link mời đã tạo sẵn cùng phòng, hết hạn cùng phòng (BR-05, cập nhật từ Phase 3 – Q-046).
-  3. Host chia sẻ link bằng nút chia sẻ của thiết bị hoặc copy link; khi dán vào ứng dụng chat, link hiện thẻ xem trước gồm tên phòng, tên host, ảnh (SUP-06).
+  3. Host chia sẻ link bằng nút chia sẻ của thiết bị, copy link hoặc copy mã phòng (Q-056); khi dán vào ứng dụng chat, link hiện thẻ xem trước gồm tên phòng, tên host, ảnh (SUP-06).
   4. Khách mở link.
   5. Hệ thống kiểm tra khách đã đăng nhập chưa.
   6. Chưa đăng nhập thì khách đăng nhập Google (FLOW-01); xong quay lại đúng link (SUP-05).
@@ -283,15 +286,17 @@ flowchart TD
   - A1. Khách đã là thành viên đang trong phòng (vd mở lại link): vào thẳng phòng, không thêm mới.
   - A2. Khách từng tự rời phòng: được vào lại như thành viên mới, không được trả vé cũ (BR-25).
   - A3. Khách vào khi ván đang chạy: xem ván, nghe rao, chat; không lấy vé tới khi ván kết thúc (BR-10).
-  - A4. Host bấm "Mời" lần nữa: luôn hiện cùng một link, tạo sẵn lúc tạo phòng và hết hạn cùng phòng (cập nhật từ Phase 3 – Q-046).
+  - A4. Host bấm "Mời" lần nữa: luôn hiện cùng một link và mã phòng, tạo sẵn lúc tạo phòng và hết hạn cùng phòng (cập nhật từ Phase 3 – Q-046).
+  - A5. Vào bằng mã phòng (Q-056): người đã đăng nhập ở trang chủ bấm "Vào phòng", nhập mã 6 ký tự → kiểm tra như bước 7–11 → vào thẳng phòng (bước 12). Không có màn xem trước lời mời (BR-30).
 - **Exceptions:**
   - E1. Link hết hạn hoặc phòng đã đóng: báo "Link không còn hiệu lực", đưa về trang chủ.
   - E2. Khách bị kick khỏi phòng: báo "Bạn không thể vào phòng này".
   - E3. Khách đang ở phòng khác: báo phải rời phòng hiện tại, có nút về phòng hiện tại.
   - E4. Phòng đủ 16 người: báo "Phòng đã đầy".
   - E5. Khách hủy đăng nhập Google: dừng, link vẫn mở lại được.
+  - E6. Mã phòng sai định dạng / không tồn tại / phòng đã đóng: báo "Mã phòng không đúng hoặc đã hết hạn", giữ ô nhập (BR-30).
 - **Supporting kích hoạt:** SUP-03 tại bước 2 (hẹn giờ hết hạn link); SUP-06 tại bước 3; SUP-05 tại bước 6; SUP-01 tại bước 12.
-- **Business rules áp dụng:** BR-05 bước 2, 7; BR-06 bước 9; BR-02 bước 10; BR-03 bước 11; BR-10 tại A3; BR-25 tại A2.
+- **Business rules áp dụng:** BR-05 bước 2, 7; BR-06 bước 9; BR-02 bước 10; BR-03 bước 11; BR-10 tại A3; BR-25 tại A2; BR-30 tại A5, E6.
 
 ### FLOW-04 Tạo lại bộ vé (BIZ-04)
 - **Actor:** ACT-02 Host, ACT-05 Hệ thống · **Trigger:** Host bấm "Tạo bộ vé mới" · **Kết quả:** Bộ vé mới hiện hành, mọi vé trống
@@ -332,7 +337,7 @@ flowchart TD
   - A1. Chỉ còn người offline giữ vé: hệ thống liệt kê họ, host bấm "Thu hồi vé"; vé về Trống, người đó thấy thông báo khi online lại (BR-13, SUP-04). Sau đó tiếp bước 4.
   - A2. Host thu hồi vé người offline mà không tạo bộ mới: vé về Trống, người khác lấy được.
 - **Exceptions:**
-  - E1. Ván đang chạy/tạm dừng/chờ xác nhận: từ chối.
+  - E1. Ván đang chạy/tạm dừng/chờ host duyệt: từ chối.
   - E2. Còn người online giữ vé: từ chối, hiển thị ai đang giữ để host nhắc họ bỏ vé.
 - **Supporting kích hoạt:** SUP-04 tại bước 3/A1; SUP-01 tại bước 5, A1.
 - **Business rules áp dụng:** BR-12 bước 2–3; BR-13 tại A1, A2; BR-08 bước 4.
@@ -379,7 +384,7 @@ flowchart TD
   - A2. Hết vé trống: player ở lại xem, chờ người khác bỏ vé ở ván sau.
   - A3. Vé giữ từ ván trước: vẫn thuộc player, không cần lấy lại (BR-11).
 - **Exceptions:**
-  - E1. Ván đang chạy/tạm dừng/chờ xác nhận: nút lấy/bỏ bị khóa.
+  - E1. Ván đang chạy/tạm dừng/chờ host duyệt: nút lấy/bỏ bị khóa.
   - E2. Đã giữ 2 vé: báo "Tối đa 2 vé".
   - E3. Hai người cùng chọn một vé: người sau báo "Vé đã có người lấy".
 - **Supporting kích hoạt:** SUP-01 tại bước 5, A1.
@@ -462,7 +467,7 @@ flowchart TD
 
 - **Happy path:**
   1. Số đầu tiên do hệ thống rao ngay khi host Bắt đầu. Các số sau: đến nhịp quay (N giây sau số trước), thiết bị host báo hệ thống; nếu chưa có số mới thì player thứ k (theo vé nhỏ nhất họ giữ: Đỏ A → Hồng B, trừ host) báo thay ở +5k giây, lần lượt tới player cuối. Hệ thống chỉ nhận báo đầu tiên và từ chối báo sớm hơn N giây (SUP-03) (cập nhật từ Phase 3 – Q-052).
-  2. Hệ thống kiểm tra ván Đang quay (không tạm dừng, không đang kiểm tra Kinh/chờ đồng kinh/chờ xác nhận) (BR-16).
+  2. Hệ thống kiểm tra ván Đang quay (không tạm dừng, không Chờ host duyệt) (BR-16).
   3. Kiểm tra còn số chưa rao.
   4. Chọn ngẫu nhiên 1 số chưa rao trong 1–90 (BR-15).
   5. Mọi thành viên thấy số mới và toàn bộ số đã rao (SUP-01, BR-20).
@@ -474,74 +479,76 @@ flowchart TD
   - A2. Host đổi nhịp giữa chừng: nhịp mới tính từ số kế tiếp (FLOW-06 A3).
 - **Exceptions:**
   - E1. Ván không ở Đang quay: không quay.
-  - E2. Đã rao đủ 90 số mà không ai kinh đúng: ván Kết thúc không người thắng, lưu vào lịch sử, cả phòng được báo (BR-19, SUP-01).
+  - E2. Đã rao đủ 90 số mà không ai kinh đúng: ván Kết thúc không người thắng, lưu vào lịch sử, cả phòng được báo (BR-19, SUP-01); vé của người đang offline và vé bị khóa trả về bộ (BR-29, BR-22).
   - E3. Sau E2: tạo ván mới ở Chờ bắt đầu (BR-07).
 - **Supporting kích hoạt:** SUP-03 bước 1; SUP-01 bước 5, E2; SUP-02 bước 6; SUP-10 bước 7.
 - **Business rules áp dụng:** BR-16 bước 2; BR-15 bước 4; BR-20 bước 5, 7; BR-26 bước 6; BR-19 tại E2; BR-07 tại E3.
 
 ### FLOW-08 Dò số & báo Kinh (BIZ-08)
-- **Actor:** ACT-03 Player (chính), ACT-05 Hệ thống, ACT-02 Host (xác nhận) · **Trigger:** Player bấm "Kinh" cho một vé · **Kết quả:** Kinh hụt và ván quay tiếp, hoặc ván Kết thúc với danh sách người thắng và ván mới ở Chờ bắt đầu
+> Cập nhật – Q-055: bỏ cửa sổ đồng kinh 5 giây; mọi lượt Kinh đều chờ host duyệt; trong lúc chờ duyệt player khác vẫn Kinh được.
+- **Actor:** ACT-03 Player (chính), ACT-05 Hệ thống (kiểm tra, gợi ý), ACT-02 Host (duyệt) · **Trigger:** Player bấm "Kinh" cho một vé · **Kết quả:** Host bác bỏ và ván quay tiếp, hoặc host xác nhận và ván Kết thúc với danh sách người thắng, ván mới ở Chờ bắt đầu
 
 ```mermaid
 flowchart TD
   subgraph P["ACT-03 Player"]
     S1["Dò số trên vé<br/>(Tự dò: tự đánh dấu / Auto: hệ thống đánh dấu)"]
     S2["Bấm Kinh cho một vé"]
-    A2["Player khác bấm Kinh<br/>trong cửa sổ"]
+    A2["Player khác bấm Kinh<br/>(bất cứ lúc nào trước khi host bấm)"]
   end
   subgraph HO["ACT-02 Host"]
-    S9b["Bấm Xác nhận kết thúc ván"]
+    S8{"Có ≥ 1 vé đúng?"}
+    S9b["Bấm Xác nhận kết thúc ván<br/>BR-28"]
+    R1["Bấm Bác bỏ<br/>BR-28"]
   end
   subgraph H["Hệ thống"]
-    S3{"Vé thuộc player<br/>và tham gia ván?"}
-    S4["Tạm dừng quay số<br/>BR-16"]
-    S5{"Có hàng đủ 5 số<br/>đều đã rao?<br/>BR-17"}
-    E2["Thông báo 'kinh hụt'<br/>SUP-01, SUP-02"]
-    E3["Tiếp tục quay<br/>(về FLOW-07)"]
-    S6["Ghi nhận người thắng đầu tiên<br/>Mở cửa sổ đồng kinh 5 giây<br/>BR-18, SUP-03"]
-    S7{"Hết 5 giây?"}
-    S8["Kiểm tra lượt Kinh mới<br/>đúng thì thêm người thắng"]
-    S9a["Chờ host xác nhận<br/>hiển thị vé/hàng thắng cho host<br/>BR-28"]
-    S9["Kết thúc ván, lưu người thắng<br/>BIZ-13"]
+    S3{"Vé thuộc player, tham gia ván<br/>và chưa bị hủy?"}
+    S4["Dừng quay số<br/>ván → Chờ host duyệt<br/>BR-16"]
+    S5["Kiểm tra: hàng đủ 5 số đều đã rao?<br/>gợi ý Đúng / Hụt kèm hàng<br/>BR-17"]
+    S6["Báo cả phòng '&lt;tên&gt; KINH!'<br/>host thấy danh sách chờ duyệt<br/>SUP-01"]
+    E2["Báo 'kinh hụt'<br/>SUP-01, SUP-02"]
+    E3["Ván quay tiếp<br/>(về FLOW-07)"]
+    S9["Kết thúc ván, lưu người thắng = mọi vé đúng<br/>BIZ-13"]
     S10["Công bố người thắng, vé, hàng thắng<br/>Phát tiếng chúc mừng<br/>SUP-01, SUP-02"]
-    S11["Tạo ván mới ở Chờ bắt đầu<br/>vé vẫn thuộc người giữ<br/>BR-07, BR-11"]
+    S10b["Trả vé của người đang offline<br/>BR-29"]
+    S11["Tạo ván mới ở Chờ bắt đầu<br/>vé còn lại vẫn thuộc người giữ<br/>BR-07, BR-11"]
     X1(["Từ chối"])
     X2(["Ván kết thúc"])
   end
   S1 --> S2 --> S3
   S3 -- Không --> X1
-  S3 -- Có --> S4 --> S5
-  S5 -- Không --> E2 --> E3
-  S5 -- Có --> S6 --> S7
-  S7 -- Chưa --> A2 --> S8 --> S7
-  S7 -- Rồi --> S9a --> S9b --> S9 --> S10 --> S11 --> X2
+  S3 -- Có --> S4 --> S5 --> S6 --> S8
+  A2 --> S3
+  S8 -- "Không (mọi vé hụt)" --> R1 --> E2 --> E3
+  S8 -- Có --> S9b --> S9 --> S10 --> S10b --> S11 --> X2
 ```
 
 - **Happy path:**
   1. Player dò số trên vé: mode Tự dò thì tự đánh dấu, mode Auto thì hệ thống đánh dấu và làm nổi bật hàng "chờ" (BR-20, SUP-10).
   2. Player bấm "Kinh" cho một vé.
-  3. Hệ thống kiểm tra vé thuộc player và nằm trong danh sách vé tham gia ván.
-  4. Hệ thống tạm dừng quay số (BR-16).
-  5. Hệ thống kiểm tra vé có ít nhất 1 hàng đủ 5 số đều đã rao, kể cả số rao từ trước (BR-17). Đúng thì sang bước 6.
-  6. Ghi nhận người thắng đầu tiên, mở cửa sổ đồng kinh 5 giây (BR-18, SUP-03); cả phòng thấy "<tên> KINH! Đang chờ đồng kinh…".
-  7. Hết 5 giây: ván chuyển Chờ host xác nhận; không nhận thêm Kinh, không quay số. Host thấy danh sách vé và hàng thắng (BR-28).
-  7b. Host bấm "Xác nhận kết thúc ván" (host không bác bỏ được). Ván chuyển Kết thúc, lưu người thắng (tên, màu vé) vào lịch sử (BIZ-13).
-  8. Công bố người thắng, vé và hàng thắng cho cả phòng; phát tiếng chúc mừng (SUP-01, SUP-02).
-  9. Hệ thống tạo ván mới ở Chờ bắt đầu; vé vẫn thuộc người giữ (BR-07, BR-11). Mọi người được lấy/bỏ vé lại.
+  3. Hệ thống kiểm tra vé thuộc player, nằm trong danh sách vé tham gia ván và chưa bị hủy (BR-22).
+  4. Hệ thống dừng quay số; ván chuyển **Chờ host duyệt** (BR-16).
+  5. Hệ thống kiểm tra vé có ít nhất 1 hàng đủ 5 số đều đã rao, kể cả số rao từ trước (BR-17), và ghi gợi ý Đúng/Hụt kèm hàng thắng.
+  6. Cả phòng (player + host) thấy "<tên> KINH!"; host thấy danh sách lượt chờ duyệt với gợi ý của hệ thống (SUP-01).
+  7. Trong lúc chờ host, player khác vẫn bấm Kinh được (A2).
+  8. Có ≥ 1 vé đúng: host bấm "Xác nhận kết thúc ván" (nút Bác bỏ không dùng được). Ván Kết thúc; người thắng là mọi vé đúng trong danh sách; lưu người thắng (tên, màu vé) vào lịch sử (BR-28, BIZ-13).
+  9. Công bố người thắng, vé và hàng thắng cho cả phòng; phát tiếng chúc mừng (SUP-01, SUP-02).
+  10. Vé của người giữ đang offline trả về bộ; vé bị khóa (BR-22) trả về bộ (BR-29).
+  11. Hệ thống tạo ván mới ở Chờ bắt đầu; vé còn lại vẫn thuộc người giữ (BR-07, BR-11). Player được bỏ vé, lấy vé mới hoặc rời phòng.
 - **Alternative paths:**
-  - A1. Ván đang tạm dừng do host bấm: vẫn nhận và kiểm tra lượt Kinh (Q-029); nếu hụt thì giữ trạng thái tạm dừng thay vì quay tiếp.
-  - A2. Trong cửa sổ đồng kinh, player khác bấm Kinh: kiểm tra như bước 5; đúng thì thêm vào danh sách người thắng, hụt thì báo kinh hụt; quay lại chờ hết cửa sổ (bước 7).
-  - A3. Nhiều người bấm Kinh gần như cùng lúc: kiểm tra lần lượt theo thứ tự nhận; người đúng đầu tiên mở cửa sổ, những người sau xử lý theo A2.
-  - A4. Một player có 2 vé cùng kinh: bấm Kinh cho từng vé; cả hai vé đều được ghi là vé thắng.
+  - A1. Ván đang tạm dừng do host bấm: vẫn nhận lượt Kinh (Q-029); bị bác bỏ thì ván về Tạm dừng thay vì quay tiếp.
+  - A2. Ván đang Chờ host duyệt, player khác bấm Kinh: kiểm tra như bước 3, 5; thêm vào danh sách chờ duyệt; cả phòng thấy "<tên> KINH!". Host thấy danh sách cập nhật (Q-055).
+  - A3. Nhiều người bấm Kinh gần như cùng lúc: tất cả vào danh sách chờ duyệt theo thứ tự nhận.
+  - A4. Một player có 2 vé cùng kinh: bấm Kinh cho từng vé; mỗi vé là một lượt; vé đúng đều được ghi là vé thắng.
+  - A5. Chính host là người kinh: host vẫn tự duyệt.
+  - A6. Mọi vé trong danh sách đều hụt: host bấm "Bác bỏ"; cả phòng thấy "<tên> kinh hụt" cho từng lượt, phát tiếng kinh hụt (SUP-02), không phạt (BR-17); ván quay tiếp theo nhịp (về FLOW-07 bước 1).
 - **Exceptions:**
-  - E1. Vé không thuộc player hoặc không tham gia ván (vé bị khóa do người rời/kick – BR-22): từ chối, ván không dừng.
-  - E2. Kinh hụt: cả phòng thấy "<tên> kinh hụt", phát tiếng kinh hụt (SUP-02), không phạt (BR-17).
-  - E3. Sau kinh hụt: quay số tiếp tục theo nhịp (về FLOW-07 bước 1).
-  - E4. Player mất kết nối sau khi bấm Kinh: kết quả vẫn được tính.
-  - E5. Host offline lúc cần xác nhận: ván đứng ở Chờ host xác nhận, cả phòng thấy "Đang chờ host xác nhận"; chấp nhận ván không kết thúc được tới khi host quay lại (Q-048). Phòng quá hạn 8 giờ: ván tự Kết thúc với người thắng đã xác định rồi đóng phòng (Q-042).
-  - A5. Chính host là người kinh: host vẫn tự bấm xác nhận.
-- **Supporting kích hoạt:** SUP-10 tại bước 1; SUP-03 tại bước 6; SUP-01 tại bước 6, 8, E2; SUP-02 tại bước 8, E2.
-- **Business rules áp dụng:** BR-20 bước 1; BR-16 bước 4; BR-17 bước 5, E2; BR-18 bước 6, A2; BR-28 bước 7, 7b, E5; BR-07 và BR-11 bước 9; BR-22 tại E1.
+  - E1. Vé không thuộc player, không tham gia ván hoặc đã bị hủy (người rời/đăng xuất/bị kick – BR-22): từ chối, ván không dừng.
+  - E2. Vé đã có lượt Kinh trong danh sách chờ duyệt hiện tại: từ chối bấm lại.
+  - E3. Player mất kết nối sau khi bấm Kinh: lượt vẫn được tính.
+  - E4. Host offline lúc cần duyệt: ván đứng ở Chờ host duyệt, cả phòng thấy "Đang chờ host duyệt"; chấp nhận ván không kết thúc được tới khi host quay lại (Q-048). Player tự rời phòng được (FLOW-11, Q-057). Phòng quá hạn 8 giờ: ván tự Kết thúc với các vé đúng (nếu có) rồi đóng phòng (Q-042).
+  - E5. Bấm Kinh khi ván không ở Đang quay / Tạm dừng / Chờ host duyệt: từ chối.
+- **Supporting kích hoạt:** SUP-10 tại bước 1; SUP-01 tại bước 6, 9, A2, A6; SUP-02 tại bước 9, A6.
+- **Business rules áp dụng:** BR-20 bước 1; BR-22 bước 3, E1; BR-16 bước 4; BR-17 bước 5, A6; BR-28 bước 8, A6, E4; BR-29 bước 10; BR-07 và BR-11 bước 11.
 
 ### FLOW-09 Chuẩn bị kho tiếng rao (BIZ-09)
 - **Actor:** ACT-07 Đội phát triển · **Trigger:** Trước khi phát hành; khi muốn đổi bộ tiếng · **Kết quả:** Kho tiếng rao đầy đủ được nạp vào sản phẩm
@@ -612,41 +619,50 @@ flowchart TD
 - **Business rules áp dụng:** BR-06 bước 3; BR-22 bước 4.
 
 ### FLOW-11 Rời phòng (BIZ-11)
-> Cập nhật từ Phase 3 – Q-048: host không rời phòng được; phòng chỉ đóng khi hết hạn.
-- **Actor:** ACT-03 Player (trừ host), ACT-05 Hệ thống · **Trigger:** Bấm "Rời phòng" · **Kết quả:** Người dùng không còn ở phòng
+> Cập nhật – Q-057: rời được cả khi ván đang diễn ra (có cảnh báo, vé bị hủy); host rời = đóng phòng (thay Q-048, Q-052).
+- **Actor:** ACT-03 Player, ACT-02 Host, ACT-05 Hệ thống · **Trigger:** Bấm "Rời phòng" (hoặc đăng xuất – FLOW-01 A2) · **Kết quả:** Người dùng không còn ở phòng; nếu là host thì phòng đóng
 
 ```mermaid
 flowchart TD
-  subgraph P["ACT-03 Player"]
-    S1["Bấm Rời phòng, xác nhận"]
+  subgraph P["ACT-03 Player / ACT-02 Host"]
+    S1["Bấm Rời phòng"]
+    S2{"Ván đang diễn ra?"}
+    S3["Dialog cảnh báo 'Bạn đang chơi,<br/>vé sẽ bị hủy' → xác nhận"]
+    S3b["Dialog 'Rời phòng?' → xác nhận"]
   end
   subgraph H["Hệ thống"]
-    S4["Người dùng rời phòng"]
-    S5{"Ván đang diễn ra?"}
-    S6["Vé khóa tới hết ván<br/>BR-22"]
+    S4{"Là host?<br/>BR-21"}
+    C1["Hủy ván hiện tại<br/>đóng phòng ngay<br/>(FLOW-14 bước 5–6)"]
+    S5["Người dùng rời phòng"]
+    S6["Vé bị hủy khỏi ván,<br/>khóa tới hết ván<br/>BR-22"]
     S7["Vé về Trống"]
     S8["Báo cả phòng<br/>SUP-01"]
     X1(["Về trang chủ"])
   end
-  S1 --> S4 --> S5
-  S5 -- Có --> S6 --> S8
-  S5 -- Không --> S7 --> S8
+  S1 --> S2
+  S2 -- Có --> S3 --> S4
+  S2 -- Không --> S3b --> S4
+  S4 -- Có --> C1 --> X1
+  S4 -- Không --> S5
+  S5 -- "ván đang diễn ra" --> S6 --> S8
+  S5 -- "không" --> S7 --> S8
   S8 --> X1
 ```
 
 - **Happy path:**
-  1. Player bấm "Rời phòng", xác nhận.
+  1. Player bấm "Rời phòng". Ván đang diễn ra (Đang quay / Tạm dừng / Chờ host duyệt) → dialog cảnh báo "Bạn đang chơi, vé của bạn sẽ bị hủy"; không thì dialog "Rời phòng?". Player xác nhận.
   2. Người dùng rời phòng.
-  3. Vé: ván đang diễn ra thì khóa tới hết ván; không thì về Trống ngay (BR-22).
+  3. Vé: ván đang diễn ra thì bị hủy khỏi ván — khóa, không Kinh được — tới hết ván; không thì về Trống ngay (BR-22).
   4. Cả phòng thấy "<tên> đã rời phòng" (SUP-01).
   5. Người rời về trang chủ, có thể tạo/vào phòng khác (BR-02).
 - **Alternative paths:**
-  - A1. Người đã rời muốn quay lại: dùng link còn hạn (FLOW-03 A2, BR-25).
+  - A1. Người đã rời muốn quay lại: dùng link hoặc mã phòng còn hạn (FLOW-03 A2, BR-25).
+  - A2. Host bấm "Rời phòng": dialog "Rời phòng sẽ đóng phòng cho mọi người" (thêm cảnh báo đang chơi nếu ván đang diễn ra); xác nhận → ván hiện tại bị hủy (không ai thắng), phòng Đã đóng ngay, mọi người về trang chủ với thông báo "Host đã đóng phòng" (BR-21, FLOW-14).
+  - A3. Ván treo ở Chờ host duyệt vì host offline: player rời như bước 1–5 (action 6, Q-057).
 - **Exceptions:**
-  - E0. Ván đang diễn ra: nút "Rời phòng" bị khóa, chờ ván kết thúc (cập nhật từ Phase 3 – Q-052).
-  - E1. Host: không có nút "Rời phòng"; host ở phòng tới khi phòng hết hạn (BR-21).
-- **Supporting kích hoạt:** SUP-01 tại bước 4.
-- **Business rules áp dụng:** BR-22 bước 3; BR-02 bước 5; BR-25 tại A1; BR-21 tại E1.
+  - E1. Mất mạng lúc bấm: báo "Không rời được phòng, thử lại"; vẫn ở phòng.
+- **Supporting kích hoạt:** SUP-01 tại bước 4, A2.
+- **Business rules áp dụng:** BR-22 bước 3; BR-02 bước 5; BR-25 tại A1; BR-21 tại A2.
 
 ### FLOW-12 Chat trong phòng (BIZ-12)
 - **Actor:** ACT-03 Player, ACT-05 Hệ thống · **Trigger:** Gửi tin nhắn · **Kết quả:** Tin nhắn hiện cho cả phòng
@@ -713,7 +729,7 @@ flowchart TD
     S3["Phòng → Chờ đóng<br/>khóa bắt đầu ván mới"]
     S4["Chờ ván kết thúc<br/>(FLOW-08 / FLOW-07 E2)"]
     S5["Hủy ván chưa bắt đầu"]
-    S5b["Kết thúc ván với<br/>người thắng đã xác định"]
+    S5b["Kết thúc ván với<br/>các vé đúng (nếu có)"]
     S6["Phòng → Đã đóng<br/>link mời hết hiệu lực"]
     S7["Báo 'Phòng đã hết hạn'<br/>đưa mọi người về trang chủ<br/>SUP-01"]
   end
@@ -721,7 +737,7 @@ flowchart TD
   S1 --> S2
   S2 -- "Đang quay / tạm dừng do host (host online)" --> S3 --> S4 --> S6
   S2 -- "Chờ bắt đầu" --> S5 --> S6
-  S2 -- "Chờ host xác nhận" --> S5b --> S6
+  S2 -- "Chờ host duyệt" --> S5b --> S6
   S6 --> S7
 ```
 
@@ -733,7 +749,8 @@ flowchart TD
   5. Phòng Đã đóng; mọi link mời hết hiệu lực; hủy hẹn giờ còn lại.
   6. Mọi thành viên thấy "Phòng đã hết hạn", được đưa về trang chủ, có thể tạo/vào phòng khác (BR-02).
 - **Alternative paths:**
-  - A1. Ván ở/tới bước Chờ host xác nhận khi phòng đã quá hạn: ván tự Kết thúc với người thắng đã xác định, lưu lịch sử, rồi đóng phòng (Q-042, Q-048, BR-28).
+  - A1. Ván ở/tới bước Chờ host duyệt khi phòng đã quá hạn: ván tự Kết thúc với các vé đúng (không có thì không người thắng), lưu lịch sử, rồi đóng phòng (Q-042, Q-048, Q-055, BR-28).
+  - A3. Host rời phòng / đăng xuất (Q-057): bỏ qua bước 2–4; hủy ván hiện tại (không ai thắng); sang bước 5; mọi người thấy "Host đã đóng phòng" thay cho "Phòng đã hết hạn".
   - A2. Ván đang chạy mà host offline: phòng Chờ đóng, ván chạy tới khi có Kinh (A1) hoặc hết 90 số.
 - **Exceptions:**
   - E1. Thành viên offline lúc đóng: khi mở lại ứng dụng thấy thông báo phòng đã hết hạn.
@@ -846,33 +863,40 @@ stateDiagram-v2
 | Còn hiệu lực | Hết hạn | SUP-03 (8 giờ); FLOW-14 bước 5 | ACT-05 |
 
 #### ENT-05 Ván
+> Cập nhật – Q-055 (bỏ Đang chờ đồng kinh, gộp thành Chờ host duyệt), Q-057 (host rời/đăng xuất → Đã hủy).
 ```mermaid
 stateDiagram-v2
   [*] --> ChoBatDau: Tạo phòng / ván trước kết thúc
   ChoBatDau --> DangQuay: Host bấm Bắt đầu (FLOW-06)
-  DangQuay --> TamDung: Host tạm dừng / đang kiểm tra Kinh
-  TamDung --> DangQuay: Host tiếp tục / kinh hụt
-  DangQuay --> ChoDongKinh: Kinh đúng đầu tiên (FLOW-08)
-  TamDung --> ChoDongKinh: Kinh đúng khi đang tạm dừng
-  ChoDongKinh --> ChoXacNhan: Hết 5 giây
-  ChoXacNhan --> KetThuc: Host xác nhận (BR-28)
+  DangQuay --> TamDung: Host tạm dừng
+  TamDung --> DangQuay: Host tiếp tục
+  DangQuay --> ChoDuyet: Có người bấm Kinh (FLOW-08)
+  TamDung --> ChoDuyet: Có người bấm Kinh khi đang tạm dừng
+  ChoDuyet --> ChoDuyet: Player khác bấm Kinh
+  ChoDuyet --> DangQuay: Host bác bỏ (mọi vé hụt)
+  ChoDuyet --> TamDung: Host bác bỏ (trước đó tạm dừng)
+  ChoDuyet --> KetThuc: Host xác nhận (có vé đúng – BR-28)
   DangQuay --> KetThuc: Rao hết 90 số (BR-19)
-  ChoXacNhan --> KetThuc: Phòng đã quá hạn
-  ChoBatDau --> DaHuy: Phòng đến hạn
+  ChoDuyet --> KetThuc: Phòng đã quá hạn
+  ChoBatDau --> DaHuy: Phòng đến hạn / host rời
+  DangQuay --> DaHuy: Host rời / đăng xuất
+  TamDung --> DaHuy: Host rời / đăng xuất
+  ChoDuyet --> DaHuy: Host rời / đăng xuất
   KetThuc --> [*]
   DaHuy --> [*]
 ```
 | Trạng thái | → Trạng thái | Do FLOW/bước | Actor |
 |---|---|---|---|
-| — | Chờ bắt đầu | FLOW-02 bước 6; FLOW-08 bước 9; FLOW-07 E3 | ACT-05 |
+| — | Chờ bắt đầu | FLOW-02 bước 6; FLOW-08 bước 11; FLOW-07 E3 | ACT-05 |
 | Chờ bắt đầu | Đang quay | FLOW-06 bước 3 | ACT-02 |
-| Đang quay | Tạm dừng | FLOW-06 A1; FLOW-08 bước 4 | ACT-02 / ACT-05 |
-| Tạm dừng | Đang quay | FLOW-06 A2; FLOW-08 E3 | ACT-02 / ACT-05 |
-| Đang quay / Tạm dừng | Đang chờ đồng kinh | FLOW-08 bước 6, A1 | ACT-05 |
-| Đang chờ đồng kinh | Chờ host xác nhận | FLOW-08 bước 7 | ACT-05 |
-| Chờ host xác nhận | Kết thúc | FLOW-08 bước 7b; FLOW-14 A2 | ACT-02 / ACT-05 |
+| Đang quay | Tạm dừng | FLOW-06 A1 | ACT-02 |
+| Tạm dừng | Đang quay | FLOW-06 A2 | ACT-02 |
+| Đang quay / Tạm dừng | Chờ host duyệt | FLOW-08 bước 4, A1 | ACT-03 / ACT-05 |
+| Chờ host duyệt | Đang quay / Tạm dừng | FLOW-08 A6, A1 | ACT-02 |
+| Chờ host duyệt | Kết thúc | FLOW-08 bước 8; FLOW-14 A1 | ACT-02 / ACT-05 |
 | Đang quay | Kết thúc (không người thắng) | FLOW-07 E2 | ACT-05 |
 | Chờ bắt đầu | Đã hủy | FLOW-14 bước 3 | ACT-05 |
+| Mọi trạng thái chưa kết thúc | Đã hủy | FLOW-11 A2; FLOW-01 A2 (host rời/đăng xuất) | ACT-02 |
 
 #### ENT-06 Bộ vé
 ```mermaid
@@ -891,34 +915,37 @@ stateDiagram-v2
 stateDiagram-v2
   [*] --> Trong: Sinh bộ vé
   Trong --> DangGiu: Player lấy vé (FLOW-05)
-  DangGiu --> Trong: Bỏ vé / thu hồi / rời, kick khi không có ván
-  DangGiu --> BiKhoa: Rời / kick khi ván đang diễn ra
-  BiKhoa --> Trong: Ván kết thúc
+  DangGiu --> Trong: Bỏ vé / thu hồi / rời, kick khi không có ván / offline lúc ván kết thúc
+  DangGiu --> BiKhoa: Rời / đăng xuất / kick khi ván đang diễn ra (vé bị hủy)
+  BiKhoa --> Trong: Ván kết thúc / bị hủy
 ```
 | Trạng thái | → Trạng thái | Do FLOW/bước | Actor |
 |---|---|---|---|
 | — | Trống | FLOW-02 bước 5; FLOW-04 bước 4 | ACT-05 |
 | Trống | Đang giữ | FLOW-05 bước 5 | ACT-03 |
-| Đang giữ | Trống | FLOW-05 A1; FLOW-04 A1, A2; FLOW-10 bước 4; FLOW-11 bước 4 | ACT-03 / ACT-02 |
-| Đang giữ | Bị khóa | FLOW-10 bước 4; FLOW-11 bước 4 (ván đang diễn ra) | ACT-02 / ACT-03 |
-| Bị khóa | Trống | FLOW-08 bước 7b; FLOW-07 E2 | ACT-05 |
+| Đang giữ | Trống | FLOW-05 A1; FLOW-04 A1, A2; FLOW-10 bước 4; FLOW-11 bước 3; FLOW-08 bước 10, FLOW-07 E2 (người giữ offline – BR-29) | ACT-03 / ACT-02 / ACT-05 |
+| Đang giữ | Bị khóa | FLOW-10 bước 4; FLOW-11 bước 3; FLOW-01 A2 (ván đang diễn ra) | ACT-02 / ACT-03 |
+| Bị khóa | Trống | FLOW-08 bước 10; FLOW-07 E2 | ACT-05 |
 
-Ghi chú: trạng thái "Bị khóa" làm rõ BR-22 (vé của người rời/bị kick giữa ván) – bổ sung so với vòng đời ở business.md.
+Ghi chú: trạng thái "Bị khóa" (= vé bị hủy khỏi ván) làm rõ BR-22 (vé của người rời/đăng xuất/bị kick giữa ván) – bổ sung so với vòng đời ở business.md. Trả vé người offline lúc ván kết thúc theo BR-29 (Q-058).
 
 #### ENT-11 Lượt báo Kinh
+> Cập nhật – Q-055: hệ thống chỉ gợi ý; host chốt theo gợi ý.
 ```mermaid
 stateDiagram-v2
-  [*] --> DangKiemTra: Player bấm Kinh
-  DangKiemTra --> Dung: Hàng đủ 5 số đã rao
-  DangKiemTra --> Hut: Không đủ
-  Dung --> [*]
-  Hut --> [*]
+  [*] --> ChoDuyet: Player bấm Kinh (hệ thống gợi ý Đúng / Hụt)
+  ChoDuyet --> DuocXacNhan: Host xác nhận (gợi ý Đúng)
+  ChoDuyet --> BiBacBo: Host bác bỏ (gợi ý Hụt)
+  DuocXacNhan --> [*]
+  BiBacBo --> [*]
 ```
 | Trạng thái | → Trạng thái | Do FLOW/bước | Actor |
 |---|---|---|---|
-| — | Đang kiểm tra | FLOW-08 bước 2 | ACT-03 |
-| Đang kiểm tra | Đúng | FLOW-08 bước 5–6, A2 | ACT-05 |
-| Đang kiểm tra | Hụt | FLOW-08 E2 | ACT-05 |
+| — | Chờ duyệt (gợi ý Đúng/Hụt) | FLOW-08 bước 2–5, A2 | ACT-03 / ACT-05 |
+| Chờ duyệt | Được xác nhận | FLOW-08 bước 8; FLOW-14 A1 | ACT-02 / ACT-05 |
+| Chờ duyệt | Bị bác bỏ | FLOW-08 A6 | ACT-02 |
+
+Ghi chú: khi host xác nhận, lượt gợi ý Hụt trong cùng danh sách không thành người thắng (chỉ thông báo kinh hụt).
 
 ## 4. Non-Functional Requirements
 > Nguồn: Q-040 (quy mô ≤ 50 phòng, web trên điện thoại là chính, xóa dữ liệu phòng đóng sau 30 ngày). Toàn bộ giá trị được xác nhận ở Q-041.
@@ -967,7 +994,8 @@ stateDiagram-v2
 | Loại | Nội dung | Ref |
 |---|---|---|
 | ĐÃ CHỐT (Q-042) | Tên hiển thị 2–30 ký tự; ảnh JPG/PNG ≤ 5 MB. | BR-27, SUP-08 |
-| ĐÃ CHỐT (Q-042) | Trong lúc chờ host xác nhận: không nhận thêm Kinh, không quay số. | BR-28, FLOW-08 |
-| ĐÃ CHỐT (Q-042, Q-048) | Phòng quá hạn mà ván ở/tới bước Chờ host xác nhận: ván tự Kết thúc với người thắng đã xác định rồi đóng phòng. | BR-04, BR-28, FLOW-14 A1 |
+| ĐÃ CHỐT (Q-055, thay Q-042) | Trong lúc chờ host duyệt: không quay số, vẫn nhận thêm Kinh. Bỏ cửa sổ đồng kinh 5 giây. | BR-28, FLOW-08 |
+| ĐÃ CHỐT (Q-042, Q-048, Q-055) | Phòng quá hạn mà ván ở/tới bước Chờ host duyệt: ván tự Kết thúc với các vé đúng rồi đóng phòng. | BR-04, BR-28, FLOW-14 A1 |
+| ĐÃ CHỐT (Q-056, Q-057, Q-058) | Vào phòng bằng mã 6 ký tự; rời/đăng xuất giữa ván được (vé bị hủy), host rời = đóng phòng; vé người offline trả về khi ván kết thúc. | BR-21, BR-22, BR-29, BR-30 |
 | ĐÃ CHỐT (Q-042) | Đổi bộ tiếng rao sau phát hành: phòng đang chơi dùng bộ mới từ số kế tiếp. | FLOW-09 A1 |
 | OPEN | — (không còn câu hỏi mở) | |

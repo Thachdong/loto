@@ -29,7 +29,7 @@ Header ngoài phòng với nút ← và tiêu đề. Thân: ảnh đại diện 
 | SCR-10.A1 | Lưu tên hiển thị (5 → 8) | `updateProfile` (`PATCH /me/profile`, body `{displayName}`) | `display_name`, `profile_customized = true`; nếu đang ở phòng, server cập nhật tên ở `players` của ván hiện tại; toast "Đã lưu hồ sơ" | `DISPLAY_NAME_INVALID` (422) (BR-27) → 6, giữ giá trị cũ ở server; lỗi mạng → toast "Chưa lưu được, thử lại" |
 | SCR-10.A2 | Tải ảnh lên / chọn avatar có sẵn (3) | Tải lên: client upload Cloud Storage `avatars/{uid}/…` rồi `updateProfile` (body `{photoUrl}`); avatar có sẵn: `updateProfile` (body `{photoUrl: "/avatars/xx.png"}`) | Ảnh mới hiện ngay, đóng sheet; lưu luôn không cần bấm 8 `(Q-050)`; ảnh cũ trong `avatars/` bị xóa (ADR-12) | File sai định dạng / > 5 MB → 6, không upload (kiểm ở client trước, Storage Rules chặn lần nữa); upload lỗi → 6 "Tải ảnh thất bại, thử lại"; `AVATAR_INVALID` → 6 |
 | SCR-10.A3 | Khôi phục tên/ảnh Google (9) | `resetProfile` (`POST /me/profile/reset`) | `display_name = google_name`, `photo_url = google_photo_url`, `profile_customized = false`; toast "Đã khôi phục từ Google" | Lỗi → toast "Chưa khôi phục được, thử lại" |
-| SCR-10.A4 | Đăng xuất | `deleteCurrentSession` (`DELETE /sessions/current`) + Firebase Auth `signOut` | Ván đang diễn ra: nút khóa + "Không đăng xuất được khi ván đang diễn ra" (`GAME_IN_PROGRESS`). Ván chờ: player → dialog "Đăng xuất sẽ rời phòng {tên}"; host → dialog "Đăng xuất sẽ **đóng phòng** cho mọi người" → SCR-01 (Q-052) | BR-21 |
+| SCR-10.A4 | Đăng xuất | `deleteCurrentSession` (`DELETE /sessions/current`) + Firebase Auth `signOut` | Player → dialog "Đăng xuất sẽ rời phòng {tên}"; host → dialog "Đăng xuất sẽ **đóng phòng** cho mọi người". Ván đang diễn ra và mình có vé tham gia: dialog thêm cảnh báo "⚠ Bạn đang chơi ván {n}, vé sẽ bị hủy" (host: "ván sẽ bị hủy, không ai thắng"). Xác nhận → SCR-01 (Q-052, Q-057) | BR-21, BR-22 |
 
 ## 4. Trạng thái màn
 | Trạng thái | Hiển thị |
@@ -42,4 +42,4 @@ Header ngoài phòng với nút ← và tiêu đề. Thân: ảnh đại diện 
 
 ## 5. Ghi chú UX
 - Tên/ảnh mới dùng ở mọi phòng; tin chat cũ giữ tên lúc gửi.
-- `(Q-050)` SCR-10 vào được từ trong phòng qua SCR-11 vì host không rời phòng được (Q-048) và người đang ở phòng mở app luôn vào SCR-04, nếu không sẽ không bao giờ sửa được hồ sơ trong 8 giờ. Cần bổ sung cạnh điều hướng SCR-11 → SCR-10 vào wireframe.md mục 2–3.
+- `(Q-050)` SCR-10 vào được từ trong phòng qua SCR-11 vì người đang ở phòng mở app luôn vào SCR-04 (host rời = đóng phòng – Q-057), nếu không sẽ không bao giờ sửa được hồ sơ trong 8 giờ. Cần bổ sung cạnh điều hướng SCR-11 → SCR-10 vào wireframe.md mục 2–3.

@@ -1,5 +1,7 @@
 # Backlog
 
+> ⚠ **Specs đổi ngày 2026-11-19 (Q-055..Q-058)** — task bị ảnh hưởng, cần chạy lại `backlog-task-detail`: T-003, T-004, T-006, T-007 (viết lại), T-011. Xem ghi chú đầu mỗi task.
+
 > Cập nhật: 2026-11-19 · Nguồn: `specs/` (Phase 3 chốt ngày 2026-11-19) · Chi tiết phạm vi: `backlog/_draft/slices.md` · Quyết định: Q-053
 
 ## 1. Thiết lập

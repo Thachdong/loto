@@ -1,7 +1,7 @@
 # Project State
 
 - **Phase hiện tại:** 4
-- **Cập nhật lần cuối:** 2026-11-19
+- **Cập nhật lần cuối:** 2026-11-19 (đối chiếu specs/actions.md – Q-055..Q-058)
 
 ## Phase 1 — Business discovery → `idea/business.md`
 - [x] idea-parse
@@ -30,13 +30,14 @@
 
 ## Phase 4 — Backlog → `backlog/`
 - [x] backlog-slice
-- [x] backlog-task-detail
+- [ ] backlog-task-detail — cần cập nhật T-003, T-004, T-006, T-007, T-011 theo Q-055..Q-058
 - [ ] backlog-review
 - [ ] ✅ User xác nhận chốt Phase 4
 
 ## Câu hỏi còn mở
 | ID | Câu hỏi | Liên quan | Chặn bước nào? |
 |---|---|---|---|
+| — | Drawio SCR-02/04/09 chưa vẽ lại theo Q-055..Q-057 | specs/ui-ux/drawio | Không chặn (traceability #7) |
 
 ## Ghi chú
 

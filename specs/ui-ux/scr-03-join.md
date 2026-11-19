@@ -1,7 +1,7 @@
 # SCR-03 Lời mời vào phòng (`/join/{code}`)
 
 - **Actor:** ACT-04 (khách chưa đăng nhập), ACT-01 (người dùng đã đăng nhập)
-- **BIZ thể hiện:** BIZ-03 — phòng chỉ vào được bằng link mời (Q-022). Màn là đích của link host chia sẻ qua Zalo/Messenger/Telegram: cho khách biết ai mời, phòng nào, còn chỗ không, rồi đưa khách vào phòng sau khi kiểm tra mã còn hạn, chưa đầy, không bị chặn, không ở phòng khác (BR-02, BR-03, BR-05, BR-06). Trang render ở server với Open Graph để có thẻ xem trước khi dán link (SUP-06).
+- **BIZ thể hiện:** BIZ-03 — vào phòng bằng link mời (dùng được cả khi chưa có tài khoản); người đã có tài khoản còn vào được bằng mã phòng ở SCR-02 (Q-056, thay Q-022). Màn là đích của link host chia sẻ qua Zalo/Messenger/Telegram: cho khách biết ai mời, phòng nào, còn chỗ không, rồi đưa khách vào phòng sau khi kiểm tra mã còn hạn, chưa đầy, không bị chặn, không ở phòng khác (BR-02, BR-03, BR-05, BR-06). Trang render ở server với Open Graph để có thẻ xem trước khi dán link (SUP-06).
 - **FLOW:** FLOW-03 (bước 4–13, A1, A2, A3, E1–E5); FLOW-01 bước 7
 - **Đến từ:** link mời (ngoài app), SCR-01 (đăng nhập xong, `returnTo`) · **Đi tới:** SCR-04, SCR-01, SCR-02
 - **Wireframe:** [drawio](./drawio/scr-03-join.drawio) — 4 trang: *Lời mời hợp lệ (đã đăng nhập)*, *Chưa đăng nhập*, *Link lỗi*, *Đang ở phòng khác*. Chưa export PNG.
