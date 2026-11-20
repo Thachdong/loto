@@ -46,7 +46,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
-| 1 | P1 | Đặt viewport 375×812, mở `http://localhost:3000` | `[data-testid=app-title]` = "Lô Tô Online"; `[data-testid=app-tagline]` = "Chơi lô tô cùng bạn bè, mọi lúc mọi nơi"; tab title "Lô Tô Online" | ui |
+| 1 | P1 | Đặt viewport 375×812, mở `http://localhost:3000` (chưa đăng nhập) | Từ T-002: chuyển tới `/login`; `h1` = "Lô Tô Online"; có câu "Chơi lô tô cùng bạn bè, mọi lúc mọi nơi"; tab title "Lô Tô Online" | ui |
 | 2 | P1 | Đọc console | Không có lỗi đỏ (error) | console |
 | 3 | P1 | Kiểm `document.documentElement.lang` và `getComputedStyle(document.body).fontFamily` | `lang = "vi"`; font chứa "Be Vietnam Pro"; dấu tiếng Việt ("Lô Tô", "cùng bạn bè") hiển thị đúng, không ô vuông | ui |
 
@@ -104,6 +104,8 @@ TC-T001-01, TC-T001-02, TC-T001-03
 ---
 
 ### TC-T001-05 · Bố cục ở 360px và 1280px
+> Cập nhật T-002: trang `/` chuyển tới `/login`; đo trên `/login` (vẫn trong `[data-testid=app-shell]`).
+
 | Ưu tiên | Loại | Phủ | Chạy bằng |
 |---|---|---|---|
 | P1 | responsive | AC-3, NFR-12 | chrome |
