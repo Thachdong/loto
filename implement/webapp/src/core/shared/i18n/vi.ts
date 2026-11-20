@@ -9,6 +9,32 @@ export const vi = {
     tagline: "Chơi lô tô cùng bạn bè, mọi lúc mọi nơi",
     description: "Chơi lô tô online cùng bạn bè",
   },
+  common: {
+    loading: "Đang tải…",
+  },
+  login: {
+    signInWithGoogle: "Đăng nhập với Google",
+    signingIn: "Đang đăng nhập…",
+    error: "Đăng nhập không thành công, thử lại.",
+    inviteBanner: "Bạn được mời vào một phòng lô tô. Đăng nhập để vào phòng.",
+    dataNote: "Chúng tôi chỉ dùng tên, ảnh đại diện và email Google của bạn.",
+    inApp: {
+      title: "Ứng dụng này không cho đăng nhập Google",
+      step1: "Bấm nút ⋯ ở góc màn hình",
+      step2: "Chọn \"Mở bằng trình duyệt\"",
+      openChrome: "Mở bằng Chrome",
+      copyLink: "Copy link",
+      copied: "Đã copy link",
+      copyManual: "Chọn và copy link bên dưới",
+    },
+  },
+  home: {
+    greeting: "Xin chào, {name}",
+  },
+  room: {
+    title: "Phòng",
+    currentRoom: "Mã phòng: {id}",
+  },
   error: {
     VALIDATION_FAILED: "Dữ liệu gửi lên không hợp lệ",
     GOOGLE_TOKEN_INVALID: "Đăng nhập Google không hợp lệ, vui lòng thử lại",
