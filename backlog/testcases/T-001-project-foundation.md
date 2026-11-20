@@ -2,8 +2,8 @@
 task: T-001
 title: Dựng nền dự án chạy được trên local + emulator
 written_from_commit: e467650
-last_run: null
-summary: null
+last_run: 2026-11-20 21:47
+summary: "P0 5/5 · P1 4/4 · P2 không có"
 ---
 
 # Test case QC · T-001 Dựng nền dự án chạy được trên local + emulator
@@ -50,7 +50,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 2 | P1 | Đọc console | Không có lỗi đỏ (error) | console |
 | 3 | P1 | Kiểm `document.documentElement.lang` và `getComputedStyle(document.body).fontFamily` | `lang = "vi"`; font chứa "Be Vietnam Pro"; dấu tiếng Việt ("Lô Tô", "cùng bạn bè") hiển thị đúng, không ô vuông | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · title/tagline/tab title đúng vi.ts, lang="vi", font Be Vietnam Pro đã nạp, console không lỗi (sau reload) · 2026-11-20
 
 ---
 
@@ -66,7 +66,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 1 | P1 | Chạy `document.documentElement.scrollWidth <= window.innerWidth` | `true` | layout |
 | 2 | P1 | Thử cuộn ngang (`window.scrollTo(200, 0)` rồi đọc `window.scrollX`) | `scrollX = 0` | layout |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · đo trong iframe 375×812 (cửa sổ Chrome maximize, resize không áp dụng): scrollWidth ≤ innerWidth, scrollX = 0 · 2026-11-20
 
 ---
 
@@ -81,7 +81,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 |---|---|---|---|---|
 | 1 | P1 | Mở `http://localhost:4000` | Trang Overview có các thẻ Authentication, Firestore, Realtime Database, Storage, Functions, mỗi thẻ ở trạng thái đang chạy (có port 9099, 8080, 9000, 9199, 5001) | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · Auth 9099, Firestore 8080, Storage 9199, Functions 5001, RTDB 9000 đều On · 2026-11-20
 
 ---
 
@@ -99,7 +99,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 3 | — | Terminal: `npm run seed -- reset` | Exit 0, in "Seed \"reset\" xong." | ui (terminal) |
 | 4 | P1 | Tải lại Emulator UI › Firestore | Không còn collection nào | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · smoke exit 0, `_smoke/hello` có message "hello" + created_at timestamp; reset exit 0, Firestore trống · 2026-11-20
 
 ---
 
@@ -116,7 +116,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 2 | P1 | Đặt cửa sổ 1280×800 | `[data-testid=app-shell]`: `getBoundingClientRect().width <= 480`; khoảng cách trái ≈ khoảng cách phải (lệch ≤ 2px) | layout |
 | 3 | P1 | So màu nền `body` và `[data-testid=app-shell]` (`getComputedStyle(...).backgroundColor`) | Hai màu khác nhau (nền ngoài xám nhạt, cột trắng) | layout |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · đo trong iframe: 360×740 không tràn, chữ trong khung; 1280×800 shell 480px, lề 400/400; nền body lab(94.78) ≠ shell lab(100) · 2026-11-20
 
 ---
 
@@ -132,7 +132,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 1 | — | Terminal: `env -u FIRESTORE_EMULATOR_HOST npx tsx scripts/seed/index.ts smoke` (không nạp `.env.local`) | Exit ≠ 0, stderr có "Chỉ chạy seed trên emulator" | ui (terminal) |
 | 2 | P1 | Tải lại Emulator UI › Firestore | Không có collection `_smoke` | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · exit 1, stderr "Chỉ chạy seed trên emulator — thiếu biến …"; Firestore trống · 2026-11-20
 
 ---
 
@@ -143,7 +143,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 
 Phủ bởi `tests/emulator/core/rules-baseline.test.ts` (chạy trong `npm test`): Firestore đọc/ghi, RTDB đọc/ghi, Storage upload/đọc đều `permission-denied` với cả user chưa đăng nhập và đã đăng nhập.
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (automated, `npm test`) · 2026-11-20
 
 ---
 
@@ -157,7 +157,7 @@ Phủ bởi:
 - `src/core/shared/errors.test.ts` cho AC-8. Test so sánh với bảng mã lỗi đọc trực tiếp từ `specs/api-contract.yml`.
 - `src/core/shared/time.test.ts` và `src/app/page.test.tsx` cho AC-9.
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (automated, `npm test`) · 2026-11-20
 
 ---
 
@@ -172,7 +172,7 @@ Phủ bởi:
 |---|---|---|---|---|
 | 1 | — | Terminal: `npm test && npm run lint && npm run typecheck` | Cả 3 lệnh exit 0 | ui (terminal) |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · npm test 28/28, lint 0, typecheck 0 · 2026-11-20
 
 ---
 
