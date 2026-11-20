@@ -10,6 +10,8 @@ import { clearFirestoreAndAuth, createCookieStore, googleIdToken } from "./googl
 
 const store = vi.hoisted(() => ({ current: null as ReturnType<typeof createCookieStore> | null }));
 vi.mock("next/headers", () => ({ cookies: async () => store.current }));
+// connection() chỉ chạy trong request Next — no-op trong test.
+vi.mock("next/server", () => ({ connection: async () => undefined }));
 
 const cookieStore = createCookieStore();
 store.current = cookieStore;

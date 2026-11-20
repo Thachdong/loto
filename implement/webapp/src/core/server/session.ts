@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
+import { connection } from "next/server";
 import { getAdminAuth } from "./firebase-admin";
 
 /** Tên cookie phiên (ADR-07). Firebase Hosting/App Hosting chỉ chuyển cookie tên `__session`. */
@@ -19,6 +20,8 @@ export async function getSessionUid(): Promise<string | null> {
   try {
     const value = (await cookies()).get(SESSION_COOKIE)?.value;
     if (!value) return null;
+    // verifySessionCookie đọc giờ hệ thống — báo Next đây là dữ liệu theo request (cacheComponents).
+    await connection();
     const decoded = await getAdminAuth().verifySessionCookie(value, true);
     return decoded.uid;
   } catch (error) {
