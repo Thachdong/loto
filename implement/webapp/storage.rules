@@ -1,0 +1,10 @@
+rules_version = '2';
+
+// Baseline T-001: cấm mọi đọc/ghi. T-011 mở `avatars/{uid}` (ADR-12).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
