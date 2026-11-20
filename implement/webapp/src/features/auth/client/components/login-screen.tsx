@@ -17,7 +17,7 @@ type Props = {
 /** SCR-01 Đăng nhập. */
 export function LoginScreen({ returnTo, inApp, android, mobile, currentUrl }: Props) {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-4 py-8">
+    <main className="flex w-full flex-1 flex-col py-8">
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
         {/* 1 */}
         <div className="flex flex-col items-center gap-3">
