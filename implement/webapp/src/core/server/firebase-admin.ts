@@ -17,7 +17,8 @@ function projectId(): string {
  * Application Default Credentials.
  */
 export function getAdminApp(): App {
-  const existing = getApps()[0];
+  // Chỉ dùng app mặc định — script/test có thể tạo app tên khác.
+  const existing = getApps().find((app) => app.name === "[DEFAULT]");
   if (existing) return existing;
 
   const id = projectId();

@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { AppError, defineAction } from "./action";
 
+// Unit test chạy ngoài request Next — không có cookies(); phiên luôn trống.
+vi.mock("./session", () => ({ getSessionUid: async () => null }));
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
