@@ -34,6 +34,8 @@ summary: "P0 5/5 · P1 4/4 · P2 không có"
 ## 2. Smoke (chạy lại ở các task sau)
 TC-T001-01, TC-T001-02, TC-T001-03
 
+**Smoke 2026-11-20 (khi làm T-002):** TC-T001-01 ✅ (`/` → `/login`, chữ đúng, console sạch) · TC-T001-02 ✅ (375: không tràn) · TC-T001-03 ✅ (5 emulator On)
+
 ## 3. Test case
 
 ### TC-T001-01 · Trang chủ hiện tên app và câu giới thiệu, không lỗi console

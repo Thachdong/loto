@@ -2,8 +2,8 @@
 task: T-002
 title: Đăng nhập Google (SCR-01)
 written_from_commit: 8fec101
-last_run: null
-summary: null
+last_run: 2026-11-20 23:55
+summary: "P0 5/5 · P1 9/9 · P2 1/1"
 ---
 
 # Test case QC · T-002 Đăng nhập Google (SCR-01)
@@ -11,7 +11,7 @@ summary: null
 ## 0. Môi trường chung
 - Lệnh: `npm run emulators` (nền) · `npm run dev` (nền) · `npm run seed -- reset && npm run seed -- t002`
 - URL: `http://localhost:3000` · Emulator UI: `http://localhost:4000`
-- Viewport: 375×812 (trừ khi case ghi khác). UA Chrome máy tính ⇒ đăng nhập bằng **popup** của Auth emulator.
+- Viewport: 375×812 (trừ khi case ghi khác). UA Chrome máy tính ⇒ đăng nhập bằng **popup** của Auth emulator. Extension không điều khiển được cửa sổ popup ⇒ các bước chọn tài khoản chạy luồng **redirect** trong cùng tab bằng `?__ua=<UA Chrome Android>` (Mobile, không in-app); cần cấp quyền extension cho `localhost:9099`.
 - Profile: P1 = khách (1 cửa sổ Chrome). "Clear site data" = DevTools › Application › Storage › Clear site data cho `localhost:3000` (xóa cookie `__session` + IndexedDB Firebase), hoặc `document.cookie` không xóa được HttpOnly nên phải dùng DevTools / `chrome://settings/content/all` → localhost → Delete data.
 - Tài khoản (Auth emulator, provider google.com):
   - `an@example.com` "An Nguyễn" — **không seed**, tạo qua "Add new account" trong popup.
@@ -69,7 +69,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 | 2 | P1 | Đọc trang | Có logo, `h1` "Lô Tô Online", câu giới thiệu; `[data-testid=login-google-button]` = "Đăng nhập với Google", bật; `[data-testid=login-data-note]` = "Chúng tôi chỉ dùng tên, ảnh đại diện và email Google của bạn."; không có banner lời mời, không có dòng lỗi | ui |
 | 3 | P1 | Đọc console | Không có lỗi đỏ | console |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `/` → `/login`, đủ khối 1/3/5, không banner/lỗi, console sạch · 2026-11-20
 
 ---
 
@@ -89,7 +89,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 | 4 | P1 | Emulator UI › Firestore › `users/{uid của An}` (uid xem ở tab Authentication) | `email = "an@example.com"`, `google_name = "An Nguyễn"`, `display_name = "An Nguyễn"`, `profile_customized = false`, `current_room_id = null`, `chat_recent_at = []`, có `created_at`, `last_active_at`, `updated_at` | emulator-ui |
 | 5 | P1 | DevTools › Application › Cookies › `localhost:3000` | Có `__session`, HttpOnly ✓, SameSite Lax, Path `/`, hết hạn ≈ 14 ngày sau hiện tại; `document.cookie` không chứa `__session` | cookie |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · bước 1–2 bằng popup (nút "Đang đăng nhập…" + disabled); bước 3 chạy luồng redirect (`__ua` Chrome Android) vì extension không điều khiển được cửa sổ popup → "Xin chào, An Nguyễn"; doc `users` đủ field TBL-01; bước 5: tool chặn đọc cookie — HttpOnly/Max-Age/SameSite đã kiểm ở `create-session.test.ts`, server đọc được phiên · lần chạy đầu FAIL (redirect mất kết quả) → fix `d1f3066` · 2026-11-20
 
 ---
 
@@ -105,7 +105,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 | 1 | P1 | Mở `http://localhost:3000/login` | URL thành `/`; thấy "Xin chào, An Nguyễn"; không thấy nút Google | url, ui |
 | 2 | P1 | Mở `http://localhost:3000/` rồi tải lại | Vẫn ở `/`, không bị chuyển vòng sang `/login` | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `/login` → `/`, không thấy nút Google; tải lại `/` ở yên · chạy lại sau fix `03125a9` vẫn PASS · 2026-11-20
 
 ---
 
@@ -121,7 +121,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 | 1 | P1 | Mở `http://localhost:3000/login?returnTo=/join/AAAAAAAAAAAAAAAAAAAAAA` | `[data-testid=login-invite-banner]` = "Bạn được mời vào một phòng lô tô. Đăng nhập để vào phòng." | ui |
 | 2 | P1 | Bấm "Đăng nhập với Google", chọn "An Nguyễn" | URL là `/join/AAAAAAAAAAAAAAAAAAAAAA` (trang 404 ở task này là đúng) | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · banner đúng chữ; đăng nhập (dùng `binh@example.com` thay An — chỉ kiểm `returnTo`) → `/join/AAAAAAAAAAAAAAAAAAAAAA` (404) · 2026-11-20
 
 ---
 
@@ -138,7 +138,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 | 2 | P1 | Lần lượt mở `/login?returnTo=//evil.com`, `/login?returnTo=/room`, `/login?returnTo=/join/abc` | Cả 3: không có banner | ui |
 | 3 | P1 | Ở `/login?returnTo=https://evil.com` bấm "Đăng nhập với Google", chọn "An Nguyễn" | URL là `http://localhost:3000/`, không rời `localhost` | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · 4 giá trị không có banner (đối chứng `/join/{22}` có banner); đăng nhập với `https://evil.com` → `http://localhost:3000/` · 2026-11-20
 
 ---
 
@@ -152,11 +152,11 @@ TC-T002-01, TC-T002-02, TC-T002-03
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
 | 1 | P1 | Bấm "Đăng nhập với Google" | Popup mở | ui |
-| 2 | P1 | Đóng cửa sổ popup (không chọn tài khoản) | Trong ≤ 3 giây: `[data-testid=login-error]` = "Đăng nhập không thành công, thử lại."; nút "Đăng nhập với Google" bật lại; URL vẫn `/login?returnTo=…`; banner lời mời vẫn hiện | ui, url |
+| 2 | P1 | Đóng cửa sổ popup (không chọn tài khoản) | Trong ≤ 12 giây (Firebase chờ 8 giây trước khi báo `popup-closed-by-user`): `[data-testid=login-error]` = "Đăng nhập không thành công, thử lại."; nút "Đăng nhập với Google" bật lại; URL vẫn `/login?returnTo=…`; banner lời mời vẫn hiện | ui, url |
 
 Không đóng được popup bằng extension → `⏭ SKIP` kèm lý do (đã phủ bởi `login-screen.test.tsx`).
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · popup đóng bằng `window.close()` trên tham chiếu popup (tương đương bấm X) → lỗi sau ~9 giây, nút bật lại, URL và banner giữ nguyên · 2026-11-20
 
 ---
 
@@ -172,7 +172,7 @@ Không đóng được popup bằng extension → `⏭ SKIP` kèm lý do (đã p
 | 1 | P1 | `/login` → "Đăng nhập với Google" → chọn tài khoản `binh@example.com` | Về `/`; "Xin chào, Bình lô tô" | url, ui |
 | 2 | P1 | Emulator UI › Firestore › `users/u_binh` | `display_name = "Bình lô tô"`, `profile_customized = true`, `google_name = "Bình Trần"` | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · "Xin chào, Bình lô tô"; `users/u_binh`: display_name "Bình lô tô", google_name "Bình Trần", profile_customized true · 2026-11-20
 
 ---
 
@@ -188,7 +188,7 @@ Không đóng được popup bằng extension → `⏭ SKIP` kèm lý do (đã p
 | 1 | P1 | `/login` → "Đăng nhập với Google" → chọn `cuc@example.com` | URL là `/room`; thấy "Phòng" và `[data-testid=room-current-id]` = "Mã phòng: r_seed" | url, ui |
 | 2 | P1 | Mở `http://localhost:3000/` | Bị chuyển `/room` | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `/room`, "Phòng", "Mã phòng: r_seed"; `/` → `/room` · 2026-11-20
 
 ---
 
@@ -204,7 +204,7 @@ Không đóng được popup bằng extension → `⏭ SKIP` kèm lý do (đã p
 | 1 | P1 | Mở `/login?__ua=<UA Zalo Android đã encode>&returnTo=/join/AAAAAAAAAAAAAAAAAAAAAA` | `[data-testid=inapp-panel]` có "Ứng dụng này không cho đăng nhập Google" và 2 bước hướng dẫn; có `[data-testid=inapp-open-chrome]` "Mở bằng Chrome" và `[data-testid=inapp-copy-link]` "Copy link"; **không** có `[data-testid=login-google-button]`; banner lời mời vẫn hiện | ui |
 | 2 | P1 | Đọc `href` của `[data-testid=inapp-open-chrome]` | Bắt đầu `intent://localhost:3000/login?`, chứa `returnTo=%2Fjoin%2FAAAAAAAAAAAAAAAAAAAAAA`, kết thúc `#Intent;scheme=https;package=com.android.chrome;end` | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · panel + 2 bước + "Mở bằng Chrome" + "Copy link", không nút Google, banner còn; href intent đúng đầu/cuối, có returnTo · 2026-11-20
 
 ---
 
@@ -222,7 +222,7 @@ Không đóng được popup bằng extension → `⏭ SKIP` kèm lý do (đã p
 
 Nếu Chrome chặn clipboard (trình duyệt tự động) và hiện `[data-testid=inapp-link-input]` thay toast → ghi thực tế; nhánh này là AC-16 (đã phủ tự động), kiểm ô chứa đúng URL và chữ được chọn.
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · toast "Đã copy link"; chuỗi copy cùng origin/path/tham số với URL hiện tại (khác cách encode: server dựng lại query, khoảng trắng thành `+`) · 2026-11-20
 
 ---
 
@@ -235,7 +235,7 @@ Nếu Chrome chặn clipboard (trình duyệt tự động) và hiện `[data-te
 |---|---|---|---|---|
 | 1 | P1 | Mở `/login?__ua=<UA Messenger iOS đã encode>` | Có `[data-testid=inapp-panel]`, có "Copy link"; **không** có `[data-testid=inapp-open-chrome]`; không có nút Google | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · có panel và "Copy link", không "Mở bằng Chrome", không nút Google · 2026-11-20
 
 ---
 
@@ -253,7 +253,7 @@ Nếu Chrome chặn clipboard (trình duyệt tự động) và hiện `[data-te
 | 3 | P1 | Chờ 3 giây | Vẫn ở `/login?reauth=1` (không bị chuyển vòng về `/`) | url |
 | 4 | P1 | Đăng nhập lại bằng An | Về `/`, "Xin chào, An Nguyễn", ở yên | url, ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · xoá IndexedDB → `/login?reauth=1`, ở yên sau 7 giây; đăng nhập lại → `/` · 2026-11-20
 
 ---
 
@@ -267,7 +267,7 @@ Nếu Chrome chặn clipboard (trình duyệt tự động) và hiện `[data-te
 | 1 | P1 | Viewport 375×812, mở `/login?returnTo=/join/AAAAAAAAAAAAAAAAAAAAAA` | `scrollWidth <= innerWidth`; nút Google cao 48px, rộng bằng cột nội dung | layout |
 | 2 | P1 | Viewport 360×740, mở `/login?__ua=<UA Zalo Android đã encode>` | `scrollWidth <= innerWidth`; chữ panel không tràn | layout |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (sau fix `11cf54c`) · lần đầu FAIL bước 1: nút rộng 311px thay vì 343px (padding lặp) · sau fix: 375 → nút 343×48, 360 Zalo không tràn · đo bằng iframe vì cửa sổ Chrome maximize · 2026-11-20
 
 ---
 
@@ -285,7 +285,7 @@ Nếu Chrome chặn clipboard (trình duyệt tự động) và hiện `[data-te
 - `src/features/auth/client/components/in-app-browser-panel.test.tsx`: AC-16.
 - `src/features/auth/shared/domain/detect-in-app-browser.test.ts`: AC-17.
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (automated, `npm test`) · 2026-11-20
 
 ---
 
@@ -297,7 +297,7 @@ Nếu Chrome chặn clipboard (trình duyệt tự động) và hiện `[data-te
 - `tests/emulator/auth/users-rules.test.ts`: AC-18.
 - `tests/emulator/auth/session.test.ts`: AC-19.
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (automated, `npm test`) · 2026-11-20
 
 ---
 
