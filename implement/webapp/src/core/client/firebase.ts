@@ -42,7 +42,9 @@ function init(): ClientServices {
   const storage = getStorage(app);
 
   if (useEmulator) {
-    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    // `localhost` (không phải 127.0.0.1): cùng site với app http://localhost:3000. Khác site thì Chrome
+    // tách storage của iframe auth (third-party storage partitioning) → getRedirectResult mất kết quả.
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
     connectFirestoreEmulator(firestore, "127.0.0.1", 8080);
     connectDatabaseEmulator(database, "127.0.0.1", 9000);
     connectStorageEmulator(storage, "127.0.0.1", 9199);
