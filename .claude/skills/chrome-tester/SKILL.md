@@ -10,7 +10,7 @@ Phạm vi chạy mặc định: smoke của mọi task đã `DONE` trước đó
 Bỏ qua TC `automated` (ghi `⏭ automated`) và `manual` (ghi `⏭ manual — cần dev/QC làm tay`).
 
 ## 1. Dựng môi trường (trong `implement/webapp/`)
-1. Kiểm `.env.local` tồn tại (không có → copy từ `.env.local.example`, báo dev).
+1. Kiểm `.env.local` tồn tại (không có → copy từ `.env.example`, báo dev).
 2. Kiểm port đang dùng: `lsof -i :3000 -i :8080 -i :9099 -i :4000`. Đã chạy sẵn → dùng lại, không khởi động trùng.
 3. Chưa chạy → Bash `run_in_background: true`:
    - `npm run emulators`

@@ -29,7 +29,7 @@ printf '%s' "$MSG" | grep -iE 'claude|anthropic|co-authored-by' && echo "BLOCKED
    3. Mỗi commit ≤ ~400 dòng thay đổi (không tính lockfile/generated). Lớn hơn → tách theo khối logic (VD một action/commit).
 3. Test đi **cùng commit** với code nó kiểm. Config/deps (`package.json` + lockfile) đi cùng commit dùng tới chúng, hoặc commit `build(deps)` riêng nếu nhiều.
 4. Mỗi commit phải tự đứng được: typecheck không vỡ ở commit trung gian nếu tránh được (thứ tự shared → db → server → client giúp điều này).
-5. Không commit: `.env*` (trừ `.env.local.example`), `.emulator-data/`, `node_modules/`, `.next/`, `graphify-out/`, file chứa secret/key. Thấy → cảnh báo dev.
+5. Không commit: `.env*` (trừ `.env.example`), `.emulator-data/`, `node_modules/`, `.next/`, `graphify-out/`, file chứa secret/key. Thấy → cảnh báo dev.
 6. Thực hiện: `git add <file cụ thể>` (không `git add -A`/`.`) → `git commit -F <file message trong scratchpad>` hoặc heredoc.
 
 ## Message mẫu
