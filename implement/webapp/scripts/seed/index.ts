@@ -5,10 +5,12 @@
 import { emulatorGuardError } from "./lib/env";
 import { reset } from "./scenarios/reset";
 import { smoke } from "./scenarios/smoke";
+import { t002 } from "./scenarios/t002";
 
 const SCENARIOS: Record<string, () => Promise<void>> = {
   reset,
   smoke,
+  t002,
 };
 
 async function main(): Promise<number> {
