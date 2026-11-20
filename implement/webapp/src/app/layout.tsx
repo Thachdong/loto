@@ -1,29 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
+import { AppShell } from "@/core/client/app-shell";
+import { Toaster } from "@/core/client/ui/sonner";
+import { t } from "@/core/shared/i18n/vi";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam-pro",
+  subsets: ["vietnamese", "latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Lô Tô Online",
-  description: "Chơi lô tô online cùng bạn bè",
+  title: t("app.name"),
+  description: t("app.description"),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="vi"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="vi" className={`${beVietnamPro.variable} antialiased`}>
+      <body className="min-h-dvh font-sans">
+        <AppShell>{children}</AppShell>
+        <Toaster theme="light" position="top-center" />
+      </body>
     </html>
   );
 }
