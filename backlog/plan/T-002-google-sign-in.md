@@ -1,10 +1,10 @@
 ---
 task: T-002
 title: Đăng nhập Google (SCR-01)
-status: approved
+status: done
 approved_at: 2026-11-20
 branch: feature/dongt/sign-in
-plan_commit: null
+plan_commit: 4cd8eca
 ---
 
 # Plan T-002 · Đăng nhập Google (SCR-01)
@@ -149,7 +149,28 @@ Gate sau mỗi đợt: `npm run typecheck && npm run lint && npm run test:unit`;
 - Subagent song song (đợt 2) sửa `vi.ts`? Không — mọi key nằm ở S1. Lane client không sửa `features/auth/shared/{schemas,types.ts}`.
 
 ## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test: …
-- QC: `backlog/testcases/T-002-*.md` — P0 x/y, P1 x/y
-- Còn lại cho dev review: …
+- Commits:
+  - plan: `4cd8eca`
+  - S1: `8d3245f`
+  - S2: `b8833e3`
+  - S3: `c59c5b4`
+  - S4: `c16799d`, `642b3be`
+  - S5: `8fec101`
+  - QC: `1fdaed6`, `6a1471e`
+  - fix: `d1f3066`, `03125a9`, `11cf54c`
+- Lint/typecheck/test/build: pass. `npm test` 104/104 (unit 73). `npm run build` OK.
+- QC: `backlog/testcases/T-002-google-sign-in.md` — P0 5/5, P1 9/9, P2 1/1. Smoke T-001 3/3.
+- Phát sinh khi chạy Chrome (đã sửa):
+  - Luồng redirect mất kết quả vì Auth emulator nối qua `127.0.0.1` (khác site với `localhost:3000`, Chrome tách storage) → nối qua `localhost:9099`.
+  - `Date.now()` lúc prerender `/login` khi có cookie cũ → `await connection()` trước `verifySessionCookie`.
+  - Padding lặp làm nút Google hẹp 311px → bỏ padding của `LoginScreen`.
+- Phát sinh khác:
+  - Thêm `next typegen` vào script `typecheck`, để repo mới clone vẫn có route types.
+  - `getAdminApp()` lấy app `[DEFAULT]` thay cho `getApps()[0]`.
+  - `user.doc.ts` và `user.mapper.ts` được thêm `server-only`.
+  - Xoá `src/app/page.test.tsx` vì trang chào T-001 đã được thay. Chữ từ `vi.ts` giờ được kiểm ở `login-screen.test.tsx`.
+- Còn lại cho dev review:
+  - **Production (ADR-07):** `signInWithRedirect` trên điện thoại sẽ gặp lỗi Chrome tách storage nếu `authDomain` khác site với app. Cần đặt `authDomain` bằng domain app và cho App Hosting proxy `/__/auth/*`, hoặc dùng popup. Việc này nên làm trước khi deploy.
+  - Cookie `__session` (httpOnly, sameSite lax, secure chỉ ở production) và việc không log `idToken`/cookie.
+  - Rules `users/{uid}`.
+  - Message lỗi "Đăng nhập không thành công" chỉ hiện sau khoảng 9 giây khi đóng popup. Đây là hành vi mặc định của Firebase.

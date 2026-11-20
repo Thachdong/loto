@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-01 | M1 | 5 | T-001 | TODO |
+| EPIC-01 | M1 | 5 | T-001 | DONE |
 
 ## 1. Mục tiêu demo
 Sau task này: **người dùng chưa đăng nhập mở `localhost:3000` thì được đưa tới SCR-01. Bấm "Đăng nhập với Google" và chọn tài khoản trên màn Google giả lập của emulator → server tạo `users/{uid}`, đặt cookie `__session` → người dùng về trang chủ, thấy "Xin chào, {tên}". Mở `/login` với user-agent giả lập Zalo thì thấy hướng dẫn "Mở bằng trình duyệt" và nút "Copy link".**
@@ -32,25 +32,25 @@ Sau task này: **người dùng chưa đăng nhập mở `localhost:3000` thì �
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Route `/login` (SCR-01), bố cục theo `scr-01-login.md` §1–2: logo + "Lô Tô Online" + câu giới thiệu (1), banner lời mời (2), nút "Đăng nhập với Google" full width cao 48px (3), dòng lỗi (4), ghi chú dữ liệu (5).
-- [ ] Banner lời mời (2) "Bạn được mời vào một phòng lô tô. Đăng nhập để vào phòng." chỉ hiện khi `returnTo` hợp lệ. Hàm `parseReturnTo(raw)` chỉ nhận `^/join/[0-9A-Za-z]{22}$`, mọi giá trị khác bỏ qua để tránh open redirect (`scr-01` §5).
-- [ ] Nút (3): UA điện thoại dùng `signInWithRedirect`, máy tính dùng `signInWithPopup` (ADR-07). Lấy `idToken` rồi gọi `createSessionAction`.
-- [ ] Trạng thái loading: khi đang xử lý `getRedirectResult` hoặc chờ `createSessionAction`, nút hiện "Đang đăng nhập…" + spinner và bị khóa (`scr-01` §4).
-- [ ] Trạng thái error (FLOW-01 E1): popup bị đóng, người dùng hủy, Google lỗi, hoặc `createSessionAction` trả lỗi → hiện (4) "Đăng nhập không thành công, thử lại.", nút bấm lại được, `returnTo` giữ nguyên.
-- [ ] Đăng nhập xong thì điều hướng theo thứ tự: `returnTo` hợp lệ → `returnTo`; `me.currentRoomId ≠ null` → `/room`; còn lại → `/` (FLOW-01 bước 6–8).
-- [ ] `detectInAppBrowser(ua)` (hàm thuần): nhận diện Zalo, FBAN/FBAV/Messenger, Telegram, Instagram, Line, và trả `{inApp, android}`.
+- [x] Route `/login` (SCR-01), bố cục theo `scr-01-login.md` §1–2: logo + "Lô Tô Online" + câu giới thiệu (1), banner lời mời (2), nút "Đăng nhập với Google" full width cao 48px (3), dòng lỗi (4), ghi chú dữ liệu (5).
+- [x] Banner lời mời (2) "Bạn được mời vào một phòng lô tô. Đăng nhập để vào phòng." chỉ hiện khi `returnTo` hợp lệ. Hàm `parseReturnTo(raw)` chỉ nhận `^/join/[0-9A-Za-z]{22}$`, mọi giá trị khác bỏ qua để tránh open redirect (`scr-01` §5).
+- [x] Nút (3): UA điện thoại dùng `signInWithRedirect`, máy tính dùng `signInWithPopup` (ADR-07). Lấy `idToken` rồi gọi `createSessionAction`.
+- [x] Trạng thái loading: khi đang xử lý `getRedirectResult` hoặc chờ `createSessionAction`, nút hiện "Đang đăng nhập…" + spinner và bị khóa (`scr-01` §4).
+- [x] Trạng thái error (FLOW-01 E1): popup bị đóng, người dùng hủy, Google lỗi, hoặc `createSessionAction` trả lỗi → hiện (4) "Đăng nhập không thành công, thử lại.", nút bấm lại được, `returnTo` giữ nguyên.
+- [x] Đăng nhập xong thì điều hướng theo thứ tự: `returnTo` hợp lệ → `returnTo`; `me.currentRoomId ≠ null` → `/room`; còn lại → `/` (FLOW-01 bước 6–8).
+- [x] `detectInAppBrowser(ua)` (hàm thuần): nhận diện Zalo, FBAN/FBAV/Messenger, Telegram, Instagram, Line, và trả `{inApp, android}`.
   - Khi `inApp`: thay khối giữa bằng panel (6) "Ứng dụng này không cho đăng nhập Google" + 2 bước (bấm ⋯ → "Mở bằng trình duyệt"). Ẩn nút (3).
   - Nút (7) "Mở bằng Chrome" chỉ hiện trên Android, mở `intent://<host><path+query>#Intent;scheme=https;package=com.android.chrome;end`.
   - Nút (8) "Copy link" copy URL hiện tại (giữ `returnTo`) → toast "Đã copy link". Clipboard bị chặn → hiện ô input readonly chứa link, tự chọn sẵn chữ (SCR-01.A2).
   - `[ASSUMED]` Ngoài production, query `?__ua=<chuỗi UA>` ghi đè user-agent khi nhận diện, để AI giả lập Zalo/Android trên Chrome.
-- [ ] Route `/` (khung tối thiểu SCR-02): server component kiểm phiên. Không có phiên → redirect `/login`. Có phiên thì hiện "Xin chào, {display_name}". T-003 hoàn thiện route này.
-- [ ] Route `/room` (giữ chỗ): kiểm phiên, hiện "Phòng" và `current_room_id`. T-003 thay bằng trang phòng tối thiểu. `[ASSUMED]`
-- [ ] FLOW-01 A1: server component của `/login` kiểm phiên; phiên còn hiệu lực → redirect như bước điều hướng ở trên, không hiện màn.
-- [ ] Đồng bộ phiên server và client: giữ Firebase Auth client đã đăng nhập (`browserLocalPersistence`) vì listener Firestore ở các màn sau cần `request.auth`. Nếu server có phiên nhưng client không có `currentUser` sau khi khởi tạo → chuyển `/login?reauth=1`; `/login` có `reauth=1` thì bỏ qua A1 và hiện màn đăng nhập. `[ASSUMED]`
-- [ ] Mọi chữ thêm vào `src/i18n/vi.ts`.
+- [x] Route `/` (khung tối thiểu SCR-02): server component kiểm phiên. Không có phiên → redirect `/login`. Có phiên thì hiện "Xin chào, {display_name}". T-003 hoàn thiện route này.
+- [x] Route `/room` (giữ chỗ): kiểm phiên, hiện "Phòng" và `current_room_id`. T-003 thay bằng trang phòng tối thiểu. `[ASSUMED]`
+- [x] FLOW-01 A1: server component của `/login` kiểm phiên; phiên còn hiệu lực → redirect như bước điều hướng ở trên, không hiện màn.
+- [x] Đồng bộ phiên server và client: giữ Firebase Auth client đã đăng nhập (`browserLocalPersistence`) vì listener Firestore ở các màn sau cần `request.auth`. Nếu server có phiên nhưng client không có `currentUser` sau khi khởi tạo → chuyển `/login?reauth=1`; `/login` có `reauth=1` thì bỏ qua A1 và hiện màn đăng nhập. `[ASSUMED]`
+- [x] Mọi chữ thêm vào `src/i18n/vi.ts`.
 
 ### API / Backend
-- [ ] `createSessionAction({idToken})` (`auth: 'none'`). Zod: `idToken` string min 1, `additionalProperties: false` (`SessionCreate`). Các bước:
+- [x] `createSessionAction({idToken})` (`auth: 'none'`). Zod: `idToken` string min 1, `additionalProperties: false` (`SessionCreate`). Các bước:
   1. `verifyIdToken(idToken, true)`. Token sai, hết hạn hoặc bị thu hồi → `GOOGLE_TOKEN_INVALID` (401).
   2. `decoded.firebase.sign_in_provider !== 'google.com'` → `GOOGLE_TOKEN_INVALID` (BR-01).
   3. `auth_time` cũ hơn 5 phút → `GOOGLE_TOKEN_INVALID` (khuyến nghị của Firebase cho session cookie). `[ASSUMED]`
@@ -59,21 +59,21 @@ Sau task này: **người dùng chưa đăng nhập mở `localhost:3000` thì �
      - Đã có: cập nhật `google_name`, `google_photo_url`, `last_active_at`, `updated_at`. Nếu `profile_customized = false` thì đồng bộ thêm `display_name`, `photo_url` (FLOW-01 A3).
   5. `createSessionCookie(idToken, {expiresIn: 14 ngày})` → `cookies().set('__session', …, {httpOnly: true, secure: NODE_ENV === 'production', sameSite: 'lax', maxAge: 1209600, path: '/'})`. `[ASSUMED]` Bỏ `secure` khi chạy dev trên http.
   6. Trả `{me: Me, isNewUser}`. `Me` gồm `email` của chính mình, không có `chat_recent_at`, `last_active_at`.
-- [ ] `src/server/session.ts`: `getSessionUid()` đọc cookie `__session` → `verifySessionCookie(cookie, true)` → `uid | null`.
-- [ ] Hoàn thiện điểm móc trong `defineAction` (T-001): `auth: 'required'` mà `getSessionUid()` null → `UNAUTHENTICATED` (401), có phiên thì truyền `uid` vào handler.
-- [ ] Helper `requireUser()` cho server component: không có phiên → `redirect('/login')`. Có phiên → trả doc `users/{uid}`.
+- [x] `src/server/session.ts`: `getSessionUid()` đọc cookie `__session` → `verifySessionCookie(cookie, true)` → `uid | null`.
+- [x] Hoàn thiện điểm móc trong `defineAction` (T-001): `auth: 'required'` mà `getSessionUid()` null → `UNAUTHENTICATED` (401), có phiên thì truyền `uid` vào handler.
+- [x] Helper `requireUser()` cho server component: không có phiên → `redirect('/login')`. Có phiên → trả doc `users/{uid}`.
 
 ### Data
-- [ ] `firestore.rules` thêm `match /users/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow write: if false; }`.
-- [ ] Mapper `toMe(userDoc)` chuyển `snake_case` → `camelCase` theo schema `Me`.
-- [ ] Seed scenario `t002`:
+- [x] `firestore.rules` thêm `match /users/{uid} { allow read: if request.auth != null && request.auth.uid == uid; allow write: if false; }`.
+- [x] Mapper `toMe(userDoc)` chuyển `snake_case` → `camelCase` theo schema `Me`.
+- [x] Seed scenario `t002`:
   - `u_an`: lần đầu, chưa có doc `users`.
   - `u_binh`: đã có doc, `profile_customized = true`, `display_name = "Bình lô tô"`.
   - `u_cuc`: có doc, `current_room_id = "r_seed"`.
   - Cả 3 tạo bằng `seedUser` trong Auth emulator, provider `google.com`.
 
 ### Khác
-- [ ] Biến môi trường: không thêm. Dùng cấu hình emulator của T-001.
+- [x] Biến môi trường: không thêm. Dùng cấu hình emulator của T-001.
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -149,10 +149,10 @@ AC-4, AC-11, AC-12, AC-13, AC-16, AC-17, AC-18, AC-19 được phủ bằng test
 Đã gộp vào kịch bản Chrome. Dev review thêm: cookie options (`httpOnly`, `sameSite`) và việc không log `idToken`.
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Rules `users` có test allow (chính chủ) và deny (người khác, chưa auth, ghi)
-- [ ] `defineAction` `auth: 'required'` có test cookie thiếu, rác, bị thu hồi
-- [ ] Không log `idToken` hay session cookie
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Rules `users` có test allow (chính chủ) và deny (người khác, chưa auth, ghi)
+- [x] `defineAction` `auth: 'required'` có test cookie thiếu, rác, bị thu hồi
+- [x] Không log `idToken` hay session cookie
 
 ## 7. Ghi chú
 - `[ASSUMED]` Query `?__ua=` (tắt ở production) để AI giả lập trình duyệt trong ứng dụng chat trên Chrome, vì Claude in Chrome không đổi được user-agent.
@@ -162,3 +162,10 @@ AC-4, AC-11, AC-12, AC-13, AC-16, AC-17, AC-18, AC-19 được phủ bằng test
 - `[ASSUMED]` Task này dựng `/` tối thiểu ("Xin chào, {tên}") và `/room` giữ chỗ. T-003 thay cả hai.
 - `scr-01-login.md` §5 ghi "đăng xuất không làm rời phòng" là quyết định cũ. Q-052 đã ghi đè: đăng xuất = thoát phòng (làm ở T-011). Task này không đụng tới đăng xuất.
 - Point: giữ 5.
+
+## 8. Kết quả chạy
+- Test case QC: [testcases/T-002-google-sign-in.md](../testcases/T-002-google-sign-in.md) — 2026-11-20, P0 5/5, P1 9/9, P2 1/1.
+- Plan: [plan/T-002-google-sign-in.md](../plan/T-002-google-sign-in.md).
+- Lệch so với mô tả task:
+  - `requireUser()` nằm ở `features/auth/server/queries/current-user.query.ts`, không ở `src/server/session.ts`.
+  - Kịch bản Chrome đăng nhập bằng luồng redirect (`?__ua=` UA Android), vì extension không điều khiển được cửa sổ popup.
