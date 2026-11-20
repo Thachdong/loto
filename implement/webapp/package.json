@@ -10,7 +10,8 @@
     "test:unit": "vitest run --project unit",
     "typecheck": "tsc --noEmit",
     "emulators": "npm --prefix functions run build && firebase emulators:start --export-on-exit=.emulator-data $([ -d .emulator-data ] && echo --import=.emulator-data)",
-    "test": "firebase emulators:exec --only auth,firestore,database,storage \"vitest run\""
+    "test": "firebase emulators:exec --only auth,firestore,database,storage \"vitest run\"",
+    "seed": "tsx --env-file-if-exists=.env.local scripts/seed/index.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",
