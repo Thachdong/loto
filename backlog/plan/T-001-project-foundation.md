@@ -1,10 +1,10 @@
 ---
 task: T-001
 title: Dựng nền dự án chạy được trên local + emulator
-status: approved
+status: done
 approved_at: 2026-11-20
 branch: feature/dongt/sign-in
-plan_commit: null
+plan_commit: 943a2b4
 ---
 
 # Plan T-001 · Dựng nền dự án chạy được trên local + emulator
@@ -180,7 +180,11 @@ Gate sau mỗi step: `npm run typecheck && npm run lint && npm run test:unit`; S
 - `cacheComponents: true` trong `next.config.ts`: trang `/` tĩnh, không ảnh hưởng; ghi nhớ cho task sau.
 
 ## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test: …
-- QC: `backlog/testcases/T-001-*.md` — P0 x/y, P1 x/y
-- Còn lại cho dev review: …
+- Commits: `943a2b4` (plan) → `30f0a95` build(deps) · `aeefa53` S1 · `11e840a` S2 · `824ee5f` S3 · `643c303` S4 · `4798457` + `e5691ab` S5 · `5c436eb` S6 · `e467650` S7 · `f943c0f`, `7d7238a` QC.
+- Lint/typecheck/test/build: pass — `npm test` 28/28 (unit + emulator), `npm run build` OK.
+- QC: `backlog/testcases/T-001-project-foundation.md` — P0 5/5, P1 4/4 (TC-02/05 đo viewport bằng iframe vì cửa sổ Chrome maximize).
+- Phát sinh ngoài plan:
+  - Lockfile tạo lại: bản cũ thiếu native binding rolldown (npm/cli#4828) làm Vitest 5 không chạy; bỏ `vite-tsconfig-paths` (Vite có `resolve.tsconfigPaths`). Audit không đổi (12 prod / 24 total).
+  - shadcn CLI tự `npm install` (thêm `cn`, đổi pin thành `^`, làm hỏng lockfile) → đã khôi phục package.json/lockfile, sửa import `cn` sang `@/core/shared/utils`.
+  - Skill chrome-tester, commit-worker đổi `.env.local.example` → `.env.example`.
+- Còn lại cho dev review: message tiếng Việt tự viết cho các mã lỗi chưa có mẫu (`vi.ts` › `error`); `next.config.ts` bật `cacheComponents: true`; rule boundaries chưa giới hạn "service public" khi service gọi service feature khác.
