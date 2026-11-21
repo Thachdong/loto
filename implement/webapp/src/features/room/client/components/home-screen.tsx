@@ -7,6 +7,7 @@ import { t } from "@/core/shared/i18n/vi";
 import { useCurrentRoom } from "@/features/room/client/hooks/use-current-room";
 import { CreateRoomForm } from "@/features/room/client/components/create-room-form";
 import { CurrentRoomCard } from "@/features/room/client/components/current-room-card";
+import { JoinRoomCard } from "@/features/room/client/components/join-room-card";
 import { LeaveReasonBanner } from "@/features/room/client/components/leave-reason-banner";
 import { OfflineBanner } from "@/features/room/client/components/offline-banner";
 
@@ -87,11 +88,8 @@ export function HomeScreen({ uid, displayName }: Props) {
                 <CreateRoomForm displayName={name} onAlreadyInRoom={handleAlreadyInRoom} />
               </section>
 
-              {/* 8 — T-003: chỉ gợi ý link mời; nút + dialog nhập mã ở T-004 */}
-              <section data-testid="join-hint-card" className="flex flex-col gap-1 rounded-xl border bg-card p-4">
-                <h2 className="text-lg font-semibold">{t("home.joinTitle")}</h2>
-                <p className="text-sm text-muted-foreground">{t("home.joinHint")}</p>
-              </section>
+              {/* 8 */}
+              <JoinRoomCard onAlreadyInRoom={handleAlreadyInRoom} />
             </>
           )}
         </>

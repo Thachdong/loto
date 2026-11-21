@@ -60,6 +60,7 @@ vi.mock("@/core/client/hooks/use-doc-listener", async () => {
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
   createRoomAction: vi.fn(),
+  joinRoomAction: vi.fn(),
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push, replace: vi.fn() }) }));
@@ -71,6 +72,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 vi.mock("sonner", () => ({ toast: mocks.toast }));
+vi.mock("@/features/invite/server/actions/join-room.action", () => ({ joinRoomAction: mocks.joinRoomAction }));
 vi.mock("@/features/room/server/actions/create-room.action", () => ({
   createRoomAction: mocks.createRoomAction,
 }));
@@ -135,7 +137,7 @@ describe("HomeScreen", () => {
     expect(screen.getByTestId("create-room-button")).toHaveTextContent(dict.home.createRoom);
     expect(screen.getByTestId("join-hint-card")).toHaveTextContent(dict.home.joinTitle);
     expect(screen.getByTestId("join-hint-card")).toHaveTextContent(dict.home.joinHint);
-    expect(screen.getByTestId("join-hint-card").querySelector("button")).toBeNull();
+    expect(screen.getByTestId("join-room-open-button")).toHaveTextContent(dict.home.joinButton);
     expect(screen.queryByTestId("current-room-card")).not.toBeInTheDocument();
     expect(screen.queryByTestId("home-offline-banner")).not.toBeInTheDocument();
   });
@@ -233,6 +235,29 @@ describe("HomeScreen", () => {
     expect(mocks.toast).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("current-room-card")).toHaveTextContent("Phòng của Cúc");
     expect(screen.getByTestId("current-room-summary")).toHaveTextContent("Ván 1 · Chờ bắt đầu · 1 người");
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it("AC-24: ALREADY_IN_ROOM from the room-code dialog → card 9 and toast 'Bạn đang ở phòng {tên}'", async () => {
+    set(`users/${UID}`, { status: "ready", raw: userDoc(null) });
+    mocks.joinRoomAction.mockResolvedValue({
+      ok: false,
+      error: {
+        code: "ALREADY_IN_ROOM",
+        message: dict.error.ALREADY_IN_ROOM,
+        details: [{ code: "current_room", currentRoomId: "r_old" }],
+      },
+    });
+    renderHome();
+    await userEvent.click(screen.getByTestId("join-room-open-button"));
+    await userEvent.type(screen.getByTestId("join-code-input"), "abc234");
+    await userEvent.click(screen.getByTestId("join-code-submit"));
+    expect(mocks.joinRoomAction).toHaveBeenCalledWith({ roomCode: "ABC234" });
+
+    expect(await screen.findByTestId("current-room-card")).toBeInTheDocument();
+    set("rooms/r_old", { status: "ready", raw: roomDoc({ name: "Phòng của Cúc", host_uid: "u_cuc" }) });
+    set("rooms/r_old/games/g1", { status: "ready", raw: { seq_no: 1, status: "waiting" } });
+    await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith("Bạn đang ở phòng Phòng của Cúc"));
     expect(mocks.push).not.toHaveBeenCalled();
   });
 });
