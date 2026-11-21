@@ -1,10 +1,10 @@
 ---
 task: T-004
 title: Lời mời & vào phòng (SCR-03)
-status: approved
+status: done
 approved_at: 2026-11-21
 branch: feature/dongt/create-room
-plan_commit: null
+plan_commit: a59a3d4
 ---
 
 # Plan T-004 · Lời mời & vào phòng (SCR-03)
@@ -220,7 +220,9 @@ Không còn ❓.
 - Người dùng bị `blocked` lộ qua `viewer.blocked` chỉ khi đã có phiên — không lộ danh sách `blocked_uids` (NFR-10).
 
 ## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test/build: …
-- QC: `backlog/testcases/T-004-*.md` — P0 x/y, P1 x/y
-- Còn lại cho dev review: …
+- Commits: `a59a3d4..HEAD` — plan, contract (S1), repositories + seed (S2), getInvite + joinRoom (S3), invite page + Open Graph (S4), Home join dialog + "Copy mã" (S5), test case QC, fix `b876b91`, kết quả QC.
+- Lint/typecheck/test/build: pass — `npm test` 43 file / 305 test, `npm run build` pass; unit 198 sau fix.
+- QC: `backlog/testcases/T-004-invite-join-room.md` — P0 4/4, P1 8/8 (+2 automated), P2 2/3 (TC-17 skip môi trường). Smoke T-001 3/3, T-002 3/3, T-003 3/3.
+- Fix trong lúc chạy Chrome: `getInvite` chạy truy vấn Firestore trước `connection()`, nên `generateMetadata` báo lỗi `blocking-prerender-random` (`crypto.randomBytes`) ở dev. Gọi `connection()` trước khi chạm DB (`b876b91`).
+- Giả định mới của lane backend: `getInvite` trả `viewer.currentRoomId` thô (phòng đó có thể đã hết hạn nhưng chưa bị đóng lười); `addMemberInTx` nhận `text` đã dịch từ service; `alreadyMember` không ghi gì kể cả RTDB `presence_access`.
+- Còn lại cho dev review: thứ tự 6 bước lỗi và đóng lười trong `join-room.service.ts`; `ROOM_FULL` song song dựa vào khóa doc của Firestore transaction (test 5 lần ổn định); `htmlLimitedBots` ghi đè danh sách mặc định của Next (Zalo thật không kiểm được trên local); dialog "đang ở phòng khác" có `DialogTitle` ẩn và nút đóng sr-only "Close" chưa qua i18n; `?__ua=` tắt ở production nên TC đăng nhập redirect chỉ chạy trên dev; TC-17 responsive 360px cần kiểm tay.

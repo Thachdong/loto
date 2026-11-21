@@ -4,7 +4,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-03 | M1 | 5 | T-003 | TODO |
+| EPIC-03 | M1 | 5 | T-003 | DONE |
 
 ## 1. Mục tiêu demo
 Sau task này: **host copy link `/join/{code}` ở trang phòng. Người thứ 2 (profile Chrome khác) mở link khi chưa đăng nhập → thấy ảnh/tên host, tên phòng, "Link hết hạn lúc HH:mm" → "Đăng nhập để vào phòng" → đăng nhập xong quay lại đúng link → "Vào phòng" → vào trang phòng. Cả 2 profile thấy "2 người"; Emulator có `member_count = 2`. Mã nguồn HTML của trang link mời có đủ thẻ Open Graph.**
@@ -45,34 +45,34 @@ Sau task này: **host copy link `/join/{code}` ở trang phòng. Người thứ 
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Route `/join/[code]` (SCR-03), server component, không bắt buộc đăng nhập. Gọi `getInvite(code, viewerUid | null)`.
+- [x] Route `/join/[code]` (SCR-03), server component, không bắt buộc đăng nhập. Gọi `getInvite(code, viewerUid | null)`.
   - `viewer.inThisRoom = true` → `redirect('/room')` (FLOW-03 A1).
   - Hiện header chỉ có logo, ảnh host 80px (2), "{hostName} mời bạn chơi lô tô" (3), tên phòng (4), "Link hết hạn lúc HH:mm" (5) theo GMT+7. Không hiện số người (Q-049). `[ASSUMED]` Hạn rơi vào ngày khác ngày hiện tại (GMT+7) → "Link hết hạn lúc HH:mm dd/MM".
   - Nút chính (6): đã đăng nhập → "Vào phòng"; chưa đăng nhập → "Đăng nhập để vào phòng" dẫn tới `/login?returnTo=/join/{code}`.
-- [ ] Khung lỗi (7), cùng bố cục với icon, tiêu đề, mô tả, nút "Về trang chủ" (đã đăng nhập → `/`, chưa → `/login`):
+- [x] Khung lỗi (7), cùng bố cục với icon, tiêu đề, mô tả, nút "Về trang chủ" (đã đăng nhập → `/`, chưa → `/login`):
   - `INVITE_INVALID` / mã sai định dạng / `status ∈ {expired, closed}` → "Link không còn hiệu lực".
   - `status = full` → "Phòng đã đầy".
   - `viewer.blocked = true` → "Bạn không thể vào phòng này".
   - Lỗi đọc dữ liệu → "Không tải được lời mời" + nút "Thử lại" (tải lại trang).
-- [ ] Dialog (8), hiện khi `viewer.currentRoomId` là phòng khác (FLOW-03 E3), hoặc khi `joinRoomAction` trả `ALREADY_IN_ROOM`:
+- [x] Dialog (8), hiện khi `viewer.currentRoomId` là phòng khác (FLOW-03 E3), hoặc khi `joinRoomAction` trả `ALREADY_IN_ROOM`:
   - Nội dung: "Bạn đang ở "{tên phòng hiện tại}". Mỗi người chỉ ở 1 phòng — hãy rời phòng đó trước."
   - Tên phòng hiện tại: client đọc `rooms/{currentRoomId}.name` bằng Firestore (rules cho phép vì đang là thành viên).
   - Nút "Đóng" và "Về phòng hiện tại" → `/room`.
-- [ ] SCR-03.A1, khi bấm "Vào phòng":
+- [x] SCR-03.A1, khi bấm "Vào phòng":
   - Nút hiện "Đang vào phòng…" và bị khóa, gọi `joinRoomAction({inviteCode})`.
   - Thành công (kể cả `alreadyMember`) → `router.push('/room')`.
   - `INVITE_INVALID` / `INVITE_EXPIRED` / `ROOM_FULL` / `BLOCKED_FROM_ROOM` → khung (7) tương ứng.
   - `ALREADY_IN_ROOM` → dialog (8).
   - `UNAUTHENTICATED` → `/login?returnTo=/join/{code}`.
   - Lỗi khác → toast "Không vào được phòng, thử lại".
-- [ ] `generateMetadata`:
+- [x] `generateMetadata`:
   - `metadataBase = NEXT_PUBLIC_APP_URL`.
   - Mã hợp lệ: `og:title` / `<title>` "{hostName} mời bạn chơi lô tô", `og:description` = tên phòng, `og:image` = `/og/invite.png` (ảnh chung 1200×630 có sẵn trong `public/`), `og:url`, `og:type = website`, `og:locale = vi_VN`, `twitter:card = summary_large_image`.
   - Mã không tồn tại/hết hạn: title "Lô Tô Online", không có tên phòng. `[ASSUMED]`
-- [ ] Trang phòng tối thiểu `/room` (của T-003) đã nghe `rooms/{id}` realtime nên tự hiện "2 người". Không cần sửa.
+- [x] Trang phòng tối thiểu `/room` (của T-003) đã nghe `rooms/{id}` realtime nên tự hiện "2 người". Không cần sửa.
 
 ### API / Backend
-- [ ] `src/server/invites/getInvite.ts`: `getInvite(code, viewerUid?) → InvitePreview`. Hàm đọc thuần, không ghi DB.
+- [x] `src/server/invites/getInvite.ts`: `getInvite(code, viewerUid?) → InvitePreview`. Hàm đọc thuần, không ghi DB.
   - `code` không khớp `^[0-9A-Za-z]{22}$` → `INVITE_INVALID`, không truy vấn DB (NFR-09).
   - Query `rooms where invite_code == code limit 1`. Không có → `INVITE_INVALID` (404).
   - Tính `status`: `closed` nếu `rooms.status = closed`; `expired` nếu `status = closing` hoặc `now ≥ invite_expires_at`; `full` nếu `member_count ≥ 16`; còn lại `valid`.
@@ -80,7 +80,7 @@ Sau task này: **host copy link `/join/{code}` ở trang phòng. Người thứ 
   - Có `viewerUid`: `viewer = {inThisRoom: users.current_room_id == roomId, currentRoomId: users.current_room_id, blocked: viewerUid ∈ blocked_uids}`. Không có → `viewer = null`.
   - Dùng `React.cache` để `page.tsx` và `generateMetadata` chỉ truy vấn 1 lần mỗi request.
   - `[ASSUMED]` Không áp lazy expiry ở đây vì là thao tác đọc, chỉ tính `status` theo giờ server.
-- [ ] `joinRoomAction({inviteCode})` (`auth: 'required'`). Zod `JoinRoomRequest`: `inviteCode` khớp regex 22 base62, không có field lạ → sai thì `VALIDATION_FAILED`.
+- [x] `joinRoomAction({inviteCode})` (`auth: 'required'`). Zod `JoinRoomRequest`: `inviteCode` khớp regex 22 base62, không có field lạ → sai thì `VALIDATION_FAILED`.
   - Transaction, đúng thứ tự trong api-contract:
     1. Query phòng theo `invite_code`. Không có → `INVITE_INVALID` (404).
     2. `users.current_room_id == roomId` → trả `{roomId, alreadyMember: true}`, không ghi gì (FLOW-03 A1).
@@ -99,9 +99,9 @@ Sau task này: **host copy link `/join/{code}` ở trang phòng. Người thứ 
   - `[ASSUMED]` Lỗi ở bước 3 và 5 ném ra sau khi `applyLazyExpiry` đã ghi, nên phải commit phần đóng phòng trước rồi mới trả lỗi. Cách làm: transaction trả về kết quả dạng `{error}` thay vì ném lỗi; action đổi thành `AppError` sau commit.
 
 ### Data
-- [ ] Không thêm collection/field. Index `rooms.invite_code` là single tự có.
-- [ ] `public/og/invite.png` (ảnh chung 1200×630, logo + chữ "Lô Tô Online").
-- [ ] Seed scenario `t004`. Mọi phòng tạo bằng `seedRoom` của T-003, mã mời cố định, dễ đọc:
+- [x] Không thêm collection/field. Index `rooms.invite_code` là single tự có.
+- [x] `public/og/invite.png` (ảnh chung 1200×630, logo + chữ "Lô Tô Online").
+- [x] Seed scenario `t004`. Mọi phòng tạo bằng `seedRoom` của T-003, mã mời cố định, dễ đọc:
   - `u_host` (`host@example.com`, "An Nguyễn"): host phòng `r_ok` "Lô tô Tết nhà Ngoại", `member_count = 1`, mã `OKOKOKOKOKOKOKOKOKOKOK`.
   - `r_late`: `invite_expires_at = expires_at` = 1 phút trước, `status = active`, ván `waiting`, mã `LATELATELATELATELATE00`.
   - `r_closed`: `status = closed`, mã `CLOSEDCLOSEDCLOSED0000`.
@@ -114,7 +114,7 @@ Sau task này: **host copy link `/join/{code}` ở trang phòng. Người thứ 
   - Script in ra 5 URL `/join/…` để AI copy.
 
 ### Khác
-- [ ] Chữ mới thêm vào `vi.ts`.
+- [x] Chữ mới thêm vào `vi.ts`.
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -204,10 +204,10 @@ AC-12, AC-14, AC-18, AC-19, AC-21 được phủ bằng test tự động. AC-7 
 Đã gộp vào kịch bản Chrome. Không kiểm được thẻ xem trước trên Zalo/Messenger thật vì chỉ chạy local (Q-053). Bước 3 và 19 kiểm thẻ meta thay cho việc đó.
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Test song song `ROOM_FULL` pass ổn định (chạy 5 lần liên tiếp)
-- [ ] `getInvite` không trả dữ liệu ngoài schema `InvitePreview` (test so key)
-- [ ] Thứ tự kiểm lỗi của `joinRoom` đúng 6 bước trong api-contract
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Test song song `ROOM_FULL` pass ổn định (chạy 5 lần liên tiếp)
+- [x] `getInvite` không trả dữ liệu ngoài schema `InvitePreview` (test so key)
+- [x] Thứ tự kiểm lỗi của `joinRoom` đúng 6 bước trong api-contract
 
 ## 7. Ghi chú
 - `[ASSUMED]` `getInvite` không ghi DB (không đóng lười), chỉ tính `status` theo giờ server. Đóng lười xảy ra khi gọi `joinRoom` hoặc các action sau.
@@ -222,3 +222,16 @@ AC-12, AC-14, AC-18, AC-19, AC-21 được phủ bằng test tự động. AC-7 
 - Toast "{tên} đã vào phòng" (SUP-01) chỉ hiển thị khi T-006 dựng SCR-04. Task này chỉ ghi `last_event`.
 - NFR-04 đo trên local nên chỉ để tham khảo. Đo thật trên 4G cần môi trường deploy, ngoài phạm vi (Q-053).
 - Point: giữ 5.
+
+## 8. Kết quả chạy
+- Test case QC: [testcases/T-004-invite-join-room.md](../testcases/T-004-invite-join-room.md) — 2026-11-21, P0 4/4, P1 8/8 (+2 automated), P2 2/3 (TC-17 skip: cửa sổ Chrome không thu nhỏ dưới ~500px).
+- Plan: [plan/T-004-invite-join-room.md](../plan/T-004-invite-join-room.md).
+- Ghi chú ⚠ đầu file đã xử lý (dev chốt 2026-11-21):
+  - `joinRoom` nhận `inviteCode` **hoặc** `roomCode`; lỗi mới `ROOM_CODE_INVALID` (mọi phòng không mở được khi nhập mã đều trả mã này, không phân biệt).
+  - Gồm SCR-02.A4 chuyển từ T-003: card "Vào phòng" có nút + dialog nhập mã 6 ký tự ở Trang chủ.
+  - "Copy mã" thêm vào `/room` tối thiểu (chỉ host); Sheet Mời đầy đủ vẫn ở T-006.
+- Lệch so với mô tả task:
+  - Đường dẫn theo kiến trúc feature `invite` (`getInvite` ở `server/queries/get-invite.query.ts`, `joinRoom` ở `server/services/join-room.service.ts`).
+  - `getInvite` ném `AppError('INVITE_INVALID')` thay vì trả `status: not_found`.
+  - `next.config.ts` thêm `htmlLimitedBots` (Zalo/Telegram/Viber/Line) để crawler nhận thẻ `<meta>` trong `<head>`.
+  - Bước 7 của TC-03 (host thấy "2 người" realtime) không quan sát được trên 1 cửa sổ Chrome; listener `/room` đã kiểm ở T-003.
