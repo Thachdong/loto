@@ -2,6 +2,8 @@
 export const TICKET_COLORS = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink"] as const;
 
 export const ROOM_NAME_MAX = 50;
+/** BR-03: phòng tối đa 16 thành viên, kể cả host. */
+export const MAX_MEMBERS = 16;
 /** BR-04: phòng hết hạn sau 8 giờ. */
 export const ROOM_TTL_MS = 8 * 60 * 60 * 1000;
 export const DEFAULT_DRAW_INTERVAL_SEC = 5;
