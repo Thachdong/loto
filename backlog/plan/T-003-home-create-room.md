@@ -1,10 +1,10 @@
 ---
 task: T-003
 title: Trang chủ & tạo phòng (SCR-02)
-status: approved
+status: done
 approved_at: 2026-11-21
 branch: feature/dongt/create-room
-plan_commit: null
+plan_commit: 230189f
 ---
 
 # Plan T-003 · Trang chủ & tạo phòng (SCR-02)
@@ -240,7 +240,9 @@ Không còn ❓.
 - Test emulator cần cookie phiên thật (helper từ `google-token.ts`).
 
 ## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test: …
-- QC: `backlog/testcases/T-003-*.md` — P0 x/y, P1 x/y
-- Còn lại cho dev review: …
+- Commits: `230189f..HEAD` — plan, contract (S1), domain (S2), repository + rules/seed (S3), createRoom + deleteCurrentSession (S4), UI (S5: core listener/ui, room UI, auth header), test case QC, fix `4e03889`, kết quả QC.
+- Lint/typecheck/test/build: pass — `npm test` 33 file / 213 test (trước fix), unit 143 sau fix; `npm run build` pass.
+- QC: `backlog/testcases/T-003-home-create-room.md` — P0 4/4, P1 6/6 (+3 automated), P2 1/2 (TC-11 skip môi trường). Smoke T-001 3/3, T-002 3/3.
+- Fix trong lúc chạy Chrome: tab nền nhận snapshot phòng `closed` và `current_room_id = null` cùng một lượt render → banner sai lý do ("Bạn không còn ở trong phòng."). `useDocListener` thêm `onData` chạy trong callback snapshot; `useCurrentRoom` lưu snapshot cuối ở đó (`4e03889`, có test tái hiện).
+- Giả định mới của lane backend: `last_event.text = null` cho `room_closed`/`room_closing` (chưa có chữ trong vi.ts); phòng quá hạn mà ván đang chạy → lưu `closing` rồi trả `ALREADY_IN_ROOM`; kiểm lỗi theo thứ tự user thiếu → `ROOM_NAME_INVALID` → `ALREADY_IN_ROOM`; `runTransaction` export từ `room.repository.ts` (chưa có `core/db/transaction.ts`).
+- Còn lại cho dev review: rules `rooms/**` (`isMember` qua `get(users/…)`); nhánh đăng xuất khi đang ở phòng trả `INTERNAL_ERROR` tới T-011; banner offline chỉ dựa vào lỗi listener + `navigator.onLine`; TC-11 responsive 360px cần kiểm tay bằng DevTools; đường lỗi ghi `presence_access` (chỉ log) chưa có test.

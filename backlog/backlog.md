@@ -51,7 +51,7 @@
 |---|---|---|---|---|---|---|---|---|
 | T-001 | Dựng nền dự án chạy được trên local + emulator | — | EPIC-00 | M0 | 3 | — | DONE | [T-001](tasks/T-001-project-foundation.md) |
 | T-002 | Đăng nhập Google | SCR-01 | EPIC-01 | M1 | 5 | T-001 | DONE | [T-002](tasks/T-002-google-sign-in.md) |
-| T-003 | Trang chủ & tạo phòng | SCR-02 | EPIC-02 | M1 | 8 | T-002 | TODO | [T-003](tasks/T-003-home-create-room.md) |
+| T-003 | Trang chủ & tạo phòng | SCR-02 | EPIC-02 | M1 | 8 | T-002 | DONE | [T-003](tasks/T-003-home-create-room.md) |
 | T-004 | Lời mời & vào phòng | SCR-03 | EPIC-03 | M1 | 5 | T-003 | TODO | [T-004](tasks/T-004-invite-join-room.md) |
 | T-005 | Chọn vé | SCR-05 | EPIC-04 | M1 | 8 | T-004 | TODO | [T-005](tasks/T-005-ticket-selection.md) |
 | T-006 | Phòng chơi | SCR-04 | EPIC-05 | M1 | 21 | T-005 | TODO | [T-006](tasks/T-006-game-room.md) |
