@@ -5,10 +5,28 @@ rules_version = '2';
 // Lưu ý: các match OR nhau — catch-all `if false` không đóng lại quyền đã mở ở match cụ thể.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Thành viên phòng = users.current_room_id == roomId (Q-047, TBL-02 Rules đọc).
+    // Doc users không tồn tại → get() lỗi → từ chối.
+    function isMember(roomId) {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.current_room_id == roomId;
+    }
+
     // TBL-01 (T-002): chỉ chính chủ đọc; client không bao giờ ghi.
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
+    }
+
+    // TBL-02..TBL-06 (T-003): thành viên đọc phòng và cả cây con (tickets, games, players, messages).
+    match /rooms/{roomId} {
+      allow read: if isMember(roomId);
+      allow write: if false;
+
+      match /{doc=**} {
+        allow read: if isMember(roomId);
+        allow write: if false;
+      }
     }
 
     match /{document=**} {

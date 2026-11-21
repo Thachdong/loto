@@ -4,7 +4,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-02 | M1 | 8 | T-002 | TODO |
+| EPIC-02 | M1 | 8 | T-002 | DONE |
 
 ## 1. Mục tiêu demo
 Sau task này: **người dùng đã đăng nhập mở SCR-02, nhập tên phòng (hoặc để trống) rồi bấm "Tạo phòng" → vào trang phòng tối thiểu, thấy tên phòng, "Ván 1 · Chờ bắt đầu", "1 người" và link mời `/join/{code}`. Emulator có room, ván 1 `waiting` và 16 vé đúng BR-08. Người đang ở phòng mở lại app thì vào thẳng phòng. Người không ở phòng bấm Đăng xuất thì về SCR-01.**
@@ -45,14 +45,14 @@ Sau task này: **người dùng đã đăng nhập mở SCR-02, nhập tên phò
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Route `/` (SCR-02), thay khung tối thiểu của T-002. Server component:
+- [x] Route `/` (SCR-02), thay khung tối thiểu của T-002. Server component:
   - Chưa có phiên → `/login`.
   - `users.current_room_id ≠ null` → `redirect('/room')`. Mở app khi đang ở phòng thì vào thẳng phòng (FLOW-01 bước 6, wireframe §3).
   - Còn lại render client component `HomeScreen`.
-- [ ] Header chung ngoài phòng: logo "LÔ TÔ" (1); avatar (2) lấy `photo_url`, rỗng thì hiện chữ cái đầu của `display_name`; menu avatar (3).
+- [x] Header chung ngoài phòng: logo "LÔ TÔ" (1); avatar (2) lấy `photo_url`, rỗng thì hiện chữ cái đầu của `display_name`; menu avatar (3).
   - Mục "Đăng xuất": chỉ hiện khi `current_room_id = null`. `[ASSUMED]`
   - Mục "Hồ sơ cá nhân": ẩn tới T-011. `[ASSUMED]`
-- [ ] `HomeScreen` (SCR-02.A0) nghe realtime `users/{uid}`; khi `current_room_id ≠ null` thì nghe thêm `rooms/{current_room_id}` và `games/{current_game_id}`.
+- [x] `HomeScreen` (SCR-02.A0) nghe realtime `users/{uid}`; khi `current_room_id ≠ null` thì nghe thêm `rooms/{current_room_id}` và `games/{current_game_id}`.
   - Loading: header + skeleton card cho tới khi listener `users` trả lần đầu.
   - Error: listener lỗi hoặc mất mạng → banner "Mất kết nối – đang thử lại…"; nút Tạo phòng vẫn bấm được.
   - Empty (chưa ở phòng):
@@ -61,25 +61,25 @@ Sau task này: **người dùng đã đăng nhập mở SCR-02, nhập tên phò
     - (7) Nút "Tạo phòng", khóa khi đang gửi.
     - (8) Gợi ý "Muốn vào phòng bạn bè? Mở link mời bạn nhận được…".
   - Đang ở phòng: card (9) thay (6)–(7). Card có tên phòng, "Ván {game_count} · {trạng thái ván} · {member_count} người", nút "Về phòng" → `/room` (SCR-02.A2).
-- [ ] SCR-02.A1, khi bấm "Tạo phòng":
+- [x] SCR-02.A1, khi bấm "Tạo phòng":
   - Client trim tên; rỗng thì không gửi `name`.
   - Gọi `createRoomAction`. Thành công → `router.push('/room')`.
   - `ALREADY_IN_ROOM` → toast "Bạn đang ở phòng {tên}" (tên đọc từ listener phòng hiện tại) và chuyển sang card (9).
   - `VALIDATION_FAILED` / `ROOM_NAME_INVALID` → lỗi đỏ dưới ô (6) "Tên phòng từ 1 đến 50 ký tự".
   - Lỗi khác → toast "Không tạo được phòng, thử lại".
-- [ ] Banner lý do rời phòng (4), component `LeaveReasonBanner`: đọc `sessionStorage['loto:leaveReason'] = {reason, roomName}`, có nút ✕, tự ẩn khi tải lại trang.
+- [x] Banner lý do rời phòng (4), component `LeaveReasonBanner`: đọc `sessionStorage['loto:leaveReason'] = {reason, roomName}`, có nút ✕, tự ẩn khi tải lại trang.
   - Task này ghi lý do `expired` khi listener thấy `current_room_id` chuyển từ phòng X sang `null` mà snapshot cuối của X có `status = closed` hoặc `expires_at` đã qua → "Phòng "{tên}" đã hết hạn."
   - Không xác định được lý do → "Bạn không còn ở trong phòng."
   - Hai lý do `kicked` / `left` có sẵn chữ trong từ điển, task sau mới ghi (SCR-02 §5).
-- [ ] SCR-02.A3: menu → "Đăng xuất" → `deleteCurrentSessionAction()` → Firebase Auth `signOut()` (client) → `router.replace('/login')`. `UNAUTHENTICATED` cũng xử lý như thành công.
-- [ ] Route `/room` (trang phòng **tối thiểu**, thay bản giữ chỗ của T-002). T-006 thay bằng SCR-04 đầy đủ.
+- [x] SCR-02.A3: menu → "Đăng xuất" → `deleteCurrentSessionAction()` → Firebase Auth `signOut()` (client) → `router.replace('/login')`. `UNAUTHENTICATED` cũng xử lý như thành công.
+- [x] Route `/room` (trang phòng **tối thiểu**, thay bản giữ chỗ của T-002). T-006 thay bằng SCR-04 đầy đủ.
   - Server component: không có phiên → `/login`; `current_room_id = null` → `/`.
   - Client nghe `rooms/{id}` + `games/{current_game_id}`. Hiện tên phòng, "Ván {game_count} · {Chờ bắt đầu}", "{member_count} người", và link mời `{NEXT_PUBLIC_APP_URL}/join/{invite_code}` (chỉ host thấy) kèm nút "Copy link".
   - Nghe `users/{me}`: `current_room_id` thành `null` → ghi lý do (như banner 4) → `/`.
   - `[ASSUMED]` Hiện link mời dạng chữ để T-004 demo được. Nút Mời/Web Share thật thuộc T-006.
 
 ### API / Backend
-- [ ] `createRoomAction({name?})` (`auth: 'required'`).
+- [x] `createRoomAction({name?})` (`auth: 'required'`).
   - Zod `RoomCreate`: `name` string optional, không có field lạ.
   - Sau trim: có gửi `name` mà rỗng hoặc > 50 ký tự → `ROOM_NAME_INVALID` (422). Không gửi `name` → "Phòng của {display_name}", cắt còn 50 ký tự nếu dài hơn. `[ASSUMED]`
   - Transaction:
@@ -95,33 +95,33 @@ Sau task này: **người dùng đã đăng nhập mở SCR-02, nhập tên phò
     6. `users.current_room_id = roomId`, `updated_at`, `last_active_at`.
   - Sau commit: RTDB `presence_access/{roomId}/{uid} = true`. Lỗi → log `severity: ERROR` và vẫn trả thành công. `[ASSUMED]` Presence chỉ dùng từ T-005, RTDB không nằm trong transaction Firestore.
   - Trả `RoomCreated {roomId, name, inviteCode, inviteUrl, currentGameId, drawIntervalSec, expiresAt}`, `inviteUrl = ${NEXT_PUBLIC_APP_URL}/join/${inviteCode}`.
-- [ ] `src/domain/tickets/generateTicketSet.ts` (ADR-14), hàm thuần `generateTicketSet(rng: () => number)`:
+- [x] `src/domain/tickets/generateTicketSet.ts` (ADR-14), hàm thuần `generateTicketSet(rng: () => number)`:
   - Trả 16 vé `{id: '{color}_{side}', color, side, grid: number[81]}`, màu theo thứ tự `red, orange, yellow, green, teal, blue, purple, pink`.
   - Mỗi cặp: chia số từng cột cho vé a/b (cột 1: 1–9, cột 2–8: 10 số, cột 9: 80–90). Sinh ma trận 0/1 9×9 với tổng hàng = 5, tổng cột = số được chia; bế tắc thì thử lại. Số trong cột tăng dần từ trên xuống.
   - Kèm `cryptoRng()` dùng `crypto.randomInt` và `seededRng(seed)` cho test/seed.
-- [ ] `src/server/rooms/applyLazyExpiry.ts` (BR-04, ADR-05 lazy expiry), dùng chung cho T-004, T-006, T-007.
+- [x] `src/server/rooms/applyLazyExpiry.ts` (BR-04, ADR-05 lazy expiry), dùng chung cho T-004, T-006, T-007.
   - Chạy trong transaction được truyền vào, chỉ khi `status = active` và `now ≥ expires_at`.
   - Ván hiện tại `waiting`: ván → `cancelled` (`result = cancelled`, `ended_at`); phòng → `closed`, `close_reason = expired`, `closed_at`, `member_count = 0`, `last_event = {type: room_closed}`; mọi `users where current_room_id == roomId` → `null`. Sau commit xóa RTDB `presence/{roomId}` và `presence_access/{roomId}`.
   - Ván đang diễn ra: phòng → `closing`, `last_event = room_closing`. T-006/T-007 bổ sung phần còn lại.
   - Trả trạng thái mới để action gọi xử lý tiếp.
-- [ ] `deleteCurrentSessionAction()` (`auth: 'required'`):
+- [x] `deleteCurrentSessionAction()` (`auth: 'required'`):
   - Nhánh không ở phòng: xóa cookie `__session` (`maxAge: 0`), `auth.revokeRefreshTokens(uid)`, trả `null` (204).
   - Nhánh `current_room_id ≠ null`: chưa hiện thực, ném `AppError('INTERNAL_ERROR')`, log `not_implemented_until_T-011`, không đổi dữ liệu. `[ASSUMED]` T-011 thay bằng logic Q-052.
 
 ### Data
-- [ ] `firestore.rules`: thêm `function isMember(roomId) { return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.current_room_id == roomId; }`.
+- [x] `firestore.rules`: thêm `function isMember(roomId) { return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.current_room_id == roomId; }`.
   - `match /rooms/{roomId}`: `allow read: if isMember(roomId)`.
   - `match /rooms/{roomId}/{doc=**}`: `allow read: if isMember(roomId)`.
   - Mọi `write: if false`.
-- [ ] RTDB `database.rules.json`: `presence_access` cấm client đọc/ghi (giữ mặc định deny). Rules `presence` làm ở T-005.
-- [ ] Mọi doc trong `rooms/{roomId}/**` có `expire_at = created_at + 31 ngày`. TTL policy khai báo ở T-013.
-- [ ] Index: không cần composite mới; query `users where current_room_id ==` dùng index single tự có. Thêm `fieldOverrides` tắt index cho `rooms.called_numbers` và `rooms.last_event` vào `firestore.indexes.json` (TBL-02 Indexes).
-- [ ] Seed:
+- [x] RTDB `database.rules.json`: `presence_access` cấm client đọc/ghi (giữ mặc định deny). Rules `presence` làm ở T-005.
+- [x] Mọi doc trong `rooms/{roomId}/**` có `expire_at = created_at + 31 ngày`. TTL policy khai báo ở T-013.
+- [x] Index: không cần composite mới; query `users where current_room_id ==` dùng index single tự có. Thêm `fieldOverrides` tắt index cho `rooms.called_numbers` và `rooms.last_event` vào `firestore.indexes.json` (TBL-02 Indexes).
+- [x] Seed:
   - Scenario `t003`: `u_an` chưa ở phòng; `u_cuc` ở phòng `r_old` đang `active`, ván `waiting`, chưa quá hạn.
   - Helper `seedRoom({roomId, hostUid, members, expiresAt, gameStatus, rngSeed})` dùng `generateTicketSet(seededRng)` để T-004..T-007 dùng lại.
 
 ### Khác
-- [ ] Chữ mới thêm vào `vi.ts`. Nhãn trạng thái ván: `waiting` "Chờ bắt đầu", `running` "Đang quay", `paused` "Tạm dừng", `claim_window` / `awaiting_confirm` "Đang xác nhận KINH", `finished` "Đã kết thúc", `cancelled` "Đã hủy". `[ASSUMED]`
+- [x] Chữ mới thêm vào `vi.ts`. Nhãn trạng thái ván: `waiting` "Chờ bắt đầu", `running` "Đang quay", `paused` "Tạm dừng", `claim_window` / `awaiting_confirm` "Đang xác nhận KINH", `finished` "Đã kết thúc", `cancelled` "Đã hủy". `[ASSUMED]`
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -200,11 +200,11 @@ AC-5, AC-7 (phần server), AC-8, AC-9, AC-15, AC-17, AC-19, AC-20 được ph�
 Đã gộp vào kịch bản Chrome. Dev review thêm thuật toán `generateTicketSet` (không có vòng lặp vô hạn, có giới hạn số lần thử lại).
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Test bất biến BR-08 chạy 10.000 bộ và pass, thời gian test < 10 giây
-- [ ] Rules `rooms/**` có test allow (thành viên) và deny (người ngoài, chưa auth, ghi)
-- [ ] `applyLazyExpiry` có test riêng, được export để T-004/T-006/T-007 dùng lại
-- [ ] Helper seed `seedRoom` dùng được cho các task sau
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Test bất biến BR-08 chạy 10.000 bộ và pass, thời gian test < 10 giây
+- [x] Rules `rooms/**` có test allow (thành viên) và deny (người ngoài, chưa auth, ghi)
+- [x] `applyLazyExpiry` có test riêng, được export để T-004/T-006/T-007 dùng lại
+- [x] Helper seed `seedRoom` dùng được cho các task sau
 
 ## 7. Ghi chú
 - `[ASSUMED]` Khi đang ở phòng, menu avatar ở SCR-02 ẩn "Đăng xuất". Server trả lỗi cho nhánh ở phòng, chưa đổi dữ liệu. T-011 làm nhánh ở phòng theo Q-052.
@@ -216,3 +216,14 @@ AC-5, AC-7 (phần server), AC-8, AC-9, AC-15, AC-17, AC-19, AC-20 được ph�
 - `[ASSUMED]` `/` luôn chuyển `/room` khi đang ở phòng. Card (9) chỉ thấy khi `current_room_id` đổi lúc đang mở trang, hoặc sau lỗi `ALREADY_IN_ROOM` (SCR-02 §4).
 - Kịch bản Chrome bước 9 sửa dữ liệu trên Emulator UI để giả lập phòng đóng. Trước T-006 chưa có `expireRoom`, nên đây là cách quan sát duy nhất.
 - Point: giữ 8. Phần nặng nhất là `generateTicketSet` (bài toán ma trận 0/1 có ràng buộc) và `applyLazyExpiry`.
+
+## 8. Kết quả chạy
+- Test case QC: [testcases/T-003-home-create-room.md](../testcases/T-003-home-create-room.md) — 2026-11-21, P0 4/4, P1 6/6 (+3 automated), P2 1/2 (TC-11 skip: cửa sổ Chrome không thu nhỏ dưới 500px).
+- Plan: [plan/T-003-home-create-room.md](../plan/T-003-home-create-room.md).
+- Ghi chú ⚠ đầu file đã xử lý (dev chốt 2026-11-21):
+  - `createRoom` sinh `join_code` 6 ký tự (BR-30), kiểm trùng với phòng `active`/`closing`; `RoomCreated.roomCode`; `/room` hiện "Mã phòng".
+  - Nhãn trạng thái ván theo Q-055: bỏ `claim_window`, `awaiting_confirm` = "Chờ host duyệt".
+  - SCR-02.A4 (nút "Vào phòng" + dialog nhập mã + `joinRoom({roomCode})`) chuyển sang **T-004**; card "Vào phòng" ở T-003 chỉ có gợi ý link mời.
+- Lệch so với mô tả task:
+  - Đường dẫn theo kiến trúc feature: `generateTicketSet` ở `src/features/room/shared/domain/generate-ticket-set.ts`, `applyLazyExpiry`/`planLazyExpiry` ở `src/features/room/server/services/room-expiry.service.ts`.
+  - Seed T-003 đặt tên `u_cuc` là "Cúc" (T-002 là "Cúc Lê").

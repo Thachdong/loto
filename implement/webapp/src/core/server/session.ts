@@ -41,3 +41,14 @@ export async function setSessionCookie(value: string): Promise<void> {
     path: "/",
   });
 }
+
+/** Xóa cookie `__session` (`maxAge: 0`, cùng thuộc tính lúc đặt) — chỉ gọi trong Server Action / Route Handler. */
+export async function clearSessionCookie(): Promise<void> {
+  (await cookies()).set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+}

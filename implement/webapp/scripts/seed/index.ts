@@ -6,11 +6,15 @@ import { emulatorGuardError } from "./lib/env";
 import { reset } from "./scenarios/reset";
 import { smoke } from "./scenarios/smoke";
 import { t002 } from "./scenarios/t002";
+import { t003 } from "./scenarios/t003";
+import { t004 } from "./scenarios/t004";
 
 const SCENARIOS: Record<string, () => Promise<void>> = {
   reset,
   smoke,
   t002,
+  t003,
+  t004,
 };
 
 async function main(): Promise<number> {
