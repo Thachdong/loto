@@ -128,6 +128,26 @@ describe("RoomLobby", () => {
     expect(screen.getByTestId("room-code")).toHaveTextContent("ABC234");
     expect(screen.queryByTestId("room-invite-link")).not.toBeInTheDocument();
     expect(screen.queryByTestId("room-copy-link")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("room-copy-code")).not.toBeInTheDocument();
+  });
+
+  it("AC-25: host 'Copy mã' copies the room code and toasts 'Đã copy mã phòng'", async () => {
+    seedRoom(HOST);
+    render(<RoomLobby uid={HOST} roomId="r1" />);
+    expect(screen.getByTestId("room-copy-code")).toHaveTextContent(dict.room.copyCode);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    await userEvent.click(screen.getByTestId("room-copy-code"));
+    expect(writeText).toHaveBeenCalledWith("ABC234");
+    await waitFor(() => expect(mocks.toast.success).toHaveBeenCalledWith(dict.room.codeCopied));
+  });
+
+  it("AC-25: clipboard failure on 'Copy mã' → toast room.copyFailed", async () => {
+    seedRoom(HOST);
+    render(<RoomLobby uid={HOST} roomId="r1" />);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+    await userEvent.click(screen.getByTestId("room-copy-code"));
+    await waitFor(() => expect(mocks.toast.error).toHaveBeenCalledWith(dict.room.copyFailed));
   });
 
   it("AC-13: current_room_id → null → writes leave reason and router.replace('/')", () => {

@@ -33,11 +33,11 @@ export function RoomLobby({ uid, roomId }: Props) {
   const isHost = room?.hostUid === uid;
   const inviteUrl = room ? inviteUrlFor(room.inviteCode) : "";
 
-  async function copyLink() {
+  async function copyText(text: string, successMessage: string) {
     try {
       if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
-      await navigator.clipboard.writeText(inviteUrl);
-      toast.success(t("room.copied"));
+      await navigator.clipboard.writeText(text);
+      toast.success(successMessage);
     } catch {
       toast.error(t("room.copyFailed"));
     }
@@ -70,6 +70,18 @@ export function RoomLobby({ uid, roomId }: Props) {
             <p data-testid="room-code" className="font-mono text-3xl font-bold tracking-[0.3em] select-all">
               {room.joinCode}
             </p>
+            {isHost && (
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="room-copy-code"
+                className="mt-2 h-11 w-full text-base"
+                onClick={() => copyText(room.joinCode, t("room.codeCopied"))}
+              >
+                <CopyIcon aria-hidden="true" />
+                {t("room.copyCode")}
+              </Button>
+            )}
           </section>
 
           {isHost && (
@@ -82,7 +94,7 @@ export function RoomLobby({ uid, roomId }: Props) {
                 type="button"
                 data-testid="room-copy-link"
                 className="h-12 w-full text-base"
-                onClick={copyLink}
+                onClick={() => copyText(inviteUrl, t("room.copied"))}
               >
                 <CopyIcon aria-hidden="true" />
                 {t("room.copyLink")}
