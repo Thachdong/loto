@@ -20,6 +20,10 @@ export type RoomRecord = {
   currentGameId: string;
   gameCount: number;
   expiresAt: Date;
+  /** Hạn link mời (BR-05) — hiện bằng `expiresAt`. */
+  inviteExpiresAt: Date;
+  /** uid bị host mời ra, không được vào lại (BR-06). Chỉ dùng nội bộ server, KHÔNG đưa ra client. */
+  blockedUids: string[];
   createdAt: Date;
   closeReason: CloseReason | null;
 };
@@ -64,6 +68,8 @@ export function roomFromDoc(id: string, doc: RoomDoc): RoomRecord {
     currentGameId: doc.current_game_id,
     gameCount: doc.game_count,
     expiresAt: doc.expires_at.toDate(),
+    inviteExpiresAt: (doc.invite_expires_at ?? doc.expires_at).toDate(),
+    blockedUids: doc.blocked_uids ?? [],
     createdAt: doc.created_at.toDate(),
     closeReason: doc.close_reason ?? null,
   };

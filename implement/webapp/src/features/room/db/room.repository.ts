@@ -56,6 +56,43 @@ export async function findOpenRoomByJoinCodeInTx(tx: Transaction, joinCode: stri
   return open?.id ?? null;
 }
 
+/** Phòng theo `invite_code` (đọc thuần, không transaction) hoặc null. Query single-field, limit 1. */
+export async function findRoomByInviteCode(inviteCode: string): Promise<RoomRecord | null> {
+  const snap = await firestore().collection(ROOMS).where("invite_code", "==", inviteCode).limit(1).get();
+  const doc = snap.docs[0];
+  return doc ? roomFromDoc(doc.id, doc.data() as RoomDoc) : null;
+}
+
+/** Như `findRoomByInviteCode` nhưng đọc trong transaction (joinRoom). */
+export async function findRoomByInviteCodeInTx(tx: Transaction, inviteCode: string): Promise<RoomRecord | null> {
+  const snap = await tx.get(firestore().collection(ROOMS).where("invite_code", "==", inviteCode).limit(1));
+  const doc = snap.docs[0];
+  return doc ? roomFromDoc(doc.id, doc.data() as RoomDoc) : null;
+}
+
+/**
+ * Phòng `active` đang giữ `join_code` (BR-30: duy nhất trong nhóm đang mở), hoặc null.
+ * Query `join_code ==` (index tự có), lọc `status` trong bộ nhớ.
+ */
+export async function findActiveRoomByJoinCodeInTx(tx: Transaction, joinCode: string): Promise<RoomRecord | null> {
+  const snap = await tx.get(firestore().collection(ROOMS).where("join_code", "==", joinCode));
+  const doc = snap.docs.find((d) => (d.data() as RoomDoc).status === "active");
+  return doc ? roomFromDoc(doc.id, doc.data() as RoomDoc) : null;
+}
+
+export type NewMember = { memberCount: number; uid: string; displayName: string; text: string; now: Date };
+
+/** Thêm thành viên (BR-03): `member_count = memberCount + 1` (giá trị đã đọc trong tx), `last_event = member_joined`. */
+export function addMemberInTx(tx: Transaction, roomId: string, member: NewMember): void {
+  const at = Timestamp.fromDate(member.now);
+  const patch: Partial<RoomDoc> = {
+    member_count: member.memberCount + 1,
+    last_event: { type: "member_joined", text: member.text, actor_uid: member.uid, target_uid: null, at },
+    updated_at: at,
+  };
+  tx.update(roomRef(roomId), patch);
+}
+
 /** Ghi `rooms/{id}`, `games/{gameId}` (ván 1) và 16 `tickets/*` trong transaction. */
 export function createRoomInTx(tx: Transaction, room: NewRoom): void {
   const docs = newRoomDocs(room);

@@ -19,6 +19,17 @@ export async function getUser(uid: string): Promise<Me | null> {
   return data ? toMe(uid, data) : null;
 }
 
+/** Hồ sơ công khai tối thiểu (tên + ảnh) — chỉ dùng cho host trên trang mời (NFR-10), không có email. */
+export async function getPublicProfile(uid: string): Promise<{ displayName: string; photoUrl: string | null } | null> {
+  const data = (await userRef(uid).get()).data();
+  return data ? { displayName: data.display_name, photoUrl: data.photo_url } : null;
+}
+
+/** `current_room_id` của user, hoặc null (chưa ở phòng / chưa có doc). */
+export async function getCurrentRoomId(uid: string): Promise<string | null> {
+  return (await userRef(uid).get()).data()?.current_room_id ?? null;
+}
+
 export type GoogleProfile = {
   uid: string;
   email: string;

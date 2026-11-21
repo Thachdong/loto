@@ -90,6 +90,15 @@ describe("newRoomDocs", () => {
     });
   });
 
+  it("roomFromDoc maps blockedUids and inviteExpiresAt, with safe defaults", () => {
+    const record = roomFromDoc("r_1", { ...docs.room, blocked_uids: ["u_x"] });
+    expect(record.blockedUids).toEqual(["u_x"]);
+    expect(record.inviteExpiresAt.getTime()).toBe(expiresAt.getTime());
+    const legacy = roomFromDoc("r_1", { ...docs.room, blocked_uids: undefined, invite_expires_at: undefined } as never);
+    expect(legacy.blockedUids).toEqual([]);
+    expect(legacy.inviteExpiresAt.getTime()).toBe(expiresAt.getTime());
+  });
+
   it("roomFromDoc normalizes missing close_reason", () => {
     const doc = { ...docs.room, close_reason: undefined, created_at: Timestamp.fromDate(createdAt) };
     expect(roomFromDoc("r_1", doc as never).closeReason).toBeNull();
