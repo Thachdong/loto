@@ -8,6 +8,7 @@ import { smoke } from "./scenarios/smoke";
 import { t002 } from "./scenarios/t002";
 import { t003 } from "./scenarios/t003";
 import { t004 } from "./scenarios/t004";
+import { ticketsBasic, ticketsCarry, ticketsRunning } from "./scenarios/t005";
 
 const SCENARIOS: Record<string, () => Promise<void>> = {
   reset,
@@ -15,6 +16,10 @@ const SCENARIOS: Record<string, () => Promise<void>> = {
   t002,
   t003,
   t004,
+  "tickets-basic": ticketsBasic,
+  "tickets-running": ticketsRunning,
+  "tickets-carry": ticketsCarry,
+  t005: ticketsBasic,
 };
 
 async function main(): Promise<number> {
