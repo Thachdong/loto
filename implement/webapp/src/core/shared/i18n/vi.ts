@@ -53,8 +53,6 @@ export const vi = {
     backToRoom: "Về phòng",
   },
   room: {
-    title: "Phòng",
-    currentRoom: "Mã phòng: {id}",
     gameLine: "Ván {game} · {status}",
     members: "{count} người",
     roomCode: "Mã phòng",

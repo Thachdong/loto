@@ -1,0 +1,146 @@
+"use client";
+
+import "client-only";
+
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import type { DocumentData } from "firebase/firestore";
+import { useDocListener, type DocListenerStatus } from "@/core/client/hooks/use-doc-listener";
+import { writeLeaveReason } from "@/features/room/client/lib/leave-reason-store";
+import { leaveReasonRecord } from "@/features/room/client/lib/infer-leave-reason";
+import type { CloseReason, GameStatus, GameView, LeaveReasonRecord, RoomStatus, RoomView } from "@/features/room/shared/types";
+
+/** Phần `users/{uid}` màn phòng/trang chủ cần (TBL-01). */
+export type CurrentUserView = {
+  displayName: string;
+  photoUrl: string | null;
+  currentRoomId: string | null;
+};
+
+type Timestampish = { toDate: () => Date } | Date | null | undefined;
+const toDate = (value: Timestampish): Date =>
+  value instanceof Date ? value : value && typeof value.toDate === "function" ? value.toDate() : new Date(0);
+const str = (value: unknown): string => (typeof value === "string" ? value : "");
+const num = (value: unknown): number => (typeof value === "number" ? value : 0);
+
+/** users/{uid} snake_case → camelCase. */
+export function mapUserDoc(data: DocumentData): CurrentUserView {
+  return {
+    displayName: str(data.display_name),
+    photoUrl: typeof data.photo_url === "string" && data.photo_url ? data.photo_url : null,
+    currentRoomId: typeof data.current_room_id === "string" && data.current_room_id ? data.current_room_id : null,
+  };
+}
+
+/** rooms/{id} (TBL-02) → RoomView. */
+export function mapRoomDoc(data: DocumentData, id: string): RoomView {
+  const lastEvent = data.last_event as { type?: unknown; target_uid?: unknown } | null | undefined;
+  return {
+    id,
+    name: str(data.name),
+    hostUid: str(data.host_uid),
+    status: (str(data.status) || "active") as RoomStatus,
+    memberCount: num(data.member_count),
+    inviteCode: str(data.invite_code),
+    joinCode: str(data.join_code),
+    expiresAt: toDate(data.expires_at as Timestampish),
+    currentGameId: str(data.current_game_id),
+    gameCount: num(data.game_count),
+    closeReason: (typeof data.close_reason === "string" ? data.close_reason : null) as CloseReason | null,
+    lastEvent:
+      lastEvent && typeof lastEvent === "object"
+        ? { type: str(lastEvent.type), targetUid: typeof lastEvent.target_uid === "string" ? lastEvent.target_uid : null }
+        : null,
+  };
+}
+
+/** rooms/{id}/games/{gid} (TBL-05) → GameView. */
+export function mapGameDoc(data: DocumentData, id: string): GameView {
+  return { id, seqNo: num(data.seq_no), status: (str(data.status) || "waiting") as GameStatus };
+}
+
+function subscribeOnline(onChange: () => void) {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
+const getOnline = () => navigator.onLine;
+const getOnlineServer = () => true;
+
+export type CurrentRoomState = {
+  userStatus: DocListenerStatus;
+  user: CurrentUserView | null;
+  /** `current_room_id` hiệu lực: từ listener `users`, trước snapshot đầu dùng `initialRoomId`. */
+  roomId: string | null;
+  room: RoomView | null;
+  roomStatus: DocListenerStatus;
+  game: GameView | null;
+  gameStatus: DocListenerStatus;
+  /** Listener `users` lỗi hoặc trình duyệt offline → banner "Mất kết nối – đang thử lại…". */
+  offline: boolean;
+};
+
+type Options = {
+  uid: string;
+  /** `current_room_id` server đọc lúc render (RSC). */
+  initialRoomId: string | null;
+  /** Phòng ép nghe thêm khi `users` chưa báo (VD sau `ALREADY_IN_ROOM`). */
+  fallbackRoomId?: string | null;
+  /** Gọi khi `current_room_id` chuyển từ X sang null — đã ghi lý do vào sessionStorage. */
+  onLeave?: (record: LeaveReasonRecord) => void;
+};
+
+/**
+ * SCR-02.A0 / `/room`: nghe `users/{uid}` → `rooms/{current_room_id}` → `games/{current_game_id}` (CHỈ ĐỌC).
+ * Khi `current_room_id` từ X thành null → suy lý do từ snapshot cuối của X → `sessionStorage['loto:leaveReason']`.
+ */
+export function useCurrentRoom({ uid, initialRoomId, fallbackRoomId = null, onLeave }: Options): CurrentRoomState {
+  const userState = useDocListener(`users/${uid}`, mapUserDoc);
+  const userKnown = userState.status === "ready" || (userState.status === "error" && userState.data !== null);
+  const userRoomId = userKnown ? (userState.data?.currentRoomId ?? null) : initialRoomId;
+  const roomId = userRoomId ?? fallbackRoomId;
+
+  const roomState = useDocListener(roomId ? `rooms/${roomId}` : null, mapRoomDoc);
+  const room = roomState.data;
+  const gameId = room?.currentGameId || null;
+  const gameState = useDocListener(roomId && gameId ? `rooms/${roomId}/games/${gameId}` : null, mapGameDoc);
+
+  const online = useSyncExternalStore(subscribeOnline, getOnline, getOnlineServer);
+
+  // Snapshot cuối của từng phòng đã nghe (giữ cả khi listener phòng đã bị hủy / bị rules chặn).
+  const lastRoom = useRef<RoomView | null>(null);
+  useEffect(() => {
+    if (room) lastRoom.current = room;
+  }, [room]);
+
+  const prevRoomId = useRef<string | null>(initialRoomId);
+  const onLeaveRef = useRef(onLeave);
+  useEffect(() => {
+    onLeaveRef.current = onLeave;
+  }, [onLeave]);
+
+  useEffect(() => {
+    if (!userKnown) return;
+    const previous = prevRoomId.current;
+    prevRoomId.current = userRoomId;
+    if (previous && userRoomId === null) {
+      const snapshot = lastRoom.current?.id === previous ? lastRoom.current : null;
+      const record = leaveReasonRecord(snapshot, uid, new Date());
+      writeLeaveReason(record);
+      onLeaveRef.current?.(record);
+    }
+  }, [userKnown, userRoomId, uid]);
+
+  return {
+    userStatus: userState.status,
+    user: userState.data,
+    roomId,
+    room: room && room.id === roomId ? room : null,
+    roomStatus: roomState.status,
+    game: gameState.data,
+    gameStatus: gameState.status,
+    offline: userState.status === "error" || !online,
+  };
+}
