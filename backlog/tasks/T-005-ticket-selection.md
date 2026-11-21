@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-04 | M1 | 8 | T-004 | TODO |
+| EPIC-04 | M1 | 8 | T-004 | DONE |
 
 ## 1. Mục tiêu demo
 Sau task này: **player trong phòng mở sheet "Vé" (SCR-05), thấy 16 vé thu nhỏ theo màu kèm người giữ, chạm một vé để xem trước kiểu vé giấy, bấm "Lấy vé này" (tối đa 2 vé) và người khác trong phòng thấy vé đó có chủ trong ≤ 1 giây; bỏ vé được khi ván đang chờ. Host bấm "Tạo bộ vé mới": còn người giữ thì thấy dialog danh sách người giữ (online/offline), thu hồi vé người offline, rồi tạo bộ vé mới và cả phòng thấy toast "Bộ vé mới đã được tạo".**
@@ -46,50 +46,50 @@ Sau task này: **player trong phòng mở sheet "Vé" (SCR-05), thấy 16 vé th
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Nút mở sheet "Vé" trên khung trang phòng hiện có (từ T-003/T-004) `[ASSUMED]`: thêm nút "Vé" ở vị trí thanh nút dưới; T-006 thay bằng tab bar đầy đủ.
-- [ ] Component `TicketSheet` (sheet trượt từ dưới, chiều cao từ dưới header tới trên thanh nút dưới — SCR-05 §1), bố cục ở viewport 375×812:
-  - [ ] Header "Chọn vé" + dòng đếm "Bạn giữ {k}/2 vé · {x}/16 vé đã có chủ" (#1); hết vé trống → thêm "Hết vé trống — chờ người khác bỏ vé ở ván sau" (FLOW-05 A2).
-  - [ ] Banner khóa "🔒 Ván đang chạy — chỉ lấy/bỏ vé khi ván chờ bắt đầu." khi `games.status ≠ waiting` (#2).
-  - [ ] Lưới 16 thẻ vé 4×4, thứ tự màu cố định `red, orange, yellow, green, teal, blue, purple, pink`, A rồi B, mỗi hàng 2 cặp (#3). Thẻ: nhãn "{Màu} {A/B}" (Đỏ, Cam, Vàng, Lục, Ngọc, Lam, Tím, Hồng), hình thu nhỏ vé (3 khối 3 hàng, ô trống tô màu vé đậm, ô có số màu trắng, không hiện số), người giữ = player có `ticket_ids ∋ ticketId` (ảnh + `display_name`) hoặc "Trống"; vé của tôi viền đậm + nhãn "Bạn".
-  - [ ] Ván không `waiting` + người giữ không còn trong `presence/{roomId}` → thẻ hiện "Khóa tới hết ván" (#3, BR-22, Q-050).
-  - [ ] Màn xem trước vé trong sheet (nút ‹ quay lại) (#4): component `PaperTicket` lưới 9×9 kiểu vé giấy (khung + tiêu đề màu vé, 3 khối 3 hàng cách dải hoa văn, ô trống đặc màu vé đậm, ô số nền trắng chữ đen 17px, ô 38×32px — cùng spec SCR-04 §5); dòng phụ "Trống · cặp với vé {màu} {cạnh khác} ({người giữ})" hoặc tên người giữ. `PaperTicket` viết dùng chung để T-006/T-007 dùng lại.
-  - [ ] Nút "Lấy vé này" (#5) với các biến thể khóa: "Tối đa 2 vé" (đã giữ 2), "Đã có người lấy" (có chủ), "Ván đang chạy" (≠ `waiting`). Nút "Bỏ vé" (#6) chỉ khi vé của tôi + `waiting`. Vùng bấm ≥ 44px (NFR-12).
-  - [ ] Lấy vé xong không đóng sheet (Q-050); nút đang gửi → disabled + spinner, chống bấm đôi.
-  - [ ] Host + `waiting`: nút "Tạo bộ vé mới" (#7). Bấm: client thấy 0 người giữ → dialog xác nhận (#9) "Tạo bộ vé mới? 16 vé sẽ được sinh lại cho cả phòng." Hủy / Tạo; còn người giữ → gọi action vẫn được nhưng mở dialog #8 theo `details[]` của lỗi `TICKETS_STILL_HELD` `[ASSUMED]`: luôn hỏi xác nhận #9 trước, server là nguồn quyết định — lỗi `TICKETS_STILL_HELD` mở #8.
-  - [ ] Dialog "Chưa tạo được bộ vé mới" (#8): danh sách người giữ (ảnh, tên, chip vé, online/offline lấy realtime từ RTDB `presence`, không chỉ từ `details`); người offline có nút "Thu hồi" → `reclaimPlayerTickets`; người online có dòng "Nhắc họ bỏ vé". Thu hồi xong dòng đó biến mất; danh sách rỗng → nút "Tạo bộ vé mới" trong dialog bật.
-  - [ ] Non-host không thấy #7, #8, #9.
-  - [ ] Trạng thái: Loading = 16 thẻ skeleton theo màu; Error đọc = "Không tải được bộ vé" + "Thử lại" (gắn lại listener); lỗi thao tác = toast.
-  - [ ] Map mã lỗi → toast (SCR-05 §3): `TICKET_TAKEN` "Vé đã có người lấy"; `TICKET_LIMIT_REACHED` "Tối đa 2 vé"; `GAME_NOT_WAITING` (lấy/bỏ) "Ván đã bắt đầu, không đổi vé được", (tạo bộ mới) "Chỉ tạo bộ vé mới khi ván chờ bắt đầu"; `TICKET_NOT_HELD` → không toast, để listener làm mới; `TARGET_ONLINE` → toast "Người này đang online, không thu hồi được" `[ASSUMED]`; lỗi mạng / `INTERNAL_ERROR` → toast "Có lỗi, thử lại" `[ASSUMED]`.
-- [ ] Toast phòng từ `rooms.last_event`: `ticket_set_renewed` → "Bộ vé mới đã được tạo"; `tickets_reclaimed` → "Host đã thu hồi vé của {tên}" (người bị thu hồi thấy "Host đã thu hồi vé của bạn") `[ASSUMED]` câu chữ. Nếu T-004 đã có hook toast `last_event` chung thì chỉ thêm 2 loại này.
-- [ ] Hook `usePresence(roomId)`: khi ở trang phòng ghi `presence/{roomId}/{me} = {online: true, display_name, photo_url, at: ServerValue.TIMESTAMP}` + `onDisconnect().update({online: false})`; T-006 dùng lại.
-- [ ] Chuỗi tiếng Việt vào từ điển chung (NFR-16).
+- [x] Nút mở sheet "Vé" trên khung trang phòng hiện có (từ T-003/T-004) `[ASSUMED]`: thêm nút "Vé" ở vị trí thanh nút dưới; T-006 thay bằng tab bar đầy đủ.
+- [x] Component `TicketSheet` (sheet trượt từ dưới, chiều cao từ dưới header tới trên thanh nút dưới — SCR-05 §1), bố cục ở viewport 375×812:
+  - [x] Header "Chọn vé" + dòng đếm "Bạn giữ {k}/2 vé · {x}/16 vé đã có chủ" (#1); hết vé trống → thêm "Hết vé trống — chờ người khác bỏ vé ở ván sau" (FLOW-05 A2).
+  - [x] Banner khóa "🔒 Ván đang chạy — chỉ lấy/bỏ vé khi ván chờ bắt đầu." khi `games.status ≠ waiting` (#2).
+  - [x] Lưới 16 thẻ vé 4×4, thứ tự màu cố định `red, orange, yellow, green, teal, blue, purple, pink`, A rồi B, mỗi hàng 2 cặp (#3). Thẻ: nhãn "{Màu} {A/B}" (Đỏ, Cam, Vàng, Lục, Ngọc, Lam, Tím, Hồng), hình thu nhỏ vé (3 khối 3 hàng, ô trống tô màu vé đậm, ô có số màu trắng, không hiện số), người giữ = player có `ticket_ids ∋ ticketId` (ảnh + `display_name`) hoặc "Trống"; vé của tôi viền đậm + nhãn "Bạn".
+  - [x] Ván không `waiting` + người giữ không còn trong `presence/{roomId}` → thẻ hiện "Khóa tới hết ván" (#3, BR-22, Q-050).
+  - [x] Màn xem trước vé trong sheet (nút ‹ quay lại) (#4): component `PaperTicket` lưới 9×9 kiểu vé giấy (khung + tiêu đề màu vé, 3 khối 3 hàng cách dải hoa văn, ô trống đặc màu vé đậm, ô số nền trắng chữ đen 17px, ô 38×32px — cùng spec SCR-04 §5); dòng phụ "Trống · cặp với vé {màu} {cạnh khác} ({người giữ})" hoặc tên người giữ. `PaperTicket` viết dùng chung để T-006/T-007 dùng lại.
+  - [x] Nút "Lấy vé này" (#5) với các biến thể khóa: "Tối đa 2 vé" (đã giữ 2), "Đã có người lấy" (có chủ), "Ván đang chạy" (≠ `waiting`). Nút "Bỏ vé" (#6) chỉ khi vé của tôi + `waiting`. Vùng bấm ≥ 44px (NFR-12).
+  - [x] Lấy vé xong không đóng sheet (Q-050); nút đang gửi → disabled + spinner, chống bấm đôi.
+  - [x] Host + `waiting`: nút "Tạo bộ vé mới" (#7). Bấm: client thấy 0 người giữ → dialog xác nhận (#9) "Tạo bộ vé mới? 16 vé sẽ được sinh lại cho cả phòng." Hủy / Tạo; còn người giữ → gọi action vẫn được nhưng mở dialog #8 theo `details[]` của lỗi `TICKETS_STILL_HELD` `[ASSUMED]`: luôn hỏi xác nhận #9 trước, server là nguồn quyết định — lỗi `TICKETS_STILL_HELD` mở #8.
+  - [x] Dialog "Chưa tạo được bộ vé mới" (#8): danh sách người giữ (ảnh, tên, chip vé, online/offline lấy realtime từ RTDB `presence`, không chỉ từ `details`); người offline có nút "Thu hồi" → `reclaimPlayerTickets`; người online có dòng "Nhắc họ bỏ vé". Thu hồi xong dòng đó biến mất; danh sách rỗng → nút "Tạo bộ vé mới" trong dialog bật.
+  - [x] Non-host không thấy #7, #8, #9.
+  - [x] Trạng thái: Loading = 16 thẻ skeleton theo màu; Error đọc = "Không tải được bộ vé" + "Thử lại" (gắn lại listener); lỗi thao tác = toast.
+  - [x] Map mã lỗi → toast (SCR-05 §3): `TICKET_TAKEN` "Vé đã có người lấy"; `TICKET_LIMIT_REACHED` "Tối đa 2 vé"; `GAME_NOT_WAITING` (lấy/bỏ) "Ván đã bắt đầu, không đổi vé được", (tạo bộ mới) "Chỉ tạo bộ vé mới khi ván chờ bắt đầu"; `TICKET_NOT_HELD` → không toast, để listener làm mới; `TARGET_ONLINE` → toast "Người này đang online, không thu hồi được" `[ASSUMED]`; lỗi mạng / `INTERNAL_ERROR` → toast "Có lỗi, thử lại" `[ASSUMED]`.
+- [x] Toast phòng từ `rooms.last_event`: `ticket_set_renewed` → "Bộ vé mới đã được tạo"; `tickets_reclaimed` → "Host đã thu hồi vé của {tên}" (người bị thu hồi thấy "Host đã thu hồi vé của bạn") `[ASSUMED]` câu chữ. Nếu T-004 đã có hook toast `last_event` chung thì chỉ thêm 2 loại này.
+- [x] Hook `usePresence(roomId)`: khi ở trang phòng ghi `presence/{roomId}/{me} = {online: true, display_name, photo_url, at: ServerValue.TIMESTAMP}` + `onDisconnect().update({online: false})`; T-006 dùng lại.
+- [x] Chuỗi tiếng Việt vào từ điển chung (NFR-16).
 
 ### API / Backend
-- [ ] `takeTicketAction` (api-contract `takeTicket`): session → Zod (`roomId`, `ticketId` dạng `{color}_{a|b}`) → lazy expiry phòng (dùng chung) → transaction trên `rooms.current_game_id`:
+- [x] `takeTicketAction` (api-contract `takeTicket`): session → Zod (`roomId`, `ticketId` dạng `{color}_{a|b}`) → lazy expiry phòng (dùng chung) → transaction trên `rooms.current_game_id`:
   - không phải thành viên (`users.current_room_id ≠ roomId`) → `403 NOT_ROOM_MEMBER`; vé không tồn tại → `404 TICKET_NOT_FOUND`;
   - ván ≠ `waiting` → `409 GAME_NOT_WAITING` (BR-10);
   - query `players where ticket_ids array-contains ticketId` có kết quả → `409 TICKET_TAKEN` (BR-09; hai người cùng lấy → người commit sau nhận lỗi);
   - mình đã giữ 2 → `422 TICKET_LIMIT_REACHED`;
   - tạo (nếu chưa có) `players/{uid}` với `display_name`, `photo_url` từ `users`, `joined_at`, `expire_at`; `arrayUnion(ticketId)`. Không ghi `last_event`. Trả `{gameId, ticketIds}`.
   - Thứ tự kiểm `[ASSUMED]`: member → ticket tồn tại → `waiting` → đã có chủ → giới hạn 2.
-- [ ] `releaseTicketAction` (`releaseTicket`): member, vé tồn tại, `waiting` (`GAME_NOT_WAITING`), `ticketId ∈ players/{uid}.ticket_ids` khác → `409 TICKET_NOT_HELD`; `arrayRemove`, giữ doc với `[]` (Q-047).
-- [ ] `renewTicketSetAction` (`renewTicketSet`): member, host (`403 NOT_ROOM_HOST`), `waiting`, mọi player có `ticket_ids` rỗng; còn người giữ → `409 TICKETS_STILL_HELD` với `details[] = {code: "holder", uid, displayName, ticketIds, online}` (online đọc RTDB `presence/{roomId}/{uid}` bằng Admin SDK). Hợp lệ → `generateTicketSet(crypto rng)` ghi đè `grid`, `set_no`, `updated_at` của 16 doc; `rooms.ticket_set_no + 1`; `last_event = {type: ticket_set_renewed, actor_uid, at}`; trả `{ticketSetNo}`. Không tự thu hồi.
-- [ ] `reclaimPlayerTicketsAction` (`reclaimPlayerTickets`): member, host, `uid ≠ me` (`422 CANNOT_TARGET_SELF`), có doc player ở ván hiện tại (`404 PLAYER_NOT_FOUND`), `waiting`, đích offline theo RTDB (`online = false` hoặc không có node) khác → `409 TARGET_ONLINE`. Xóa doc player; `last_event = {type: tickets_reclaimed, actor_uid, target_uid, at}`; trả `{uid, releasedTicketIds}`.
+- [x] `releaseTicketAction` (`releaseTicket`): member, vé tồn tại, `waiting` (`GAME_NOT_WAITING`), `ticketId ∈ players/{uid}.ticket_ids` khác → `409 TICKET_NOT_HELD`; `arrayRemove`, giữ doc với `[]` (Q-047).
+- [x] `renewTicketSetAction` (`renewTicketSet`): member, host (`403 NOT_ROOM_HOST`), `waiting`, mọi player có `ticket_ids` rỗng; còn người giữ → `409 TICKETS_STILL_HELD` với `details[] = {code: "holder", uid, displayName, ticketIds, online}` (online đọc RTDB `presence/{roomId}/{uid}` bằng Admin SDK). Hợp lệ → `generateTicketSet(crypto rng)` ghi đè `grid`, `set_no`, `updated_at` của 16 doc; `rooms.ticket_set_no + 1`; `last_event = {type: ticket_set_renewed, actor_uid, at}`; trả `{ticketSetNo}`. Không tự thu hồi.
+- [x] `reclaimPlayerTicketsAction` (`reclaimPlayerTickets`): member, host, `uid ≠ me` (`422 CANNOT_TARGET_SELF`), có doc player ở ván hiện tại (`404 PLAYER_NOT_FOUND`), `waiting`, đích offline theo RTDB (`online = false` hoặc không có node) khác → `409 TARGET_ONLINE`. Xóa doc player; `last_event = {type: tickets_reclaimed, actor_uid, target_uid, at}`; trả `{uid, releasedTicketIds}`.
   - Đọc RTDB nằm ngoài Firestore transaction `[ASSUMED]`: đọc presence trước, rồi transaction kiểm phần Firestore; chấp nhận khoảng hở nhỏ (ADR-06).
-- [ ] Mọi action trả `ActionResult<T>` và mã lỗi đúng bảng lỗi api-contract.
+- [x] Mọi action trả `ActionResult<T>` và mã lỗi đúng bảng lỗi api-contract.
 
 ### Data
-- [ ] `firestore.indexes.json`: single-field `ticket_ids` array-contains cho collection group `players` (nếu emulator/production cần khai báo).
-- [ ] `firestore.rules`: xác nhận `tickets`, `games/*/players` đọc được bởi thành viên phòng (rule cây con `rooms/{roomId}` từ T-003), client không ghi được.
-- [ ] `database.rules.json`: `presence/{roomId}/{uid}` chỉ chính chủ ghi khi `presence_access/{roomId}/{uid} == true`; thành viên (có `presence_access`) đọc được `presence/{roomId}`. Nếu T-004 đã viết → chỉ bổ sung test.
-- [ ] Script seed (mở rộng script của T-001) thêm kịch bản:
+- [x] `firestore.indexes.json`: single-field `ticket_ids` array-contains cho collection group `players` (nếu emulator/production cần khai báo).
+- [x] `firestore.rules`: xác nhận `tickets`, `games/*/players` đọc được bởi thành viên phòng (rule cây con `rooms/{roomId}` từ T-003), client không ghi được.
+- [x] `database.rules.json`: `presence/{roomId}/{uid}` chỉ chính chủ ghi khi `presence_access/{roomId}/{uid} == true`; thành viên (có `presence_access`) đọc được `presence/{roomId}`. Nếu T-004 đã viết → chỉ bổ sung test.
+- [x] Script seed (mở rộng script của T-001) thêm kịch bản:
   - `tickets-basic`: phòng `active`, ván 1 `waiting`, host H + player B + player C là thành viên (có `presence_access`), chưa ai giữ vé.
   - `tickets-running`: như trên nhưng B giữ `red_a`, C giữ `blue_b`, ván `running`, C **không** có node presence (đã rời) — để kiểm khóa và "Khóa tới hết ván".
   - `tickets-carry`: ván 2 `waiting`, player B đã có `ticket_ids: [green_a]` (giả lập chép từ ván 1) — kiểm BR-11.
   `[ASSUMED]` tên kịch bản / cú pháp `npm run seed -- <tên>`.
 
 ### Khác
-- [ ] Không có biến môi trường mới.
+- [x] Không có biến môi trường mới.
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -170,12 +170,12 @@ AC-17 (action), AC-19, AC-20 phủ bằng integration test; AC-17 phần UI ph�
 - 3 tài khoản emulator: H (host), B, C; seed `tickets-basic`, `tickets-running`, `tickets-carry` (mục 3 Data).
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Integration test concurrency lấy cùng vé pass ổn định (20 lần lặp)
-- [ ] Rules Firestore + RTDB có test deny cho ghi từ client / non-member
-- [ ] `PaperTicket` và `usePresence` tách thành component/hook dùng chung (T-006, T-007, T-009 dùng lại)
-- [ ] Seed 3 kịch bản chạy được bằng 1 lệnh
-- [ ] Ảnh chụp sheet ở 375×812: danh sách, xem trước, dialog chặn, trạng thái khóa
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Integration test concurrency lấy cùng vé pass ổn định (20 lần lặp)
+- [x] Rules Firestore + RTDB có test deny cho ghi từ client / non-member
+- [x] `PaperTicket` và `usePresence` tách thành component/hook dùng chung (T-006, T-007, T-009 dùng lại)
+- [x] Seed 3 kịch bản chạy được bằng 1 lệnh
+- [ ] Ảnh chụp sheet ở 375×812: danh sách, xem trước, dialog chặn, trạng thái khóa _(chưa làm — bỏ Chrome theo yêu cầu dev)_
 
 ## 7. Ghi chú
 - `[ASSUMED]` Nút "Vé" tạm trên khung trang phòng (T-003) để mở sheet; T-006 hoàn thiện tab bar.
@@ -188,3 +188,8 @@ AC-17 (action), AC-19, AC-20 phủ bằng integration test; AC-17 phần UI ph�
 - Lệch spec: `reclaimPlayerTickets` trong api-contract chỉ có `x-screens: [SCR-07.A2]`, thiếu `SCR-05.A4` (đã duyệt ở Q-050) — nên bổ sung ở api-contract (không sửa trong task này).
 - Vì `startGame` chưa có (T-006), trạng thái ván ≠ `waiting` chỉ kiểm qua seed; khi xong T-006 chạy lại bước 16 với ván thật.
 - Point 8 giữ nguyên: 4 action + 2 dialog + presence + `PaperTicket` dùng chung.
+
+## 8. Kết quả chạy
+- Tự động: typecheck, lint, build pass; `npm test` 404/404 (57 file), gồm concurrency lấy cùng vé 20 vòng, rules Firestore + RTDB allow/deny.
+- QC: `backlog/testcases/T-005-ticket-selection.md` (16 TC). **Chưa chạy trên Chrome** theo yêu cầu dev; TC `chrome` còn ⬜.
+- Lệch/việc mở: `eslint.config.mjs` thêm element `feature-client-api` cho phép import `client/index.ts` giữa các feature; presence rules RTDB do task này viết (T-004 chưa có).

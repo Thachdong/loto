@@ -33,7 +33,10 @@ export function mapUserDoc(data: DocumentData): CurrentUserView {
 
 /** rooms/{id} (TBL-02) → RoomView. */
 export function mapRoomDoc(data: DocumentData, id: string): RoomView {
-  const lastEvent = data.last_event as { type?: unknown; target_uid?: unknown } | null | undefined;
+  const lastEvent = data.last_event as
+    | { type?: unknown; target_uid?: unknown; text?: unknown; at?: Timestampish }
+    | null
+    | undefined;
   return {
     id,
     name: str(data.name),
@@ -48,7 +51,12 @@ export function mapRoomDoc(data: DocumentData, id: string): RoomView {
     closeReason: (typeof data.close_reason === "string" ? data.close_reason : null) as CloseReason | null,
     lastEvent:
       lastEvent && typeof lastEvent === "object"
-        ? { type: str(lastEvent.type), targetUid: typeof lastEvent.target_uid === "string" ? lastEvent.target_uid : null }
+        ? {
+            type: str(lastEvent.type),
+            targetUid: typeof lastEvent.target_uid === "string" ? lastEvent.target_uid : null,
+            text: typeof lastEvent.text === "string" && lastEvent.text ? lastEvent.text : null,
+            atMs: lastEvent.at ? toDate(lastEvent.at).getTime() : null,
+          }
         : null,
   };
 }

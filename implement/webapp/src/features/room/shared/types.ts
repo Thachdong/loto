@@ -46,7 +46,8 @@ export type RoomView = {
   currentGameId: string;
   gameCount: number;
   closeReason: CloseReason | null;
-  lastEvent: { type: string; targetUid: string | null } | null;
+  /** `rooms.last_event` (SUP-01): `text` do server soạn (có thể null), `atMs` để client dedupe toast. */
+  lastEvent: { type: string; targetUid: string | null; text: string | null; atMs: number | null } | null;
 };
 
 /** Dữ liệu ván client đọc qua listener `rooms/{id}/games/{gid}`. */

@@ -105,6 +105,35 @@ function roomEvent(type: string, at: Timestamp): LastEventDoc {
   return { type, text: null, actor_uid: null, target_uid: null, at };
 }
 
+export type RoomEvent = { type: string; text: string | null; actorUid: string; targetUid: string | null; now: Date };
+
+function eventDoc(event: RoomEvent, at: Timestamp): LastEventDoc {
+  return { type: event.type, text: event.text, actor_uid: event.actorUid, target_uid: event.targetUid, at };
+}
+
+/** Chỉ ghi `last_event` (SUP-01), VD `tickets_reclaimed`. */
+export function setRoomEventInTx(tx: Transaction, roomId: string, event: RoomEvent): void {
+  const at = Timestamp.fromDate(event.now);
+  const patch: Partial<RoomDoc> = { last_event: eventDoc(event, at), updated_at: at };
+  tx.update(roomRef(roomId), patch);
+}
+
+/** Tạo bộ vé mới (FLOW-04): `ticket_set_no` = giá trị mới, `last_event = ticket_set_renewed`. */
+export function renewTicketSetInRoomInTx(
+  tx: Transaction,
+  roomId: string,
+  ticketSetNo: number,
+  event: Omit<RoomEvent, "type" | "text" | "targetUid">,
+): void {
+  const at = Timestamp.fromDate(event.now);
+  const patch: Partial<RoomDoc> = {
+    ticket_set_no: ticketSetNo,
+    last_event: eventDoc({ ...event, type: "ticket_set_renewed", text: null, targetUid: null }, at),
+    updated_at: at,
+  };
+  tx.update(roomRef(roomId), patch);
+}
+
 /** Ván → `cancelled` (`result = cancelled`, `ended_at`). */
 export function cancelGameInTx(tx: Transaction, roomId: string, gameId: string, now: Date): void {
   const patch: Partial<GameDoc> = { status: "cancelled", result: "cancelled", ended_at: Timestamp.fromDate(now) };

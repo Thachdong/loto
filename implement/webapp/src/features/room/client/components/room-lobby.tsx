@@ -1,11 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CopyIcon } from "lucide-react";
+import { useState } from "react";
+import { CopyIcon, TicketIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/core/client/ui/button";
 import { Skeleton } from "@/core/client/ui/skeleton";
+import { usePresence } from "@/core/client/hooks/use-presence";
 import { t } from "@/core/shared/i18n/vi";
+import { TicketSheet } from "@/features/ticket/client";
+import { useRoomEventToast } from "@/features/room/client/hooks/use-room-event-toast";
 import { useCurrentRoom } from "@/features/room/client/hooks/use-current-room";
 import { OfflineBanner } from "@/features/room/client/components/offline-banner";
 
@@ -28,7 +32,12 @@ export function RoomLobby({ uid, roomId }: Props) {
   const router = useRouter();
   // `initialRoomId` = phòng server thấy → cả khi snapshot `users` đầu tiên đã là null cũng tính là vừa rời.
   const state = useCurrentRoom({ uid, initialRoomId: roomId, onLeave: () => router.replace("/") });
-  const { room, game } = state;
+  const { room, game, user } = state;
+  const [ticketsOpen, setTicketsOpen] = useState(false);
+
+  // ADR-06: ghi presence của mình khi đã biết user; toast `last_event` (bộ vé mới / thu hồi vé).
+  usePresence(user ? roomId : null, user ? { uid, displayName: user.displayName, photoUrl: user.photoUrl } : null);
+  useRoomEventToast(room, uid);
 
   const isHost = room?.hostUid === uid;
   const inviteUrl = room ? inviteUrlFor(room.inviteCode) : "";
@@ -64,6 +73,27 @@ export function RoomLobby({ uid, roomId }: Props) {
               {t("room.members", { count: room.memberCount })}
             </p>
           </section>
+
+          {/* Tạm trong lobby; T-006 thay bằng thanh tab SCR-04. */}
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="ticket-open"
+            className="h-12 w-full text-base"
+            onClick={() => setTicketsOpen(true)}
+          >
+            <TicketIcon aria-hidden="true" />
+            {t("room.ticketsButton")}
+          </Button>
+          <TicketSheet
+            open={ticketsOpen}
+            onOpenChange={setTicketsOpen}
+            roomId={room.id}
+            gameId={room.currentGameId || null}
+            gameStatus={game?.status ?? null}
+            meUid={uid}
+            isHost={isHost}
+          />
 
           <section className="flex flex-col gap-1 rounded-xl border bg-card p-4">
             <h2 className="text-sm font-medium text-muted-foreground">{t("room.roomCode")}</h2>

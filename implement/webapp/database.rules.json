@@ -1,6 +1,24 @@
 {
   "rules": {
     ".read": false,
-    ".write": false
+    ".write": false,
+    "presence": {
+      "$roomId": {
+        ".read": "auth != null && root.child('presence_access').child($roomId).child(auth.uid).val() === true",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && root.child('presence_access').child($roomId).child($uid).val() === true",
+          ".validate": "newData.hasChildren(['online', 'display_name', 'at'])",
+          "online": { ".validate": "newData.isBoolean()" },
+          "display_name": { ".validate": "newData.isString() && newData.val().length <= 100" },
+          "photo_url": { ".validate": "newData.val() === null || newData.isString()" },
+          "at": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
+    "presence_access": {
+      ".read": false,
+      ".write": false
+    }
   }
 }

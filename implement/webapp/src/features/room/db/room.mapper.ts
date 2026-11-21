@@ -19,6 +19,7 @@ export type RoomRecord = {
   drawIntervalSec: number;
   currentGameId: string;
   gameCount: number;
+  ticketSetNo: number;
   expiresAt: Date;
   /** Hạn link mời (BR-05) — hiện bằng `expiresAt`. */
   inviteExpiresAt: Date;
@@ -67,6 +68,7 @@ export function roomFromDoc(id: string, doc: RoomDoc): RoomRecord {
     drawIntervalSec: doc.draw_interval_sec,
     currentGameId: doc.current_game_id,
     gameCount: doc.game_count,
+    ticketSetNo: doc.ticket_set_no,
     expiresAt: doc.expires_at.toDate(),
     inviteExpiresAt: (doc.invite_expires_at ?? doc.expires_at).toDate(),
     blockedUids: doc.blocked_uids ?? [],

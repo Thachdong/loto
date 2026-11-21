@@ -62,6 +62,14 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: mocks.replace, push: vi.fn() }) }));
 vi.mock("sonner", () => ({ toast: mocks.toast }));
+const presence = vi.hoisted(() => ({ usePresence: vi.fn() }));
+vi.mock("@/core/client/hooks/use-presence", () => presence);
+vi.mock("@/features/ticket/client", () => ({
+  TicketSheet: (p: { open: boolean; roomId: string; gameId: string | null; gameStatus: string | null; meUid: string; isHost: boolean }) =>
+    p.open ? (
+      <div data-testid="ticket-sheet">{`${p.roomId}|${p.gameId}|${p.gameStatus}|${p.meUid}|${p.isHost}`}</div>
+    ) : null,
+}));
 
 const HOST = "u_an";
 const INVITE = "AbCdEfGhIjKlMnOpQrStUv";
@@ -169,6 +177,31 @@ describe("RoomLobby", () => {
     set(`users/${HOST}`, { status: "ready", raw: { display_name: "X", photo_url: null, current_room_id: null } });
     expect(mocks.replace).toHaveBeenCalledWith("/");
     expect(JSON.parse(sessionStorage.getItem(LEAVE_REASON_STORAGE_KEY)!).reason).toBe("unknown");
+  });
+
+  it("AC-22: writes presence once the user is known (not before)", () => {
+    render(<RoomLobby uid={HOST} roomId="r1" />);
+    expect(presence.usePresence).toHaveBeenLastCalledWith(null, null);
+    seedRoom(HOST);
+    expect(presence.usePresence).toHaveBeenLastCalledWith("r1", { uid: HOST, displayName: "X", photoUrl: null });
+  });
+
+  it("'Vé' button opens the ticket sheet with room/game/user context", async () => {
+    seedRoom("u_binh");
+    render(<RoomLobby uid="u_binh" roomId="r1" />);
+    expect(screen.getByTestId("ticket-open")).toHaveTextContent(dict.room.ticketsButton);
+    expect(screen.queryByTestId("ticket-sheet")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("ticket-open"));
+    expect(screen.getByTestId("ticket-sheet")).toHaveTextContent("r1|g1|waiting|u_binh|false");
+  });
+
+  it("toasts ticket_set_renewed from last_event but not on the first snapshot", () => {
+    seedRoom(HOST);
+    set("rooms/r1", { status: "ready", raw: roomDoc({ last_event: { type: "ticket_set_renewed", at: new Date(1000) } }) });
+    render(<RoomLobby uid={HOST} roomId="r1" />);
+    expect(mocks.toast).not.toHaveBeenCalled();
+    set("rooms/r1", { status: "ready", raw: roomDoc({ last_event: { type: "ticket_set_renewed", at: new Date(2000) } }) });
+    expect(mocks.toast).toHaveBeenCalledWith(dict.event.ticketSetRenewed);
   });
 
   it("users listener error → offline banner, room still shown", () => {

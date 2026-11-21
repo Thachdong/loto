@@ -14,6 +14,8 @@ const elements = [
   { type: "feature-query", pattern: "src/features/*/server/queries", capture: ["feature"] },
   { type: "feature-service", pattern: "src/features/*/server", capture: ["feature"] },
   { type: "feature-db", pattern: "src/features/*/db", capture: ["feature"] },
+  // `client/index.ts` = API công khai của feature cho feature khác / app (architecture §3).
+  { type: "feature-client-api", pattern: "src/features/*/client/index.ts", mode: "file", capture: ["feature"] },
   { type: "feature-client", pattern: "src/features/*/client", capture: ["feature"] },
   { type: "core-shared", pattern: "src/core/shared" },
   { type: "core-server", pattern: "src/core/server" },
@@ -32,10 +34,24 @@ const layerPolicies = [
   { allow: allowTypes(...SHARED) },
   {
     from: { element: { type: "app" } },
-    allow: allowTypes("feature-action", "feature-query", "core-server", "feature-client", "core-client"),
+    allow: allowTypes(
+      "feature-action",
+      "feature-query",
+      "core-server",
+      "feature-client",
+      "feature-client-api",
+      "core-client",
+    ),
   },
   {
     from: { element: { type: "feature-client" } },
+    allow: [
+      allowTypes("feature-action", "core-client", "feature-client-api"),
+      { to: sameFeature("feature-client") },
+    ],
+  },
+  {
+    from: { element: { type: "feature-client-api" } },
     allow: [allowTypes("feature-action", "core-client"), { to: sameFeature("feature-client") }],
   },
   { from: { element: { type: "core-client" } }, allow: allowTypes("core-client") },

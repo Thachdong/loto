@@ -13,7 +13,7 @@ describe("inferLeaveReason", () => {
   });
 
   it("member_kicked targeting me → kicked", () => {
-    const snap = { ...base, lastEvent: { type: "member_kicked", targetUid: "u_an" } };
+    const snap = { ...base, lastEvent: { type: "member_kicked", targetUid: "u_an", text: null, atMs: null } };
     expect(inferLeaveReason(snap, "u_an", now)).toBe("kicked");
     expect(inferLeaveReason(snap, "u_other", now)).toBe("unknown");
   });
