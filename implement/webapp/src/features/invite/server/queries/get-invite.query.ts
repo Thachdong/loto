@@ -34,12 +34,14 @@ async function viewerOf(uid: string, room: RoomRecord): Promise<InviteViewer> {
 export async function getInvite(code: string, viewerUid?: string | null): Promise<InvitePreview> {
   if (!INVITE_CODE_PATTERN.test(code)) throw new AppError("INVITE_INVALID");
 
+  // Mọi truy vấn Firestore + giờ hệ thống là dữ liệu theo request (cacheComponents): Admin SDK dùng
+  // `crypto.randomBytes` khi dựng truy vấn, nên phải báo Next trước khi chạm DB (không phải chỉ trước `now()`).
+  await connection();
+
   const data = await loadInviteRoom(code);
   if (!data) throw new AppError("INVITE_INVALID");
   const { room, hostName, hostPhotoUrl } = data;
 
-  // `now()` là dữ liệu theo request (cacheComponents).
-  await connection();
   const status = computeInviteStatus(room, now());
 
   return {
