@@ -1,10 +1,10 @@
 ---
 task: T-005
 title: Chọn vé: xem 16 vé, lấy/bỏ vé, host tạo bộ vé mới
-status: approved
+status: done
 approved_at: 2026-11-21
 branch: feature/dongt/T-005-ticket-selection
-plan_commit: null
+plan_commit: 5ab1049
 ---
 
 # Plan T-005 · Chọn vé
@@ -164,8 +164,9 @@ Chrome bỏ qua theo yêu cầu dev; AC thuộc UI kiểm bằng component test 
 - Gate `npm test` cần Java; `ticket` cần database emulator trong `firebase.json` (đã có).
 - Dialog/sheet shadcn: kiểm trap focus + `DialogTitle` ẩn (nhớ i18n cho nút đóng, bài học T-004).
 
-## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test: …
-- QC: `backlog/testcases/T-005-ticket-selection.md` — Chrome bỏ qua (dev yêu cầu)
-- Còn lại cho dev review: …
+## 8. Kết quả
+- Commits: `git log --oneline 5ab1049^..HEAD` (plan, S1 ×2, lint config, core hooks, ticket UI, room integration, backend ×3, test case QC).
+- Lint/typecheck/test/build: pass; `npm test` 404/404.
+- QC: `backlog/testcases/T-005-ticket-selection.md` — Chrome bỏ qua (dev yêu cầu); TC `chrome` chưa chạy.
+- Lệch plan: `mapRoomDoc` (`text`, `atMs`) làm ở S1 thay vì S5; `findHolderOfTicketInTx` bỏ, đọc cả collection `players` rồi lọc trong bộ nhớ (race test 20 vòng pass); thêm element `feature-client-api` vào eslint boundaries.
+- Còn lại cho dev review: BR-08 checker trong `renew-ticket-set.test.ts` là bản sao của `violations` (T-003, không export); đọc presence ngoài tx (khoảng hở nhỏ); `PaperTicket` co ô < 38px ở màn hẹp; chưa kiểm trên Chrome.
