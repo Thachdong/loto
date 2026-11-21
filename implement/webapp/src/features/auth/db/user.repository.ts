@@ -1,6 +1,6 @@
 import "server-only";
 
-import { Timestamp, type DocumentReference } from "firebase-admin/firestore";
+import { Timestamp, type DocumentReference, type Transaction } from "firebase-admin/firestore";
 import { firestore } from "@/core/db/firestore";
 import type { Me } from "@/features/auth/shared/types";
 import type { UserDoc } from "./user.doc";
@@ -72,4 +72,32 @@ export async function upsertUserFromGoogle(
     tx.update(ref, patch);
     return { me: toMe(uid, { ...existing, ...patch }), isNewUser: false };
   });
+}
+
+// ── Dùng trong transaction của feature khác (room…) — repository duy nhất biết `users`. ──
+
+/** Hồ sơ chính chủ đọc trong transaction, hoặc null khi chưa có doc. */
+export async function getUserInTx(tx: Transaction, uid: string): Promise<Me | null> {
+  const data = (await tx.get(userRef(uid))).data();
+  return data ? toMe(uid, data) : null;
+}
+
+/** uid của mọi user có `current_room_id == roomId` (index single tự có). */
+export async function findUidsInRoomInTx(tx: Transaction, roomId: string): Promise<string[]> {
+  const snap = await tx.get(firestore().collection(USERS).where("current_room_id", "==", roomId));
+  return snap.docs.map((d) => d.id);
+}
+
+/** Đặt `current_room_id` (BR-02) + `updated_at`, `last_active_at`. */
+export function setCurrentRoomInTx(tx: Transaction, uid: string, roomId: string, now: Date): void {
+  const at = Timestamp.fromDate(now);
+  const patch: Partial<UserDoc> = { current_room_id: roomId, updated_at: at, last_active_at: at };
+  tx.update(userRef(uid), patch);
+}
+
+/** `current_room_id = null` cho các user (phòng đóng / rời phòng). */
+export function clearCurrentRoomInTx(tx: Transaction, uids: readonly string[], now: Date): void {
+  const at = Timestamp.fromDate(now);
+  const patch: Partial<UserDoc> = { current_room_id: null, updated_at: at };
+  for (const uid of uids) tx.update(userRef(uid), patch);
 }
