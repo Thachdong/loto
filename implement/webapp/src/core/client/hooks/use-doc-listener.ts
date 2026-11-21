@@ -27,15 +27,22 @@ export const retryDelayMs = (attempt: number) => Math.min(30_000, 2_000 * 2 ** M
  * Chờ Firebase Auth client khôi phục phiên rồi mới đăng ký (Security Rules cần `request.auth`).
  * Lỗi (mất mạng, `permission-denied`…) → `status: 'error'`, giữ dữ liệu cũ và tự đăng ký lại theo `retryDelayMs`.
  * `map` phải ổn định (khai báo ở module) — đổi `map` sẽ đăng ký lại.
+ * `onData` chạy ngay trong callback snapshot (trước render) — dùng khi cần giữ snapshot cuối của một path
+ * mà render kế tiếp có thể đã đổi path (VD phòng vừa đóng cùng lúc `current_room_id` thành null).
  */
 export function useDocListener<T>(
   path: string | null,
   map: (data: DocumentData, id: string) => T,
+  onData?: (data: T | null) => void,
 ): DocListenerState<T> {
   const [state, setState] = useState<Internal<T>>({ path, status: path ? "loading" : "idle", data: null, errorCode: null });
   const [attempt, setAttempt] = useState(0);
   /** Số lần lỗi liên tiếp — tính backoff; snapshot thành công đặt lại 0. */
   const failures = useRef(0);
+  const onDataRef = useRef(onData);
+  useEffect(() => {
+    onDataRef.current = onData;
+  }, [onData]);
 
   useEffect(() => {
     if (!path) return;
@@ -53,7 +60,9 @@ export function useDocListener<T>(
           (snap) => {
             if (cancelled) return;
             failures.current = 0;
-            setState({ path, status: "ready", data: snap.exists() ? map(snap.data(), snap.id) : null, errorCode: null });
+            const data = snap.exists() ? map(snap.data(), snap.id) : null;
+            onDataRef.current?.(data);
+            setState({ path, status: "ready", data, errorCode: null });
           },
           (error) => {
             if (cancelled) return;

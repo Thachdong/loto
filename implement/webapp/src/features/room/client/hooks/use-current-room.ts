@@ -2,7 +2,7 @@
 
 import "client-only";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { DocumentData } from "firebase/firestore";
 import { useDocListener, type DocListenerStatus } from "@/core/client/hooks/use-doc-listener";
 import { writeLeaveReason } from "@/features/room/client/lib/leave-reason-store";
@@ -102,18 +102,20 @@ export function useCurrentRoom({ uid, initialRoomId, fallbackRoomId = null, onLe
   const userRoomId = userKnown ? (userState.data?.currentRoomId ?? null) : initialRoomId;
   const roomId = userRoomId ?? fallbackRoomId;
 
-  const roomState = useDocListener(roomId ? `rooms/${roomId}` : null, mapRoomDoc);
+  // Snapshot cuối của từng phòng đã nghe (giữ cả khi listener phòng đã bị hủy / bị rules chặn).
+  // Ghi ngay trong callback snapshot: tab nền có thể nhận "phòng closed" và "current_room_id = null"
+  // cùng một lượt render, khi đó render đã đổi path phòng sang null và không bao giờ thấy bản closed.
+  const lastRoom = useRef<RoomView | null>(null);
+  const rememberRoom = useCallback((data: RoomView | null) => {
+    if (data) lastRoom.current = data;
+  }, []);
+
+  const roomState = useDocListener(roomId ? `rooms/${roomId}` : null, mapRoomDoc, rememberRoom);
   const room = roomState.data;
   const gameId = room?.currentGameId || null;
   const gameState = useDocListener(roomId && gameId ? `rooms/${roomId}/games/${gameId}` : null, mapGameDoc);
 
   const online = useSyncExternalStore(subscribeOnline, getOnline, getOnlineServer);
-
-  // Snapshot cuối của từng phòng đã nghe (giữ cả khi listener phòng đã bị hủy / bị rules chặn).
-  const lastRoom = useRef<RoomView | null>(null);
-  useEffect(() => {
-    if (room) lastRoom.current = room;
-  }, [room]);
 
   const prevRoomId = useRef<string | null>(initialRoomId);
   const onLeaveRef = useRef(onLeave);

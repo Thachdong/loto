@@ -13,10 +13,14 @@ type Entry = { status: "loading" | "ready" | "error"; raw: Record<string, unknow
 const fake = vi.hoisted(() => {
   const docs = new Map<string, Entry>();
   const listeners = new Set<() => void>();
+  /** `onData` của hook đang nghe path — gọi ngay khi có snapshot, như callback onSnapshot thật. */
+  const onData = new Map<string, (raw: Record<string, unknown> | null) => void>();
   return {
     docs,
+    onData,
     set(path: string, entry: Entry) {
       docs.set(path, entry);
+      if (entry.status === "ready") onData.get(path)?.(entry.raw);
       listeners.forEach((l) => l());
     },
     subscribe(l: () => void) {
@@ -29,7 +33,15 @@ const fake = vi.hoisted(() => {
 vi.mock("@/core/client/hooks/use-doc-listener", async () => {
   const React = await import("react");
   return {
-    useDocListener: (path: string | null, map: (d: Record<string, unknown>, id: string) => unknown) => {
+    useDocListener: (
+      path: string | null,
+      map: (d: Record<string, unknown>, id: string) => unknown,
+      onData?: (data: unknown) => void,
+    ) => {
+      if (path && onData) {
+        const id = path.split("/").pop()!;
+        fake.onData.set(path, (raw) => onData(raw ? map(raw, id) : null));
+      }
       const entry = React.useSyncExternalStore(fake.subscribe, () => (path ? fake.docs.get(path) : undefined));
       return React.useMemo(() => {
         if (!path) return { status: "idle", data: null, errorCode: null };
@@ -92,6 +104,7 @@ describe("HomeScreen", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fake.docs.clear();
+    fake.onData.clear();
     sessionStorage.clear();
   });
   afterEach(cleanup);
@@ -176,6 +189,19 @@ describe("HomeScreen", () => {
     await userEvent.click(screen.getByTestId("leave-reason-dismiss"));
     expect(screen.queryByTestId("leave-reason-banner")).not.toBeInTheDocument();
     expect(sessionStorage.getItem(LEAVE_REASON_STORAGE_KEY)).toBeNull();
+  });
+
+  it("AC-12: room closed and current_room_id → null in the same render (background tab) → still expired banner", () => {
+    set(`users/${UID}`, { status: "ready", raw: userDoc("r1") });
+    set("rooms/r1", { status: "ready", raw: roomDoc() });
+    renderHome();
+
+    act(() => {
+      fake.set("rooms/r1", { status: "ready", raw: roomDoc({ status: "closed", close_reason: "expired", expires_at: new Date(0) }) });
+      fake.set(`users/${UID}`, { status: "ready", raw: userDoc(null) });
+    });
+
+    expect(screen.getByTestId("leave-reason-banner")).toHaveTextContent('Phòng "Lô tô Tết" đã hết hạn.');
   });
 
   it("AC-12: room unreadable when leaving → 'Bạn không còn ở trong phòng.'", () => {
