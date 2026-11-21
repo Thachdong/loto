@@ -19,6 +19,8 @@ service cloud.firestore {
     }
 
     // TBL-02..TBL-06 (T-003): thành viên đọc phòng và cả cây con (tickets, games, players, messages).
+    // T-005: `tickets` (TBL-03) và `games/*/players` (TBL-06) nằm trong cây con này — thành viên đọc để
+    // listener realtime chọn vé; mọi lần ghi lấy/bỏ/tạo bộ vé/thu hồi đi qua Server Action (ADR-03).
     match /rooms/{roomId} {
       allow read: if isMember(roomId);
       allow write: if false;
