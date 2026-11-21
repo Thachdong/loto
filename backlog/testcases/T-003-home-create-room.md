@@ -2,8 +2,8 @@
 task: T-003
 title: Trang chủ & tạo phòng (SCR-02)
 written_from_commit: 8669d1a
-last_run: null
-summary: null
+last_run: 2026-11-21 16:55
+summary: "P0 4/4 · P1 6/6 (+3 automated) · P2 1/2 (1 skip)"
 ---
 
 # Test case QC · T-003 Trang chủ & tạo phòng (SCR-02)
@@ -82,7 +82,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 4 | P1 | Quan sát card dưới | Card `join-hint-card`: "Vào phòng" + "Muốn vào phòng bạn bè? Mở link mời bạn nhận được."; không có nút trong card; không có `current-room-card` | ui |
 | 5 | P1 | DevTools Console | Không có lỗi đỏ (bỏ qua cảnh báo emulator) | console |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · header "LÔ TÔ" + avatar "A", lời chào, placeholder "Phòng của An Nguyễn", "0/50", card "Vào phòng" không có nút, console sạch · 2026-11-21
 
 ---
 
@@ -105,7 +105,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 7 | P1 | `rooms/{rid}/games/{current_game_id}` và `rooms/{rid}/tickets` | Ván: `seq_no = 1`, `status = "waiting"`, `claims = []`, `winners = []`, `player_count = 0`, `resume_status = null`. `tickets` có đúng 16 doc `red_a, red_b, orange_a … pink_b`, mỗi doc `set_no = 1`, `grid` 81 phần tử. Phòng, ván, mọi vé đều có `expire_at = created_at + 31 ngày` | emulator-ui |
 | 8 | P1 | Emulator UI › Realtime Database | `presence_access/{rid}/u_an = true` | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · nút "Đang tạo phòng…" + disabled ngay sau click; `/room`: "Lô tô Tết", "Ván 1 · Chờ bắt đầu", "1 người", mã `B7QMYY`, link 22 ký tự; Firestore: room đủ field (expires = created + 8h, invite_expires = expires), ván `waiting` `claims=[]` `resume_status=null`, 16 vé `set_no=1` grid 81, mọi `expire_at` = created + 31 ngày; RTDB `presence_access/<rid>/u_an = true` · 2026-11-21
 
 ---
 
@@ -123,7 +123,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 2 | P2 | Quan sát | `room-name` = "Phòng của Cúc"; "Ván 1 · Chờ bắt đầu"; "1 người"; `room-code` = "CUC234"; `room-invite-link` = `http://localhost:3000/join/cucOldRoomInvite000001` | ui |
 | 3 | P2 | Mở `http://localhost:3000/` | Bị chuyển ngay về `/room` (không thấy form tạo phòng) | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · đăng nhập Cúc → `/room` "Phòng của Cúc", `CUC234`, link `/join/cucOldRoomInvite000001`; mở `/` bị chuyển `/room` · 2026-11-21
 
 ---
 
@@ -143,7 +143,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 4 | P3 | DevTools › Application › Cookies `localhost:3000` | Không còn cookie `__session` | cookie |
 | 5 | P3 | Mở `http://localhost:3000/` rồi `http://localhost:3000/room` | Cả hai bị chuyển `/login` | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · Giang (tài khoản mới) có "Đăng xuất", không có "Hồ sơ cá nhân"; đăng xuất → `/login`; `/` và `/room` → `/login`. Bước 4: tool chặn đọc cookie — xóa cookie + revoke đã kiểm ở `delete-current-session.test.ts`, server không còn nhận phiên · 2026-11-21
 
 ---
 
@@ -162,7 +162,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 3 | P1 | Xóa hết, dán 49 chữ "a" + "🎉🎉" | Ô giữ 49 "a" + 1 "🎉"; bộ đếm "50/50" (emoji tính 1 ký tự) | ui |
 | 4 | P1 | Không bấm Tạo phòng; xóa ô | Bộ đếm "0/50" | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · dán 60 ký tự → giữ 50, "50/50"; gõ thêm không đổi; 49 "a" + "🎉🎉" → giữ 49 "a" + 1 "🎉", "50/50"; xóa → "0/50" · 2026-11-21
 
 ---
 
@@ -180,7 +180,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 2 | P1 | Quan sát | `room-name` = "Phòng của An Nguyễn" | ui |
 | 3 | P1 | Emulator UI › `rooms/{rid}` | `name = "Phòng của An Nguyễn"` | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · 3 dấu cách → không lỗi, `/room` "Phòng của An Nguyễn"; Firestore `name` khớp · 2026-11-21
 
 ---
 
@@ -197,7 +197,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 2 | P1 / A2 | Chuyển sang A2, **không tải lại** | Trong ≤ 1 giây form biến mất; hiện `current-room-card`: "Bạn đang ở phòng", `current-room-name` = "Lô tô Tết", `current-room-summary` = "Ván 1 · Chờ bắt đầu · 1 người", nút "Về phòng"; card `join-hint-card` biến mất | ui |
 | 3 | P1 / A2 | Bấm "Về phòng" | URL `/room`, `room-name` = "Lô tô Tết" | url, ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · A2 (không tải lại) đổi sang card "Bạn đang ở phòng" "Lô tô Tết" "Ván 1 · Chờ bắt đầu · 1 người", card "Vào phòng" ẩn; "Về phòng" → `/room` · 2026-11-21
 
 ---
 
@@ -213,7 +213,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 1 | P1 / A2 | Ở trạng thái card "Bạn đang ở phòng" trên `/` (chưa tải lại), bấm avatar | Menu mở; **không** có `sign-out-item` / chữ "Đăng xuất" | ui |
 | 2 | P1 | Emulator UI › `users/u_an` | `current_room_id` vẫn là phòng hiện tại | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · menu chỉ có tên "An Nguyễn", không có "Đăng xuất" · 2026-11-21
 
 ---
 
@@ -233,7 +233,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 5 | P1 / A2 | Bấm ✕ (`leave-reason-dismiss`) | Banner ẩn | ui |
 | 6 | P1 / A2 | Tải lại trang | Không có banner | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (lần 2) · A2: card biến mất, form hiện lại, banner "Phòng "Lô tô Tết" đã hết hạn."; A1 `/room` → `/` cùng banner; ✕ ẩn banner; tải lại không còn banner. Lần 1 FAIL bước 4: A1 (tab nền) hiện "Bạn không còn ở trong phòng." vì snapshot phòng `closed` và `current_room_id = null` tới cùng lượt render, listener phòng đổi path trước khi lưu snapshot cuối → fix `4e03889` · 2026-11-21
 
 ---
 
@@ -249,7 +249,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 1 | P1 | Mở `http://localhost:3000/` | URL `/login` | url |
 | 2 | P1 | Mở `http://localhost:3000/room` | URL `/login` | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · sau đăng xuất (TC-04) không còn phiên: `/` và `/room` → `/login` · 2026-11-21
 
 ---
 
@@ -266,7 +266,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 2 | P1 | Viewport 375×812, kiểm như bước 1 | `scrollWidth <= 375` | layout |
 | 3 | P1 | Tạo phòng tên 50 ký tự, ở `/room` với viewport 360 | `scrollWidth <= 360`; link mời xuống dòng/cắt, không đẩy tràn; nút "Copy link" cao ≥ 44px | layout |
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ SKIP: cửa sổ Chrome (extension) không thu nhỏ dưới 500px nên không đặt được 360/375px; ở 500px không tràn ngang. Cần dev kiểm bằng DevTools device mode
 
 ---
 
@@ -282,7 +282,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 1 | P2 | Bấm "Copy link" | Toast "Đã copy link" (hoặc "Không copy được, hãy chọn và copy link" nếu trình duyệt chặn clipboard — ghi lại) | toast |
 | 2 | P2 | `await navigator.clipboard.readText()` (nếu được phép) | = `http://localhost:3000/join/cucOldRoomInvite000001` | console |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · toast "Đã copy link"; clipboard = `http://localhost:3000/join/cucOldRoomInvite000001` · 2026-11-21
 
 ---
 
@@ -294,7 +294,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 - `src/features/room/shared/domain/generate-ticket-set.test.ts` — 10.000 bộ: 16 id, 81 ô, 5 số/hàng, khoảng cột, tăng dần trong cột, cặp gộp = 1..90, 45 số/vé; `seededRng(42)` ổn định.
 - `src/core/server/random.test.ts`, `src/features/room/shared/domain/random-code.test.ts` — 10.000 `invite_code` khớp `^[0-9A-Za-z]{22}$` + 10.000 `join_code` khớp `^[A-HJ-NP-Z2-9]{6}$`, spy `crypto.randomInt`, không gọi `Math.random`.
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ automated — `npm test` pass (generate-ticket-set, random, random-code)
 
 ---
 
@@ -307,7 +307,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 - `tests/emulator/room/room-expiry.test.ts` — `applyLazyExpiry` chưa tới hạn / `waiting` / `running|paused|awaiting_confirm` → `closing`.
 - `src/features/room/client/components/home-screen.test.tsx` — toast "Bạn đang ở phòng {tên}" + card 9 khi `ALREADY_IN_ROOM` (AC-8 phía UI).
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ automated — `npm test` pass (create-room, room-expiry, home-screen)
 
 ---
 
@@ -320,7 +320,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 - `tests/emulator/room/rooms-rules.test.ts` — thành viên đọc `rooms/X`, `tickets/red_a`, `games/{gid}`; người ngoài / chưa auth bị từ chối; mọi ghi bị từ chối; RTDB `presence_access` cấm client (AC-17).
 - `src/features/room/client/components/home-screen.test.tsx` — skeleton `home-skeleton` trước snapshot đầu; banner "Mất kết nối – đang thử lại…" khi listener lỗi, nút "Tạo phòng" vẫn bấm được (AC-20).
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ automated — `npm test` pass (delete-current-session, rooms-rules, home-screen)
 
 ---
 

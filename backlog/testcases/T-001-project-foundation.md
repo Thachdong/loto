@@ -53,6 +53,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 3 | P1 | Kiểm `document.documentElement.lang` và `getComputedStyle(document.body).fontFamily` | `lang = "vi"`; font chứa "Be Vietnam Pro"; dấu tiếng Việt ("Lô Tô", "cùng bạn bè") hiển thị đúng, không ô vuông | ui |
 
 **Kết quả:** ✅ PASS · title/tagline/tab title đúng vi.ts, lang="vi", font Be Vietnam Pro đã nạp, console không lỗi (sau reload) · 2026-11-20
+**Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · `/` → `/login`, h1 "Lô Tô Online", tagline, title, `lang=vi`, font Be Vietnam Pro, console sạch
 
 ---
 
@@ -69,6 +70,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 2 | P1 | Thử cuộn ngang (`window.scrollTo(200, 0)` rồi đọc `window.scrollX`) | `scrollX = 0` | layout |
 
 **Kết quả:** ✅ PASS · đo trong iframe 375×812 (cửa sổ Chrome maximize, resize không áp dụng): scrollWidth ≤ innerWidth, scrollX = 0 · 2026-11-20
+**Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · `scrollWidth <= innerWidth`, `scrollX = 0` (cửa sổ tối thiểu 500px)
 
 ---
 
@@ -84,6 +86,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 | 1 | P1 | Mở `http://localhost:4000` | Trang Overview có các thẻ Authentication, Firestore, Realtime Database, Storage, Functions, mỗi thẻ ở trạng thái đang chạy (có port 9099, 8080, 9000, 9199, 5001) | ui |
 
 **Kết quả:** ✅ PASS · Auth 9099, Firestore 8080, Storage 9199, Functions 5001, RTDB 9000 đều On · 2026-11-20
+**Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · Auth 9099, Firestore 8080, Storage 9199, RTDB 9000, Functions 5001 đều On
 
 ---
 
