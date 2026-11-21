@@ -2,8 +2,8 @@
 task: T-004
 title: Lời mời & vào phòng (SCR-03)
 written_from_commit: 873450a
-last_run: null
-summary: null
+last_run: 2026-11-21 17:25
+summary: "P0 4/4 · P1 8/8 (+2 automated) · P2 2/3 (1 skip)"
 ---
 
 # Test case QC · T-004 Lời mời & vào phòng (SCR-03)
@@ -93,7 +93,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 3 | P1 | Bấm "Copy link"; đọc `navigator.clipboard.readText()` | Toast "Đã copy link"; clipboard = link ở bước 2 | toast, console |
 | 4 | P1 | Bấm "Copy mã"; đọc clipboard | Toast "Đã copy mã phòng"; clipboard = `TET234` | toast, console |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · host `/room`: "Lô tô Tết nhà Ngoại", "1 người", `TET234`, link `/join/OKOK…`; "Copy link" → toast "Đã copy link", clipboard = link; "Copy mã" → toast "Đã copy mã phòng", clipboard = `TET234` · 2026-11-21
 
 ---
 
@@ -113,7 +113,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 4 | P2 | Đọc nút chính | `join-primary-button` = "Đăng nhập để vào phòng" | ui |
 | 5 | P2 | Console | Không có lỗi đỏ | console |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS (lần 2) · logo "LÔ TÔ" không avatar, ảnh host chữ "A", "An Nguyễn mời bạn chơi lô tô", "Lô tô Tết nhà Ngoại", "Link hết hạn lúc 01:02 22/11" (khớp `invite_expires_at` 18:02Z = 01:02 22/11 GMT+7), không có chữ "người", nút "Đăng nhập để vào phòng". Lần 1 console có lỗi đỏ `blocking-prerender-random` (`crypto.randomBytes` trong `generateMetadata` → `findRoomByInviteCode`, truy vấn Firestore chạy trước `connection()`) → fix `b876b91`, console sạch · 2026-11-21
 
 ---
 
@@ -135,7 +135,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 6 | P2 | Emulator UI › `rooms/r_ok`, `users/{uid Bình}`, RTDB `presence_access/r_ok`, `rooms/r_ok/games/*/players` | `member_count = 2`; `last_event.type = "member_joined"`, `text = "Bình đã vào phòng"`, `actor_uid` = uid Bình; `users/{Bình}.current_room_id = "r_ok"`; `presence_access/r_ok/{uid Bình} = true`; không có doc nào trong `players` | emulator-ui |
 | 7 | P1 / A1 | Quan sát trang `/room` của host, không tải lại | Đổi từ "1 người" sang "2 người" trong ≤ 1 giây | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · bước 1–6: banner lời mời ở `/login?returnTo=…`, đăng nhập Bình (redirect) quay về đúng `/join/OKOK…` nút "Vào phòng"; "Đang vào phòng…" + khóa; `/room` "2 người", không có Copy link/Copy mã; Firestore `member_count=2`, `last_event` `member_joined` "Bình đã vào phòng", `users/Bình.current_room_id=r_ok`, `presence_access/r_ok/<uid>=true`, `players` rỗng. Bước 7 (host thấy "2 người" realtime, không tải lại) không quan sát được: một cửa sổ Chrome, hai tab chung cookie/phiên Firebase; listener `/room` đã kiểm ở T-003 TC-07 · 2026-11-21
 
 ---
 
@@ -151,7 +151,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 1 | P2 | Mở lại link `r_ok` | Tự chuyển `/room`; không thấy trang mời hay nút | url, ui |
 | 2 | P2 | Emulator UI › `rooms/r_ok` | `member_count` vẫn = 2 | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · Bình mở lại link `r_ok` → tự chuyển `/room`, không thấy nút; `member_count` vẫn 2 · 2026-11-21
 
 ---
 
@@ -171,7 +171,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 5 | P2 | Bấm "Về trang chủ" ở bước 4 | URL `/login` (chưa đăng nhập) | url |
 | 6 | P2 | Emulator UI › `rooms/r_late` | **Chưa** đổi: `status = "active"` (xem trang không đóng lười — `getInvite` chỉ đọc) | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `r_late`, `r_closed`, `/join/abc`, mã 22 ký tự không tồn tại đều hiện "Link không còn hiệu lực" (`data-variant=invalid`), không nút vào, không lộ "Phòng quá hạn"; "Về trang chủ" → `/login`; `rooms/r_late.status` vẫn `active` (xem trang không đóng lười) · 2026-11-21
 
 ---
 
@@ -188,7 +188,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 2 | P3 | Bấm "Về trang chủ" | URL `/` | url |
 | 3 | P3 | Emulator UI › `rooms/r_block` | `member_count = 3` (không đổi) | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · Khoa mở `r_block`: "Bạn không thể vào phòng này" (`blocked`), không có nút vào; "Về trang chủ" → `/`; `member_count=3` không đổi · 2026-11-21
 
 ---
 
@@ -206,7 +206,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 3 | P3 | Bấm "Vào phòng" | Dialog mở lại (server trả `ALREADY_IN_ROOM`); Emulator UI `rooms/r_ok.member_count` không đổi | ui, emulator-ui |
 | 4 | P3 | Bấm "Về phòng hiện tại" | URL `/room`; `room-name` = "Phòng của Lan" | url, ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · Lan: dialog "Bạn đang ở "Phòng của Lan". Mỗi người chỉ ở 1 phòng — hãy rời phòng đó trước." có "Đóng" và "Về phòng hiện tại"; "Đóng" đóng dialog, nút "Vào phòng" → dialog mở lại; "Về phòng hiện tại" → `/room` "Phòng của Lan"; `r_ok.member_count` vẫn 1 · 2026-11-21
 
 ---
 
@@ -221,7 +221,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 |---|---|---|---|---|
 | 1 | P2 | Mở `/join/FULLFULLFULLFULLFULL00` (`r_full`) | `join-error` `data-variant="full"`; `join-error-title` = "Phòng đã đầy"; không có nút vào | ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `r_full` → "Phòng đã đầy" (`full`), không nút vào · 2026-11-21
 
 ---
 
@@ -237,7 +237,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 1 | P3 | Mở link `r_ok`, bấm "Vào phòng" | URL `/room`; "Lô tô Tết nhà Ngoại", "2 người" | url, ui |
 | 2 | P3 | Emulator UI › `rooms/r_ok/games/*/players` | Không có doc `players` nào của Minh | emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · Minh vào `r_ok` bằng link → `/room` "Lô tô Tết nhà Ngoại", "2 người"; `players` rỗng · 2026-11-21
 
 ---
 
@@ -256,7 +256,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 4 | P3 | Bấm "Vào"; chụp ngay | "Đang vào…" khóa ô | ui |
 | 5 | P3 | Chờ điều hướng | URL `/room`; "Lô tô Tết nhà Ngoại", "2 người"; Emulator UI `users/u_minh.current_room_id = "r_ok"`, `rooms/r_ok.member_count = 2` | url, ui, emulator-ui |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · card "Vào phòng" có nút; dialog "Nhập mã phòng"; nút "Vào" khóa khi trống; gõ " tet 234 " → `TET234`, nút bật; "Đang vào…" khóa; `/room` "2 người"; `users/u_minh.current_room_id=r_ok`, `member_count=2`, `last_event` "Minh đã vào phòng" · 2026-11-21
 
 ---
 
@@ -277,7 +277,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 6 | P3 | Gõ `O0I1AB` | Ô chỉ giữ `AB` (O/0/I/1 bị bỏ); nút "Vào" khóa (chưa đủ 6) | ui |
 | 7 | — | `ALREADY_IN_ROOM` từ dialog (card "Bạn đang ở phòng" + toast) không tái hiện được trên UI vì `/` luôn chuyển `/room` khi đang ở phòng | Phủ bằng `join-room.test.ts` (AC-26) và `home-screen.test.tsx` (AC-24) | automated |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `ZZZZZZ`, `CLSD22`, `LATE22` → "Mã phòng không đúng hoặc đã hết hạn" (dialog còn mở); sau `LATE22` `rooms/r_late` = `closed`/`expired`; `FULL22` → "Phòng đã đầy"; `BLCK22` → "Bạn không thể vào phòng này"; `O0I1AB` → ô chỉ giữ `AB`, nút "Vào" khóa; bước 7 automated · 2026-11-21
 
 ---
 
@@ -296,7 +296,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 4 | — | `curl -s -A "facebookexternalhit/1.1" http://localhost:3000/join/CLOSEDCLOSEDCLOSED0000 \| grep -c "Phòng đã đóng"` | `0` (không lộ tên phòng đã đóng); `<title>Lô Tô Online</title>` | network |
 | 5 | — | `curl -s -A "ZaloBot" http://localhost:3000/join/OKOKOKOKOKOKOKOKOKOKOK \| grep -o '<meta property="og:title"[^>]*>'` | Có `og:title` trong `<head>` (UA Zalo cũng nhận metadata chặn) | network |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · `curl -A facebookexternalhit/1.1` (dev và bản `build`+`start`): đủ `og:title` "An Nguyễn mời bạn chơi lô tô", `og:description` "Lô tô Tết nhà Ngoại", `og:image` `http://localhost:3000/og/invite.png`, `og:url`, `og:type`, `og:locale`; không có `host@example.com`/`u_host`/`blocked_uids`; `/og/invite.png` 200 `image/png`; `r_closed` → `<title>Lô Tô Online</title>`, không lộ tên phòng; UA `ZaloBot` cũng nhận `og:title` · 2026-11-21
 
 ---
 
@@ -313,7 +313,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 1 | P2 | Bấm "Đăng nhập với Google", đóng popup không chọn tài khoản; chờ ~9 giây | `login-error` = "Đăng nhập không thành công, thử lại."; `login-invite-banner` vẫn còn | ui |
 | 2 | P2 | Bấm "Đăng nhập với Google" lại, chọn tài khoản (luồng redirect) | Về đúng `/join/OKOK…` | url |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · popup đóng bằng `close()` trên tham chiếu `window.open`, sau ≈ 9s: "Đăng nhập không thành công, thử lại.", banner lời mời còn; đăng nhập lại (redirect) → đúng `/join/OKOK…` nút "Vào phòng" · 2026-11-21
 
 ---
 
@@ -329,7 +329,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 1 | — | `curl -s http://localhost:3000/join/OKOKOKOKOKOKOKOKOKOKOK \| grep -c -E "Lô tô Tết nhà Ngoại"` | ≥ 1 (tên phòng có trong HTML ban đầu, không chờ JS) | network |
 | 2 | P2 | Mở link, chạy `performance.getEntriesByType('navigation')[0].domContentLoadedEventEnd` | ≤ 3000 (ms, đo tham khảo trên local) | console |
 
-**Kết quả:** ⬜
+**Kết quả:** ✅ PASS · bản `build`+`start`: tên phòng có trong HTML ban đầu (`curl` không JS); `domContentLoadedEventEnd` = 67 ms (≤ 3000) · 2026-11-21
 
 ---
 
@@ -341,7 +341,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 - `tests/emulator/invite/join-room.test.ts` — user ở phòng quá hạn → đóng lười rồi vào phòng mới (AC-12); 2 lệnh song song khi còn 1 chỗ → đúng 1 thành công, người kia `ROOM_FULL`, `member_count = 16`, lặp 5 lần (AC-14); không cookie → `UNAUTHENTICATED` (AC-19); thứ tự 6 bước lỗi; `roomCode` (AC-22, 23, 26).
 - `tests/emulator/invite/get-invite.test.ts` — đúng tập key `InvitePreview`, `viewer = null` khi không phiên, không ghi DB, không lộ `host_uid`/email/`invite_code`/`blocked_uids` (AC-18).
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ automated — `npm test` pass (`tests/emulator/invite/*`)
 
 ---
 
@@ -353,7 +353,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 - `src/features/invite/client/components/join-error.test.tsx`, `join-screen.test.tsx` — biến thể `load` có "Không tải được lời mời" + "Thử lại" gọi `router.refresh`.
 - `src/app/join/[code]/metadata.test.ts` — mã lỗi → title "Lô Tô Online" chung.
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ automated — `npm test` pass (`join-error.test.tsx`, `join-screen.test.tsx`, `metadata.test.ts`)
 
 ---
 
@@ -370,7 +370,7 @@ TC-T004-02, TC-T004-03, TC-T004-10
 | 2 | P3 | Đăng nhập `minh@example.com`, ở `/`, mở dialog nhập mã ở 360px | Không tràn ngang; `join-code-input` và nút "Vào" nằm trọn trong khung | layout |
 | 3 | P2 | Viewport 375×812, kiểm lại bước 1 | `scrollWidth <= 375` | layout |
 
-**Kết quả:** ⬜
+**Kết quả:** ⏭ SKIP: cửa sổ Chrome (extension) không thu nhỏ dưới ~500px nên không đặt được 360/375px (như T-003 TC-11). Cần dev kiểm bằng DevTools device mode
 
 ---
 

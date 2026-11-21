@@ -54,6 +54,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 
 **Kết quả:** ✅ PASS · title/tagline/tab title đúng vi.ts, lang="vi", font Be Vietnam Pro đã nạp, console không lỗi (sau reload) · 2026-11-20
 **Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · `/` → `/login`, h1 "Lô Tô Online", tagline, title, `lang=vi`, font Be Vietnam Pro, console sạch
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · `/` → `/login`, h1, tagline, title, `lang=vi`, font Be Vietnam Pro, console sạch
 
 ---
 
@@ -71,6 +72,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 
 **Kết quả:** ✅ PASS · đo trong iframe 375×812 (cửa sổ Chrome maximize, resize không áp dụng): scrollWidth ≤ innerWidth, scrollX = 0 · 2026-11-20
 **Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · `scrollWidth <= innerWidth`, `scrollX = 0` (cửa sổ tối thiểu 500px)
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · `scrollWidth <= innerWidth`, `scrollX = 0`
 
 ---
 
@@ -87,6 +89,7 @@ TC-T001-01, TC-T001-02, TC-T001-03
 
 **Kết quả:** ✅ PASS · Auth 9099, Firestore 8080, Storage 9199, Functions 5001, RTDB 9000 đều On · 2026-11-20
 **Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · Auth 9099, Firestore 8080, Storage 9199, RTDB 9000, Functions 5001 đều On
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · Auth 9099, Firestore 8080, Storage 9199, RTDB 9000, Functions 5001 đều On
 
 ---
 

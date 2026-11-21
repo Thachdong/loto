@@ -83,6 +83,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 5 | P1 | DevTools Console | Không có lỗi đỏ (bỏ qua cảnh báo emulator) | console |
 
 **Kết quả:** ✅ PASS · header "LÔ TÔ" + avatar "A", lời chào, placeholder "Phòng của An Nguyễn", "0/50", card "Vào phòng" không có nút, console sạch · 2026-11-21
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · header + lời chào, placeholder, "0/50", nút "Tạo phòng"; card "Vào phòng" giờ có nút "Vào phòng" (đổi theo T-004, đúng ý)
 
 ---
 
@@ -106,6 +107,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 8 | P1 | Emulator UI › Realtime Database | `presence_access/{rid}/u_an = true` | emulator-ui |
 
 **Kết quả:** ✅ PASS · nút "Đang tạo phòng…" + disabled ngay sau click; `/room`: "Lô tô Tết", "Ván 1 · Chờ bắt đầu", "1 người", mã `B7QMYY`, link 22 ký tự; Firestore: room đủ field (expires = created + 8h, invite_expires = expires), ván `waiting` `claims=[]` `resume_status=null`, 16 vé `set_no=1` grid 81, mọi `expire_at` = created + 31 ngày; RTDB `presence_access/<rid>/u_an = true` · 2026-11-21
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · tạo "Lô tô Tết" → `/room` "Ván 1 · Chờ bắt đầu", "1 người", mã `GRFLYR`, link 22 ký tự; Firestore room/ván/vé đủ field, expires = +8h, expire_at = +31 ngày
 
 ---
 
@@ -124,6 +126,7 @@ TC-T003-01, TC-T003-02, TC-T003-03
 | 3 | P2 | Mở `http://localhost:3000/` | Bị chuyển ngay về `/room` (không thấy form tạo phòng) | url |
 
 **Kết quả:** ✅ PASS · đăng nhập Cúc → `/room` "Phòng của Cúc", `CUC234`, link `/join/cucOldRoomInvite000001`; mở `/` bị chuyển `/room` · 2026-11-21
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · Cúc → `/room` "Phòng của Cúc", `CUC234`; mở `/` → `/room`
 
 ---
 

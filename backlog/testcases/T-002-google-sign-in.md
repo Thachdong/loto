@@ -71,6 +71,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 
 **Kết quả:** ✅ PASS · `/` → `/login`, đủ khối 1/3/5, không banner/lỗi, console sạch · 2026-11-20
 **Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · `/` → `/login`, nút + ghi chú đúng, console sạch
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · `/` → `/login`, nút + ghi chú đúng, console sạch
 
 ---
 
@@ -92,6 +93,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 
 **Kết quả:** ✅ PASS · bước 1–2 bằng popup (nút "Đang đăng nhập…" + disabled); bước 3 chạy luồng redirect (`__ua` Chrome Android) vì extension không điều khiển được cửa sổ popup → "Xin chào, An Nguyễn"; doc `users` đủ field TBL-01; bước 5: tool chặn đọc cookie — HttpOnly/Max-Age/SameSite đã kiểm ở `create-session.test.ts`, server đọc được phiên · lần chạy đầu FAIL (redirect mất kết quả) → fix `d1f3066` · 2026-11-20
 **Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · redirect (`__ua` Android), tạo An mới → "Xin chào, An Nguyễn" (trang chủ T-003); `users/<uid>` đủ field TBL-01
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · redirect (`__ua` Android), tạo An mới → "Xin chào, An Nguyễn"
 
 ---
 
@@ -109,6 +111,7 @@ TC-T002-01, TC-T002-02, TC-T002-03
 
 **Kết quả:** ✅ PASS · `/login` → `/`, không thấy nút Google; tải lại `/` ở yên · chạy lại sau fix `03125a9` vẫn PASS · 2026-11-20
 **Smoke 2026-11-21 (khi làm T-003):** ✅ PASS · `/login` → `/`, không nút Google; tải lại `/` ở yên
+**Smoke 2026-11-21 (khi làm T-004):** ✅ PASS · `/login` → `/`, không nút Google; tải lại `/` ở yên
 
 ---
 
