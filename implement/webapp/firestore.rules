@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Baseline T-001: cấm mọi đọc/ghi từ client. Ghi luôn đi qua Server Action (ADR-03).
+// Các task sau mở quyền đọc từng phần, kèm test allow/deny trong tests/emulator/.
+// Lưu ý: các match OR nhau — catch-all `if false` không đóng lại quyền đã mở ở match cụ thể.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TBL-01 (T-002): chỉ chính chủ đọc; client không bao giờ ghi.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

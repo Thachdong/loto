@@ -37,7 +37,7 @@ Phiên bản: dùng bản ổn định mới nhất trong nhánh ghi dưới đ�
 | Runtime | Node.js | 22 LTS | ADR-02 |
 | Frontend | Next.js (App Router) + React | Next.js 16.x, React 19.x | ADR-02 |
 | UI | Tailwind CSS + shadcn/ui (Radix) | Tailwind 4.x | ADR-02, NFR-12 |
-| Validation | Zod (dùng chung client & server) | 3.x | ADR-03 |
+| Validation | Zod (dùng chung client & server) | 4.x (≥ 4.6.6, vá GHSA-mrhx-c7xc-m3w5) | ADR-03 |
 | Backend (ghi) | Next.js Server Actions trên App Hosting + `firebase-admin`; Route Handlers chỉ cho `/join/[code]` (SSR) và webhook nội bộ | firebase-admin 13.x | ADR-03 |
 | Backend (nền) | Cloud Functions for Firebase 2nd gen: chỉ schedule `aggregateDailyStats` (Q-051) | firebase-functions 6.x | ADR-05, ADR-11 |
 | Database | Cloud Firestore (Native), `asia-southeast1` | — | ADR-04 |

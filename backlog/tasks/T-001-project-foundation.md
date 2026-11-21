@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-00 | M0 | 3 | — | TODO |
+| EPIC-00 | M0 | 3 | — | DONE |
 
 ## 1. Mục tiêu demo
 Sau task này: **dev chạy `npm run emulators` + `npm run dev`, mở `http://localhost:3000` trên Chrome ở viewport 375×812 thì thấy trang chào "Lô Tô Online" theo bố cục mobile-first. Emulator UI (`localhost:4000`) hiện đủ Auth, Firestore, Realtime Database, Storage, Functions. `npm test`, `npm run lint` và `npm run typecheck` đều pass.**
@@ -21,38 +21,38 @@ Sau task này: **dev chạy `npm run emulators` + `npm run dev`, mở `http://lo
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Khởi tạo Next.js 16 (App Router) + React 19 + TypeScript strict. Pin phiên bản chính xác trong `package.json` (tech-stack §2).
-- [ ] Tailwind CSS 4 + shadcn/ui (khởi tạo `Button`, `Dialog`, `Sheet`, `Input`, toast `Sonner`) — dùng cho các task sau.
-- [ ] `app/layout.tsx`: `lang="vi"`, font có đủ dấu tiếng Việt, meta viewport `width=device-width, initial-scale=1`. Khung `AppShell` gồm cột `max-w-[480px] mx-auto px-4`, nền ngoài cột khác màu ở màn rộng (NFR-12).
-- [ ] Trang `/` tạm: logo chữ "Lô Tô Online" và câu giới thiệu lấy từ từ điển. T-002 thay bằng logic điều hướng.
-- [ ] `src/i18n/vi.ts`: từ điển chữ giao diện, kèm hàm `t(key, params)` (NFR-16). Chữ giao diện của các task sau đều thêm vào đây.
-- [ ] `src/lib/time.ts`: `formatTimeVN(date, 'HH:mm' | 'dd/MM HH:mm')` dùng `Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })` (NFR-16).
+- [x] Khởi tạo Next.js 16 (App Router) + React 19 + TypeScript strict. Pin phiên bản chính xác trong `package.json` (tech-stack §2).
+- [x] Tailwind CSS 4 + shadcn/ui (khởi tạo `Button`, `Dialog`, `Sheet`, `Input`, toast `Sonner`) — dùng cho các task sau.
+- [x] `app/layout.tsx`: `lang="vi"`, font có đủ dấu tiếng Việt, meta viewport `width=device-width, initial-scale=1`. Khung `AppShell` gồm cột `max-w-[480px] mx-auto px-4`, nền ngoài cột khác màu ở màn rộng (NFR-12).
+- [x] Trang `/` tạm: logo chữ "Lô Tô Online" và câu giới thiệu lấy từ từ điển. T-002 thay bằng logic điều hướng.
+- [x] `src/i18n/vi.ts`: từ điển chữ giao diện, kèm hàm `t(key, params)` (NFR-16). Chữ giao diện của các task sau đều thêm vào đây.
+- [x] `src/lib/time.ts`: `formatTimeVN(date, 'HH:mm' | 'dd/MM HH:mm')` dùng `Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })` (NFR-16).
 
 ### API / Backend
-- [ ] `src/server/errors.ts`: hằng `ERROR_CODES` gồm đủ 41 mã trong bảng mã lỗi của api-contract, mỗi mã có `{http, message}` (message tiếng Việt). Thêm class `AppError(code, details?)`.
-- [ ] `src/server/action.ts`: kiểu `ActionResult<T> = {ok: true, data: T} | {ok: false, error: {code, message, details?}}` và hàm bọc `defineAction({ input: zodSchema, auth: 'none' | 'required', handler })`. Hàm bọc làm các việc:
+- [x] `src/server/errors.ts`: hằng `ERROR_CODES` gồm đủ 41 mã trong bảng mã lỗi của api-contract, mỗi mã có `{http, message}` (message tiếng Việt). Thêm class `AppError(code, details?)`.
+- [x] `src/server/action.ts`: kiểu `ActionResult<T> = {ok: true, data: T} | {ok: false, error: {code, message, details?}}` và hàm bọc `defineAction({ input: zodSchema, auth: 'none' | 'required', handler })`. Hàm bọc làm các việc:
   - Validate Zod. Sai → `VALIDATION_FAILED`, `details[] = {field, code, message}`.
   - Handler ném `AppError` → trả đúng mã đó.
   - Lỗi bất ngờ → `INTERNAL_ERROR`, không lộ stack. Ghi log JSON một dòng `{severity: 'ERROR', action, code, message, stack}` ra stderr.
   - `auth: 'required'` để sẵn điểm móc, T-002 hiện thực kiểm phiên.
   - Quy ước đặt tên: `<operationId>Action`, file `src/server/actions/<operationId>.ts`.
-- [ ] `src/server/firebase-admin.ts`: khởi tạo `firebase-admin` (Firestore, Auth, RTDB, Storage) một lần. Tự nối emulator khi có biến `*_EMULATOR_HOST`.
-- [ ] `src/lib/firebase/client.ts`: khởi tạo Firebase JS SDK (modular). `NEXT_PUBLIC_USE_EMULATOR=true` → `connectAuthEmulator`, `connectFirestoreEmulator`, `connectDatabaseEmulator`, `connectStorageEmulator`.
-- [ ] `src/server/clock.ts`: `now()` lấy giờ server, thay được trong test, để test các rule theo thời gian (BR-04, BR-05) mà không cần chờ thật.
+- [x] `src/server/firebase-admin.ts`: khởi tạo `firebase-admin` (Firestore, Auth, RTDB, Storage) một lần. Tự nối emulator khi có biến `*_EMULATOR_HOST`.
+- [x] `src/lib/firebase/client.ts`: khởi tạo Firebase JS SDK (modular). `NEXT_PUBLIC_USE_EMULATOR=true` → `connectAuthEmulator`, `connectFirestoreEmulator`, `connectDatabaseEmulator`, `connectStorageEmulator`.
+- [x] `src/server/clock.ts`: `now()` lấy giờ server, thay được trong test, để test các rule theo thời gian (BR-04, BR-05) mà không cần chờ thật.
 
 ### Data
-- [ ] `firebase.json`: emulators auth 9099, firestore 8080, database 9000, storage 9199, functions 5001, UI 4000. Bật `singleProjectMode`. Project id `demo-loto`. `[ASSUMED]` Dùng tiền tố `demo-` để SDK không gọi tới project thật.
-- [ ] `firestore.rules`: `allow read, write: if false` cho mọi đường dẫn. `database.rules.json`: `.read/.write = false`. `storage.rules`: cấm hết. Các task sau mở dần từng phần.
-- [ ] `firestore.indexes.json` rỗng (`indexes: [], fieldOverrides: []`).
-- [ ] `functions/`: package TypeScript (Node 22, firebase-functions 6.x), `index.ts` chưa export function nào. T-013 thêm `aggregateDailyStats`.
-- [ ] `scripts/seed.ts` (`npm run seed -- <scenario>`):
+- [x] `firebase.json`: emulators auth 9099, firestore 8080, database 9000, storage 9199, functions 5001, UI 4000. Bật `singleProjectMode`. Project id `demo-loto`. `[ASSUMED]` Dùng tiền tố `demo-` để SDK không gọi tới project thật.
+- [x] `firestore.rules`: `allow read, write: if false` cho mọi đường dẫn. `database.rules.json`: `.read/.write = false`. `storage.rules`: cấm hết. Các task sau mở dần từng phần.
+- [x] `firestore.indexes.json` rỗng (`indexes: [], fieldOverrides: []`).
+- [x] `functions/`: package TypeScript (Node 22, firebase-functions 6.x), `index.ts` chưa export function nào. T-013 thêm `aggregateDailyStats`.
+- [x] `scripts/seed.ts` (`npm run seed -- <scenario>`):
   - Từ chối chạy khi thiếu `FIRESTORE_EMULATOR_HOST` / `FIREBASE_AUTH_EMULATOR_HOST`, báo lỗi rõ.
   - Hỗ trợ đăng ký scenario. Scenario `reset` xóa sạch emulator qua REST API của emulator.
   - Scenario `smoke` ghi 1 doc `_smoke/hello`.
   - Có hàm tiện ích `seedUser({uid, email, name, photoUrl})`: tạo user Auth emulator provider `google.com` qua `importUsers` để user hiện trong màn chọn tài khoản giả lập. `[ASSUMED]`
 
 ### Khác
-- [ ] Scripts `package.json`:
+- [x] Scripts `package.json`:
   - `dev`: `next dev`
   - `emulators`: `firebase emulators:start --import=.emulator-data --export-on-exit`. `[ASSUMED]` Giữ dữ liệu giữa các lần chạy; thư mục này được gitignore.
   - `test`: `firebase emulators:exec --only auth,firestore,database,storage "vitest run"`
@@ -60,18 +60,18 @@ Sau task này: **dev chạy `npm run emulators` + `npm run dev`, mở `http://lo
   - `lint`: ESLint (next + typescript)
   - `typecheck`: `tsc --noEmit`
   - `seed`: `tsx scripts/seed.ts`
-- [ ] Vitest chia 2 project:
+- [x] Vitest chia 2 project:
   - `unit`: môi trường node, thư mục `src/**/*.test.ts`.
   - `emulator`: thư mục `tests/emulator/**`, có helper `@firebase/rules-unit-testing` cho rules và helper xóa dữ liệu giữa các test.
   - `[ASSUMED]` Thêm `@testing-library/react` + jsdom để test component.
-- [ ] `.env.local.example`: `NEXT_PUBLIC_FIREBASE_*` (giá trị cho `demo-loto`), `NEXT_PUBLIC_USE_EMULATOR=true`, `NEXT_PUBLIC_APP_URL=http://localhost:3000`, các `*_EMULATOR_HOST` cho server.
-- [ ] `docs/chrome-testing.md`: hướng dẫn AI chạy kịch bản Chrome (Q-053):
+- [x] `.env.local.example`: `NEXT_PUBLIC_FIREBASE_*` (giá trị cho `demo-loto`), `NEXT_PUBLIC_USE_EMULATOR=true`, `NEXT_PUBLIC_APP_URL=http://localhost:3000`, các `*_EMULATOR_HOST` cho server.
+- [x] `docs/chrome-testing.md`: hướng dẫn AI chạy kịch bản Chrome (Q-053):
   - Khởi động emulator + dev, chạy seed.
   - Viewport 375×812.
   - Mỗi người chơi một profile/cửa sổ Chrome riêng (cookie tách biệt).
   - Xem dữ liệu ở Emulator UI.
   - Ghi kết quả pass/fail kèm ảnh chụp khi fail vào mục "Kết quả chạy" của file task.
-- [ ] README ngắn: yêu cầu Node 22, Java (cho emulator), firebase-tools; các lệnh trên.
+- [x] README ngắn: yêu cầu Node 22, Java (cho emulator), firebase-tools; các lệnh trên.
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -124,10 +124,10 @@ Tiền điều kiện: `npm run emulators` và `npm run dev` đang chạy. Dùng
 Đã gộp vào kịch bản Chrome. Dev chỉ cần đọc `docs/chrome-testing.md` và review cấu trúc thư mục.
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Rules baseline có test deny cho cả Firestore, RTDB, Storage
-- [ ] `docs/chrome-testing.md` và README đủ để một máy mới chạy được từ đầu
-- [ ] Không có giá trị bí mật nào trong repo (`.env.local` đã gitignore)
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Rules baseline có test deny cho cả Firestore, RTDB, Storage
+- [x] `docs/chrome-testing.md` và README đủ để một máy mới chạy được từ đầu
+- [x] Không có giá trị bí mật nào trong repo (`.env.local` đã gitignore)
 
 ## 7. Ghi chú
 - `[ASSUMED]` Project id emulator là `demo-loto`.
@@ -136,3 +136,8 @@ Tiền điều kiện: `npm run emulators` và `npm run dev` đang chạy. Dùng
 - `[ASSUMED]` `npm run emulators` dùng `--import/--export-on-exit` để giữ dữ liệu giữa các lần chạy.
 - Point: giữ 3. Rủi ro lệch lên 5: phần cấu hình Vitest chạy với `emulators:exec` và Next 16 + Tailwind 4 mới có thể tốn công gỡ lỗi.
 - Tech-stack ADR-13 ghi CI GitHub Actions + Playwright, nhưng Q-053 ghi đè: chỉ kiểm local, E2E do AI chạy trên Chrome. Task này không dựng CI.
+
+## 8. Kết quả chạy
+- Test case QC: [testcases/T-001-project-foundation.md](../testcases/T-001-project-foundation.md) — 2026-11-20, P0 5/5, P1 4/4.
+- Plan: [plan/T-001-project-foundation.md](../plan/T-001-project-foundation.md).
+- Lệch so với mô tả task: file mẫu biến môi trường là `.env.example` (không phải `.env.local.example`); đường dẫn file theo `architecture.md` §4 (`src/core/**`, `scripts/seed/index.ts`).
