@@ -1,4 +1,15 @@
 {
   "indexes": [],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "rooms",
+      "fieldPath": "called_numbers",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "rooms",
+      "fieldPath": "last_event",
+      "indexes": []
+    }
+  ]
 }
