@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { generateTicketSet, seededRng } from "@/features/room/shared/domain/generate-ticket-set";
-import type { GameStatus, RoomStatus } from "@/features/room/shared/types";
+import type { CloseReason, GameStatus, RoomStatus } from "@/features/room/shared/types";
 import { seedDatabase, seedFirestore } from "./admin";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -25,6 +25,12 @@ export type SeedRoom = {
   /** Mặc định `${roomId}_g1`. */
   gameId?: string;
   rngSeed?: number;
+  /** Ghi đè `member_count` (mặc định: số thành viên; 0 khi phòng closed). */
+  memberCount?: number;
+  /** `blocked_uids` (BR-06). Mặc định rỗng. */
+  blockedUids?: string[];
+  /** `close_reason` (chỉ có nghĩa khi phòng closed). Mặc định `expired` cho phòng closed. */
+  closeReason?: CloseReason;
 };
 
 /**
@@ -49,8 +55,8 @@ export async function seedRoom(opts: SeedRoom): Promise<{ gameId: string }> {
     name: opts.name,
     host_uid: opts.hostUid,
     status,
-    member_count: status === "closed" ? 0 : members.length,
-    blocked_uids: [],
+    member_count: opts.memberCount ?? (status === "closed" ? 0 : members.length),
+    blocked_uids: opts.blockedUids ?? [],
     invite_code: opts.inviteCode,
     join_code: opts.joinCode,
     invite_expires_at: expires,
@@ -64,8 +70,8 @@ export async function seedRoom(opts: SeedRoom): Promise<{ gameId: string }> {
     created_by: opts.hostUid,
     created_at: at,
     updated_at: at,
-    closed_at: null,
-    close_reason: null,
+    closed_at: status === "closed" ? at : null,
+    close_reason: status === "closed" ? (opts.closeReason ?? "expired") : null,
     expire_at: expireAt,
   });
   batch.set(db.doc(`${roomPath}/games/${gameId}`), {
