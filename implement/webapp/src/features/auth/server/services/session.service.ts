@@ -4,8 +4,9 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 import { AppError } from "@/core/server/action";
 import { now } from "@/core/server/clock";
 import { getAdminAuth } from "@/core/server/firebase-admin";
-import { SESSION_MAX_AGE_SEC, setSessionCookie } from "@/core/server/session";
-import { upsertUserFromGoogle } from "@/features/auth/db/user.repository";
+import { logError } from "@/core/server/log";
+import { clearSessionCookie, SESSION_MAX_AGE_SEC, setSessionCookie } from "@/core/server/session";
+import { getUser, upsertUserFromGoogle } from "@/features/auth/db/user.repository";
 import type { SessionResult } from "@/features/auth/shared/types";
 
 /** [ASSUMED] Firebase khuyến nghị chỉ tạo session cookie từ lần đăng nhập gần đây. */
@@ -51,4 +52,20 @@ export async function createSession(idToken: string): Promise<SessionResult> {
   await setSessionCookie(sessionCookie);
 
   return { me, isNewUser };
+}
+
+/**
+ * api-contract › deleteCurrentSession — T-003 chỉ làm nhánh **không ở phòng**: `revokeRefreshTokens(uid)` +
+ * xóa cookie `__session`, trả `null` (204).
+ * [ASSUMED] Đang ở phòng → `INTERNAL_ERROR`, không đổi dữ liệu; T-011 thay bằng rời/đóng phòng (Q-052, Q-057).
+ */
+export async function deleteCurrentSession(uid: string): Promise<null> {
+  const me = await getUser(uid);
+  if (me?.currentRoomId) {
+    logError({ action: "deleteCurrentSession", code: "INTERNAL_ERROR", message: "not_implemented_until_T-011" });
+    throw new AppError("INTERNAL_ERROR");
+  }
+  await getAdminAuth().revokeRefreshTokens(uid);
+  await clearSessionCookie();
+  return null;
 }
