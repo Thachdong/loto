@@ -1,15 +1,13 @@
 "use server";
 
-import { AppError, defineAction } from "@/core/server/action";
+import { defineAction } from "@/core/server/action";
+import { leaveRoom } from "@/features/room/server/services/room-leave.service";
 import { LeaveRoomInput } from "@/features/room/shared/schemas/leave-room";
 
-
-/** api-contract › leaveRoom. Stub của bước contract (S1) — bước backend thay bằng service. */
+/** api-contract › leaveRoom. */
 export const leaveRoomAction = defineAction({
   name: "leaveRoom",
   input: LeaveRoomInput,
   auth: "required",
-  handler: async (): Promise<null> => {
-    throw new AppError("INTERNAL_ERROR");
-  },
+  handler: ({ input, uid }) => leaveRoom(uid, input),
 });
