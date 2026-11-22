@@ -39,7 +39,37 @@ export type SeedRoom = {
   ticketSetNo?: number;
   /** `seq_no` của ván hiện tại và `game_count`. Mặc định 1. */
   gameSeqNo?: number;
+  /** `draw_interval_sec` (BR-15). Mặc định 5. */
+  drawIntervalSec?: number;
+  /** `rooms.called_numbers`. Mặc định rỗng. */
+  calledNumbers?: number[];
+  /** `games.next_call_at`. Mặc định null. */
+  nextCallAt?: Date | null;
+  /** `games.started_at`. Mặc định null. */
+  startedAt?: Date | null;
+  /** `games.pause_reason`. Mặc định null. */
+  pauseReason?: "host" | null;
+  /** `games.claims` (Q-055). Mặc định rỗng. */
+  claims?: SeedClaim[];
+  /** `games.resume_status`. Mặc định null. */
+  resumeStatus?: "running" | "paused" | null;
+  /** `games.player_count`. Mặc định 0. */
+  playerCount?: number;
+  /** `rooms.last_event`. Mặc định null. */
+  lastEvent?: SeedLastEvent | null;
 };
+
+export type SeedClaim = {
+  uid: string;
+  displayName: string;
+  ticketId: string;
+  color: string;
+  result: "win" | "miss";
+  row: number | null;
+  claimedAt?: Date;
+};
+
+export type SeedLastEvent = { type: string; text?: string | null; actorUid?: string | null; targetUid?: string | null };
 
 export type SeedPlayer = { uid: string; displayName: string; photoUrl?: string | null; ticketIds: string[] };
 
@@ -71,12 +101,20 @@ export async function seedRoom(opts: SeedRoom): Promise<{ gameId: string }> {
     join_code: opts.joinCode,
     invite_expires_at: expires,
     expires_at: expires,
-    draw_interval_sec: 5,
-    called_numbers: [],
+    draw_interval_sec: opts.drawIntervalSec ?? 5,
+    called_numbers: opts.calledNumbers ?? [],
     current_game_id: gameId,
     game_count: opts.gameSeqNo ?? 1,
     ticket_set_no: opts.ticketSetNo ?? 1,
-    last_event: null,
+    last_event: opts.lastEvent
+      ? {
+          type: opts.lastEvent.type,
+          text: opts.lastEvent.text ?? null,
+          actor_uid: opts.lastEvent.actorUid ?? null,
+          target_uid: opts.lastEvent.targetUid ?? null,
+          at,
+        }
+      : null,
     created_by: opts.hostUid,
     created_at: at,
     updated_at: at,
@@ -87,14 +125,22 @@ export async function seedRoom(opts: SeedRoom): Promise<{ gameId: string }> {
   batch.set(db.doc(`${roomPath}/games/${gameId}`), {
     seq_no: opts.gameSeqNo ?? 1,
     status: opts.gameStatus ?? "waiting",
-    pause_reason: null,
-    next_call_at: null,
-    claims: [],
-    resume_status: null,
+    pause_reason: opts.pauseReason ?? null,
+    next_call_at: opts.nextCallAt ? Timestamp.fromDate(opts.nextCallAt) : null,
+    claims: (opts.claims ?? []).map((c) => ({
+      uid: c.uid,
+      display_name: c.displayName,
+      ticket_id: c.ticketId,
+      color: c.color,
+      result: c.result,
+      row: c.row,
+      claimed_at: Timestamp.fromDate(c.claimedAt ?? createdAt),
+    })),
+    resume_status: opts.resumeStatus ?? null,
     winners: [],
     result: null,
-    player_count: 0,
-    started_at: null,
+    player_count: opts.playerCount ?? 0,
+    started_at: opts.startedAt ? Timestamp.fromDate(opts.startedAt) : null,
     ended_at: null,
     confirmed_by: null,
     created_at: at,

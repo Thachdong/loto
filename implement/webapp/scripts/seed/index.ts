@@ -8,6 +8,21 @@ import { smoke } from "./scenarios/smoke";
 import { t002 } from "./scenarios/t002";
 import { t003 } from "./scenarios/t003";
 import { t004 } from "./scenarios/t004";
+import {
+  gameAwaiting,
+  gameAwaitingExpiring,
+  gameEmpty,
+  gameExpiredIdle,
+  gameExpiringRunning,
+  gameExpiringWaiting,
+  gameNearExpiry,
+  gameNearlyDone,
+  gameNearlyDoneClosing,
+  gamePaused,
+  gameRowReady,
+  gameRunning,
+  gameWaiting,
+} from "./scenarios/t006";
 import { ticketsBasic, ticketsCarry, ticketsRunning } from "./scenarios/t005";
 
 const SCENARIOS: Record<string, () => Promise<void>> = {
@@ -20,6 +35,20 @@ const SCENARIOS: Record<string, () => Promise<void>> = {
   "tickets-running": ticketsRunning,
   "tickets-carry": ticketsCarry,
   t005: ticketsBasic,
+  "game-waiting": gameWaiting,
+  t006: gameWaiting,
+  "game-empty": gameEmpty,
+  "game-running": gameRunning,
+  "game-row-ready": gameRowReady,
+  "game-paused": gamePaused,
+  "game-awaiting": gameAwaiting,
+  "game-nearly-done": gameNearlyDone,
+  "game-nearly-done-closing": gameNearlyDoneClosing,
+  "game-near-expiry": gameNearExpiry,
+  "game-expiring-waiting": gameExpiringWaiting,
+  "game-expiring-running": gameExpiringRunning,
+  "game-expired-idle": gameExpiredIdle,
+  "game-awaiting-expiring": gameAwaitingExpiring,
 };
 
 async function main(): Promise<number> {
