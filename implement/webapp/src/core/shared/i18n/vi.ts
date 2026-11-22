@@ -181,6 +181,8 @@ export const vi = {
     claimSubmitted: "{name} KINH!",
     claimsRejected: "Host đã bác bỏ lượt KINH",
     gameConfirmed: "Host đã xác nhận ván",
+    intervalChanged: "Nhịp quay: {n} giây/số",
+    gameCancelled: "Ván đã bị hủy",
     memberLeft: "{name} đã rời phòng",
     memberJoined: "{name} đã vào phòng",
     memberKicked: "{name} đã bị mời ra khỏi phòng",
