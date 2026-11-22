@@ -4,9 +4,9 @@ import { Skeleton } from "@/core/client/ui/skeleton";
 import { t } from "@/core/shared/i18n/vi";
 import { AuthSync } from "@/features/auth/client";
 import { requireUser } from "@/features/auth/server/queries/current-user.query";
-import { RoomLobby } from "@/features/room/client";
+import { RoomScreen } from "@/features/game/client";
 
-// Trang phòng tối thiểu (T-003). T-006 thay bằng SCR-04 đầy đủ.
+// SCR-04 Phòng chơi (T-006).
 export default function RoomPage() {
   return (
     <Suspense fallback={<RoomFallback />}>
@@ -20,7 +20,7 @@ async function Room() {
   if (!me.currentRoomId) redirect("/");
   return (
     <>
-      <RoomLobby uid={me.uid} roomId={me.currentRoomId} />
+      <RoomScreen uid={me.uid} roomId={me.currentRoomId} />
       <AuthSync />
     </>
   );
