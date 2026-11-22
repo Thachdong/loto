@@ -1,15 +1,13 @@
 "use server";
 
-import { AppError, defineAction } from "@/core/server/action";
+import { defineAction } from "@/core/server/action";
+import { expireRoom } from "@/features/room/server/services/room-expire.service";
 import { ExpireRoomInput } from "@/features/room/shared/schemas/expire-room";
-import type { RoomExpireResult } from "@/features/room/shared/types";
 
-/** api-contract › expireRoom. Stub của bước contract (S1) — bước backend thay bằng service. */
+/** api-contract › expireRoom. */
 export const expireRoomAction = defineAction({
   name: "expireRoom",
   input: ExpireRoomInput,
   auth: "required",
-  handler: async (): Promise<RoomExpireResult> => {
-    throw new AppError("INTERNAL_ERROR");
-  },
+  handler: ({ input, uid }) => expireRoom(uid, input),
 });

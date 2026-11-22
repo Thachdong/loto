@@ -91,7 +91,7 @@ describe("AC-9: applyLazyExpiry (BR-04, ADR-05)", () => {
     expect((await data("users/u_b"))?.current_room_id).toBeNull();
   });
 
-  for (const gameStatus of ["running", "paused", "awaiting_confirm"]) {
+  for (const gameStatus of ["running", "paused"]) {
     it(`expired + game ${gameStatus} → room closing, last_event room_closing, game & members untouched`, async () => {
       await seed("active", gameStatus);
       const plan = await run(after);
@@ -102,6 +102,46 @@ describe("AC-9: applyLazyExpiry (BR-04, ADR-05)", () => {
       expect((await data("rooms/r1/games/g1"))?.status).toBe(gameStatus);
       expect((await data("users/u_b"))?.current_room_id).toBe("r1");
       expect((await rtdb().ref("presence_access/r1").get()).exists()).toBe(true);
+    });
+  }
+
+  it("AC-38: expired + awaiting_confirm with a win claim → game finished (won), room closed, members cleared", async () => {
+    await seed("active", "awaiting_confirm");
+    const claimAt = Timestamp.fromDate(before);
+    await db.doc("rooms/r1/games/g1").update({
+      claims: [
+        { uid: "u_b", display_name: "B", ticket_id: "red_a", color: "red", result: "miss", row: null, claimed_at: claimAt },
+        { uid: "u_a", display_name: "A", ticket_id: "blue_a", color: "blue", result: "win", row: 3, claimed_at: claimAt },
+      ],
+    });
+    const plan = await run(after);
+
+    expect(plan).toMatchObject({ outcome: "closed", status: "closed", gameStatus: "finished" });
+    const game = await data("rooms/r1/games/g1");
+    expect(game).toMatchObject({ status: "finished", result: "won", next_call_at: null });
+    expect((game?.ended_at as Timestamp).toMillis()).toBe(after.getTime());
+    expect(game?.winners).toHaveLength(1);
+    expect(game?.winners[0]).toMatchObject({ uid: "u_a", ticket_id: "blue_a", row: 3 });
+    expect(await data("rooms/r1")).toMatchObject({ status: "closed", close_reason: "expired", member_count: 0 });
+    expect((await data("users/u_a"))?.current_room_id).toBeNull();
+    expect((await rtdb().ref("presence/r1").get()).exists()).toBe(false);
+  });
+
+  it("AC-38: expired + awaiting_confirm without a win claim → finished with no_winner", async () => {
+    await seed("active", "awaiting_confirm");
+    const plan = await run(after);
+    expect(plan).toMatchObject({ outcome: "closed", gameStatus: "finished" });
+    expect(await data("rooms/r1/games/g1")).toMatchObject({ status: "finished", result: "no_winner" });
+  });
+
+  for (const gameStatus of ["finished", "cancelled"]) {
+    it(`room closing + game ${gameStatus} → room closed (even before expires_at)`, async () => {
+      await seed("closing", gameStatus);
+      const plan = await run(before);
+      expect(plan).toMatchObject({ outcome: "closed", status: "closed", gameStatus });
+      expect(await data("rooms/r1")).toMatchObject({ status: "closed", close_reason: "expired", member_count: 0 });
+      expect((await data("rooms/r1/games/g1"))?.status).toBe(gameStatus);
+      expect((await data("users/u_b"))?.current_room_id).toBeNull();
     });
   }
 
