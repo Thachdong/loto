@@ -2,8 +2,9 @@ import "server-only";
 
 import { Timestamp, type DocumentReference, type Transaction } from "firebase-admin/firestore";
 import { firestore, rtdb } from "@/core/db/firestore";
-import type { RoomStatus } from "@/features/room/shared/types";
-import type { GameDoc } from "./game.doc";
+import type { CloseReason, RoomStatus } from "@/features/room/shared/types";
+import type { GameDoc, GameResult, WinnerDoc } from "./game.doc";
+import { finishedGamePatch } from "./game.mapper";
 import type { LastEventDoc, RoomDoc } from "./room.doc";
 import { gameFromDoc, newRoomDocs, roomFromDoc, type GameRecord, type NewRoom, type RoomRecord } from "./room.mapper";
 import type { TicketDoc } from "./ticket.doc";
@@ -105,7 +106,7 @@ function roomEvent(type: string, at: Timestamp): LastEventDoc {
   return { type, text: null, actor_uid: null, target_uid: null, at };
 }
 
-export type RoomEvent = { type: string; text: string | null; actorUid: string; targetUid: string | null; now: Date };
+export type RoomEvent = { type: string; text: string | null; actorUid: string | null; targetUid: string | null; now: Date };
 
 function eventDoc(event: RoomEvent, at: Timestamp): LastEventDoc {
   return { type: event.type, text: event.text, actor_uid: event.actorUid, target_uid: event.targetUid, at };
@@ -140,17 +141,93 @@ export function cancelGameInTx(tx: Transaction, roomId: string, gameId: string, 
   tx.update(gameRef(roomId, gameId), patch);
 }
 
-/** Phòng → `closed` vì hết hạn (BR-04): `close_reason = expired`, `member_count = 0`, `last_event = room_closed`. */
-export function closeRoomExpiredInTx(tx: Transaction, roomId: string, now: Date): void {
-  const at = Timestamp.fromDate(now);
+export type CloseRoomOptions = {
+  reason: CloseReason;
+  now: Date;
+  /** Người gây ra việc đóng (host rời) — null khi hệ thống (hết hạn). */
+  actorUid?: string | null;
+  /** `last_event.text` (server soạn), VD "Host đã đóng phòng". */
+  text?: string | null;
+};
+
+/**
+ * Phòng → `closed`: `close_reason`, `closed_at`, `member_count = 0`, `last_event = room_closed`.
+ * Người gọi tự xóa `users.current_room_id` và RTDB.
+ */
+export function closeRoomInTx(tx: Transaction, roomId: string, options: CloseRoomOptions): void {
+  const at = Timestamp.fromDate(options.now);
   const patch: Partial<RoomDoc> = {
     status: "closed",
-    close_reason: "expired",
+    close_reason: options.reason,
     closed_at: at,
     member_count: 0,
-    last_event: roomEvent("room_closed", at),
+    last_event: {
+      type: "room_closed",
+      text: options.text ?? null,
+      actor_uid: options.actorUid ?? null,
+      target_uid: null,
+      at,
+    },
     updated_at: at,
   };
+  tx.update(roomRef(roomId), patch);
+}
+
+/** Phòng → `closed` vì hết hạn (BR-04). */
+export function closeRoomExpiredInTx(tx: Transaction, roomId: string, now: Date): void {
+  closeRoomInTx(tx, roomId, { reason: "expired", now });
+}
+
+/** Ván → `finished` (kết thúc tự động) rồi phòng → `closed`, trong cùng transaction. */
+export function finishAndCloseInTx(
+  tx: Transaction,
+  roomId: string,
+  gameId: string,
+  outcome: { result: GameResult; winners: WinnerDoc[] },
+  options: CloseRoomOptions,
+): void {
+  tx.update(gameRef(roomId, gameId), finishedGamePatch(outcome, options.now));
+  closeRoomInTx(tx, roomId, options);
+}
+
+/**
+ * Ghi `rooms.called_numbers` (mảng đầy đủ sau khi rao) và tuỳ chọn `last_event`
+ * (`game_started` ở startGame; `drawNumber` không đặt event).
+ */
+export function setRoomCalledNumbersInTx(
+  tx: Transaction,
+  roomId: string,
+  calledNumbers: readonly number[],
+  now: Date,
+  event?: RoomEvent,
+): void {
+  const at = Timestamp.fromDate(now);
+  const patch: Partial<RoomDoc> = { called_numbers: [...calledNumbers], updated_at: at };
+  if (event) patch.last_event = eventDoc(event, at);
+  tx.update(roomRef(roomId), patch);
+}
+
+/** Trỏ phòng sang ván mới (`current_game_id`, `game_count = seq_no`) kèm `last_event` (`game_finished`). */
+export function setRoomGameInTx(
+  tx: Transaction,
+  roomId: string,
+  game: { gameId: string; gameCount: number },
+  event: RoomEvent,
+): void {
+  const at = Timestamp.fromDate(event.now);
+  const patch: Partial<RoomDoc> = {
+    current_game_id: game.gameId,
+    game_count: game.gameCount,
+    last_event: eventDoc(event, at),
+    updated_at: at,
+  };
+  tx.update(roomRef(roomId), patch);
+}
+
+/** `member_count` mới + `last_event` (`member_left`): người rời không phải host. */
+export function setRoomMemberLeftInTx(tx: Transaction, roomId: string, memberCount: number, event: RoomEvent): void {
+  const at = Timestamp.fromDate(event.now);
+  const patch: Partial<RoomDoc> = { member_count: memberCount, last_event: eventDoc(event, at), updated_at: at };
   tx.update(roomRef(roomId), patch);
 }
 

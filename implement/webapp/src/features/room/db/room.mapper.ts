@@ -3,6 +3,7 @@ import "server-only";
 import { Timestamp } from "firebase-admin/firestore";
 import { expireAtFrom } from "@/core/db/ttl";
 import type { CloseReason, GameStatus, RoomCreated, RoomStatus, Ticket } from "@/features/room/shared/types";
+import { claimFromDoc, type ClaimRecord } from "./game.mapper";
 import type { GameDoc } from "./game.doc";
 import type { RoomDoc } from "./room.doc";
 import type { TicketDoc } from "./ticket.doc";
@@ -17,6 +18,8 @@ export type RoomRecord = {
   inviteCode: string;
   joinCode: string;
   drawIntervalSec: number;
+  /** `rooms.called_numbers` theo thứ tự rao. */
+  calledNumbers: number[];
   currentGameId: string;
   gameCount: number;
   ticketSetNo: number;
@@ -34,6 +37,12 @@ export type GameRecord = {
   id: string;
   seqNo: number;
   status: GameStatus;
+  pauseReason: "host" | null;
+  nextCallAt: Date | null;
+  resumeStatus: "running" | "paused" | null;
+  claims: ClaimRecord[];
+  playerCount: number;
+  startedAt: Date | null;
 };
 
 /** Dữ liệu service quyết định khi tạo phòng (FLOW-02 bước 3–5). */
@@ -66,6 +75,7 @@ export function roomFromDoc(id: string, doc: RoomDoc): RoomRecord {
     inviteCode: doc.invite_code,
     joinCode: doc.join_code,
     drawIntervalSec: doc.draw_interval_sec,
+    calledNumbers: [...(doc.called_numbers ?? [])],
     currentGameId: doc.current_game_id,
     gameCount: doc.game_count,
     ticketSetNo: doc.ticket_set_no,
@@ -78,7 +88,17 @@ export function roomFromDoc(id: string, doc: RoomDoc): RoomRecord {
 }
 
 export function gameFromDoc(id: string, doc: GameDoc): GameRecord {
-  return { id, seqNo: doc.seq_no, status: doc.status };
+  return {
+    id,
+    seqNo: doc.seq_no,
+    status: doc.status,
+    pauseReason: doc.pause_reason ?? null,
+    nextCallAt: doc.next_call_at?.toDate() ?? null,
+    resumeStatus: doc.resume_status ?? null,
+    claims: (doc.claims ?? []).map(claimFromDoc),
+    playerCount: doc.player_count ?? 0,
+    startedAt: doc.started_at?.toDate() ?? null,
+  };
 }
 
 /**
