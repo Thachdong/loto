@@ -20,6 +20,8 @@ const room = (lastEvent: Event, id = "r1"): RoomView => ({
   expiresAt: new Date(),
   currentGameId: "g1",
   gameCount: 1,
+  drawIntervalSec: 5,
+  calledNumbers: [],
   closeReason: null,
   lastEvent,
 });
