@@ -9,7 +9,7 @@ import {
 } from "firebase-admin/firestore";
 import { expireAtFrom } from "@/core/db/ttl";
 import { firestore, rtdb } from "@/core/db/firestore";
-import type { Ticket, TicketId } from "@/features/room/shared/types";
+import type { Ticket, TicketColor, TicketId } from "@/features/room/shared/types";
 import type { PlayerDoc, PresenceNode } from "./player.doc";
 import { newPlayerDoc, playerFromDoc, type NewPlayer, type PlayerRecord } from "./player.mapper";
 
@@ -40,6 +40,16 @@ function ticketRef(roomId: string, ticketId: string): DocumentReference {
 /** Doc vé `rooms/{roomId}/tickets/{ticketId}` có tồn tại không (đọc trong transaction). */
 export async function getTicketExistsInTx(tx: Transaction, roomId: string, ticketId: TicketId): Promise<boolean> {
   return (await tx.get(ticketRef(roomId, ticketId))).exists;
+}
+
+/** Lưới + màu của vé (đọc trong transaction), null khi không có doc. */
+export async function getTicketGridInTx(
+  tx: Transaction,
+  roomId: string,
+  ticketId: TicketId,
+): Promise<{ color: TicketColor; grid: number[] } | null> {
+  const data = (await tx.get(ticketRef(roomId, ticketId))).data();
+  return data ? { color: data.color as TicketColor, grid: [...(data.grid as number[])] } : null;
 }
 
 /**

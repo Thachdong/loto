@@ -250,6 +250,13 @@ export async function removeRoomPresence(roomId: string): Promise<void> {
     .update({ [`${PRESENCE}/${roomId}`]: null, [`${PRESENCE_ACCESS}/${roomId}`]: null });
 }
 
+/** Xóa RTDB `presence/{roomId}/{uid}` và `presence_access/{roomId}/{uid}` khi một người rời phòng. */
+export async function removeMemberPresence(roomId: string, uid: string): Promise<void> {
+  await rtdb()
+    .ref()
+    .update({ [`${PRESENCE}/${roomId}/${uid}`]: null, [`${PRESENCE_ACCESS}/${roomId}/${uid}`]: null });
+}
+
 /** Chạy transaction Firestore (service không gọi `firestore()` trực tiếp). Tự retry khi xung đột. */
 export function runTransaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
   return firestore().runTransaction(fn);
