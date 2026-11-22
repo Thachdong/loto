@@ -1,25 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
-import { usePresence } from "@/core/client/hooks/use-presence";
+import { useRef, useState, type ReactNode } from "react";
+import { cancelPresence, usePresence } from "@/core/client/hooks/use-presence";
 import { Skeleton } from "@/core/client/ui/skeleton";
 import { t } from "@/core/shared/i18n/vi";
-import { OfflineBanner, useRoomEventToast } from "@/features/room/client";
+import { writeLeaveReason } from "@/features/room/client";
 import { TicketSheet } from "@/features/ticket/client";
 import { useGameActions } from "@/features/game/client/hooks/use-game-actions";
 import { useGameRoom } from "@/features/game/client/hooks/use-game-room";
+import { useDebugConnection, useConnection } from "@/features/game/client/hooks/use-connection";
 import { useNow } from "@/features/game/client/hooks/use-now";
 import { usePlayMode } from "@/features/game/client/hooks/use-play-mode";
+import { useServerTimeOffset } from "@/features/game/client/hooks/use-server-time-offset";
 import { LAYOUT_HEIGHTS } from "@/features/game/shared/domain/ticket-layout";
-import type { GameView, RoomView } from "@/features/room/shared/types";
+import type { GameView, LeaveReasonRecord, RoomView } from "@/features/room/shared/types";
 import type { PlayerView, TicketView } from "@/features/ticket/shared/types";
 import { BottomBar, ComingSoonSheet, type BottomTab } from "./bottom-bar";
 import { ClaimCard } from "./claim-card";
+import { ConnectionBanner } from "./connection-banner";
 import { HostControls, MeStatusLine } from "./host-controls";
 import { isKinhVisible, KinhBar } from "./kinh-bar";
 import { MyTickets } from "./my-tickets";
 import { NumberPanel } from "./number-panel";
+import { RoomExtras } from "./room-extras";
 import { RoomHeader } from "./room-header";
 
 /** Sheet/dialog đợt B mount vào (Mời, Rời, Bảng 90); đợt A chỉ ghi state. */
@@ -44,7 +48,7 @@ type Props = {
   uid: string;
   /** `current_room_id` server đọc lúc render (khác null — page đã redirect nếu null). */
   roomId: string;
-  /** `serverTime − localTime` (ms); đợt B nối `useServerTimeOffset`. */
+  /** `serverTime − localTime` (ms); mặc định đo từ RTDB `.info/serverTimeOffset` (`useServerTimeOffset`). */
   serverOffsetMs?: number;
   /** Chỗ gắn đợt B: trả về các component (không UI hoặc sheet/dialog) mount cùng màn. */
   renderExtras?: (ctx: RoomScreenContext) => ReactNode;
@@ -56,9 +60,23 @@ type Props = {
  * SCR-04 Phòng chơi: header → panel số → thanh điều khiển host / dòng trạng thái → (thẻ tạm) → vé của tôi
  * → thanh KINH → thanh nút dưới. `current_room_id` thành null → đã ghi lý do → về `/`.
  */
-export function RoomScreen({ uid, roomId, serverOffsetMs = 0, renderExtras, renderBanner }: Props) {
+export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, renderExtras, renderBanner }: Props) {
   const router = useRouter();
-  const state = useGameRoom({ uid, initialRoomId: roomId, onLeave: () => router.replace("/") });
+  /** Ý định rời của chính mình (player): lý do `left` thắng lý do suy ra từ snapshot khi `current_room_id` → null. */
+  const leaveIntent = useRef<LeaveReasonRecord | null>(null);
+  const state = useGameRoom({
+    uid,
+    initialRoomId: roomId,
+    onLeave: () => {
+      if (leaveIntent.current) writeLeaveReason(leaveIntent.current);
+      router.replace("/");
+    },
+  });
+  const measuredOffsetMs = useServerTimeOffset();
+  const serverOffsetMs = serverOffsetOverride ?? measuredOffsetMs;
+  const [leaving, setLeaving] = useState(false);
+  const connectionLost = useConnection(state.offline);
+  useDebugConnection();
   const { room, game, user, players, me, myTickets } = state;
   const [ticketsOpen, setTicketsOpen] = useState(false);
   const [overlay, setOverlay] = useState<RoomOverlay | null>(null);
@@ -66,14 +84,13 @@ export function RoomScreen({ uid, roomId, serverOffsetMs = 0, renderExtras, rend
   const mode = usePlayMode();
   const nowMs = useNow(room !== null);
 
-  // ADR-06: ghi presence khi đã biết user; toast `last_event` hiện có (đợt B thay bằng use-room-toasts).
-  usePresence(user ? roomId : null, user ? { uid, displayName: user.displayName, photoUrl: user.photoUrl } : null);
-  useRoomEventToast(room, uid);
+  // ADR-06: ghi presence khi đã biết user; ngừng ghi khi đang rời phòng.
+  usePresence(user && !leaving ? roomId : null, user && !leaving ? { uid, displayName: user.displayName, photoUrl: user.photoUrl } : null);
 
   const actions = useGameActions(roomId, game?.id ?? "");
 
   if (!room || !game) {
-    return <RoomSkeleton offline={state.offline} />;
+    return <RoomSkeleton offline={connectionLost} />;
   }
 
   const isHost = room.hostUid === uid;
@@ -95,11 +112,20 @@ export function RoomScreen({ uid, roomId, serverOffsetMs = 0, renderExtras, rend
     closeOverlay: () => setOverlay(null),
   };
   const openTickets = () => setTicketsOpen(true);
+  const startLeave = async () => {
+    leaveIntent.current = isHost ? null : { reason: "left", roomName: room.name };
+    setLeaving(true);
+    await cancelPresence(roomId, uid);
+  };
+  const abortLeave = () => {
+    leaveIntent.current = null;
+    setLeaving(false);
+  };
   const expiryRemainingMs = room.expiresAt.getTime() - (nowMs + serverOffsetMs);
 
   return (
     <main data-testid="room-screen" className="flex h-dvh min-h-0 w-full flex-col gap-1.5 overflow-hidden">
-      {state.offline && <OfflineBanner />}
+      {connectionLost && <ConnectionBanner />}
       {renderBanner?.(ctx)}
       <RoomHeader
         room={room}
@@ -164,7 +190,9 @@ export function RoomScreen({ uid, roomId, serverOffsetMs = 0, renderExtras, rend
         gameStatus={game.status}
         meUid={uid}
         isHost={isHost}
+        bottom={dockHeight}
       />
+      <RoomExtras ctx={ctx} dockHeight={dockHeight} onLeaveStart={startLeave} onLeaveAbort={abortLeave} onLeft={() => router.replace("/")} />
       {renderExtras?.(ctx)}
     </main>
   );
@@ -174,7 +202,7 @@ function RoomSkeleton({ offline }: { offline: boolean }) {
   return (
     <main data-testid="room-skeleton" aria-busy="true" className="flex h-dvh w-full flex-col gap-1.5 overflow-hidden">
       <span className="sr-only">{t("game.loadingRoom")}</span>
-      {offline && <OfflineBanner />}
+      {offline && <ConnectionBanner />}
       <div className="flex h-14 shrink-0 items-center">
         <Skeleton className="h-6 w-48" />
       </div>

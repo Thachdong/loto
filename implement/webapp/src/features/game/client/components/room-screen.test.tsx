@@ -15,12 +15,22 @@ const h = vi.hoisted(() => ({
   pause: vi.fn(),
   resume: vi.fn(),
   claim: vi.fn(),
+  leave: vi.fn(),
 }));
 
 vi.mock("@/features/game/client/hooks/use-game-room", () => ({ useGameRoom: () => h.state }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: h.replace, push: vi.fn() }) }));
 vi.mock("sonner", () => ({ toast: h.toast }));
-vi.mock("@/core/client/hooks/use-presence", () => ({ usePresence: vi.fn() }));
+vi.mock("@/core/client/hooks/use-presence", () => ({ usePresence: vi.fn(), cancelPresence: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/features/game/client/hooks/use-server-time-offset", () => ({ useServerTimeOffset: () => 0 }));
+vi.mock("@/features/game/client/hooks/use-connection", () => ({ useConnection: (snapshotError: boolean) => snapshotError, useDebugConnection: vi.fn() }));
+vi.mock("@/features/game/client/hooks/use-draw-scheduler", () => ({ useDrawScheduler: vi.fn() }));
+vi.mock("@/features/game/client/hooks/use-expiry-timer", () => ({ useExpiryTimer: vi.fn() }));
+vi.mock("@/features/game/client/hooks/use-wake-lock", () => ({ useWakeLock: vi.fn() }));
+vi.mock("@/features/game/client/hooks/use-audio", () => ({ useAudio: vi.fn() }));
+vi.mock("@/features/game/client/hooks/use-room-toasts", () => ({ useRoomToasts: vi.fn() }));
+vi.mock("./sound-gate", () => ({ SoundGate: () => null }));
+vi.mock("@/features/room/server/actions/leave-room.action", () => ({ leaveRoomAction: (...a: unknown[]) => h.leave(...a) }));
 vi.mock("@/features/ticket/client", async () => {
   const actual = await vi.importActual<typeof import("@/features/ticket/client")>("@/features/ticket/client");
   return {
@@ -245,16 +255,41 @@ describe("RoomScreen", () => {
     );
     await userEvent.click(screen.getByTestId("btn-invite"));
     expect(screen.getByTestId("extras")).toHaveTextContent("invite");
+    await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByTestId("btn-leave"));
     expect(screen.getByTestId("extras")).toHaveTextContent("leave");
+    await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByTestId("btn-board90"));
     expect(screen.getByTestId("extras")).toHaveTextContent("board90");
+  });
+
+  it("host: Mời opens the invite sheet; Rời → host dialog; confirm calls leaveRoom and goes home", async () => {
+    h.leave.mockResolvedValue({ ok: true, data: null });
+    render(<RoomScreen uid={HOST} roomId="r1" />);
+    await userEvent.click(screen.getByTestId("btn-invite"));
+    expect(screen.getByTestId("invite-sheet")).toBeInTheDocument();
+    expect(screen.getByTestId("invite-code")).toHaveTextContent("ABC 234");
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByTestId("btn-leave"));
+    expect(screen.getByTestId("leave-dialog")).toHaveAttribute("data-variant", "host");
+    await userEvent.click(screen.getByTestId("btn-leave-confirm"));
+    expect(h.leave).toHaveBeenCalledWith({ roomId: "r1" });
+    expect(h.replace).toHaveBeenCalledWith("/");
+  });
+
+  it("player: Bảng 90 opens the board sheet", async () => {
+    setState({ room: makeRoom({ calledNumbers: [5, 17] }) });
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    await userEvent.click(screen.getByTestId("btn-board90"));
+    expect(screen.getByTestId("board90")).toBeInTheDocument();
+    expect(screen.getByTestId("board-cell-17")).toHaveAttribute("data-last", "true");
+    expect(screen.queryByTestId("invite-sheet")).toBeNull();
   });
 
   it("offline → banner", () => {
     setState({ offline: true });
     render(<RoomScreen uid={ME} roomId="r1" />);
-    expect(screen.getByTestId("home-offline-banner")).toBeInTheDocument();
+    expect(screen.getByTestId("conn-banner")).toBeInTheDocument();
   });
 
 
