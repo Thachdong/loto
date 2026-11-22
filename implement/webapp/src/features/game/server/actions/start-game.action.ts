@@ -1,15 +1,13 @@
 "use server";
 
-import { AppError, defineAction } from "@/core/server/action";
+import { defineAction } from "@/core/server/action";
+import { startGame } from "@/features/game/server/services/game-lifecycle.service";
 import { StartGameInput } from "@/features/game/shared/schemas/start-game";
-import type { GameState } from "@/features/game/shared/types";
 
-/** api-contract › startGame. Stub của bước contract (S1) — bước backend thay bằng service. */
+/** api-contract › startGame. */
 export const startGameAction = defineAction({
   name: "startGame",
   input: StartGameInput,
   auth: "required",
-  handler: async (): Promise<GameState> => {
-    throw new AppError("INTERNAL_ERROR");
-  },
+  handler: ({ input, uid }) => startGame(uid, input),
 });
