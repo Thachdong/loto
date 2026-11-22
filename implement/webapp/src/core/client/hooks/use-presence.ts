@@ -50,6 +50,19 @@ export function usePresence(roomId: string | null, me: PresenceMe | null): void 
   }, [roomId, uid, displayName, photoUrl]);
 }
 
+/**
+ * Trước khi rời phòng: hủy `onDisconnect` đã đăng ký cho `presence/{roomId}/{uid}` (server xóa node sau khi rời,
+ * không để lệnh offline ghi lại sau đó). Lỗi chỉ bỏ qua — việc rời vẫn tiếp tục.
+ */
+export async function cancelPresence(roomId: string, uid: string): Promise<void> {
+  try {
+    await getClientAuth().authStateReady();
+    await onDisconnect(ref(getClientDatabase(), `presence/${roomId}/${uid}`)).cancel();
+  } catch {
+    // bỏ qua
+  }
+}
+
 export type RoomPresenceState = {
   status: "idle" | "loading" | "ready" | "error";
   /** `map[uid] = online`; uid KHÔNG có key = đã rời / chưa vào. */
