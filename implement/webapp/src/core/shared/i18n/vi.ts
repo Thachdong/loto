@@ -87,6 +87,7 @@ export const vi = {
     loadingRoom: "Đang vào phòng…",
   },
   panel: {
+    recentScroll: "Các số đã rao, vuốt ngang để xem thêm",
     none: "Chưa rao số nào",
     interval: "Nhịp quay {n} giây/số",
     count: "Số thứ {n}/90",

@@ -9,7 +9,7 @@
 ## 1. Layout
 Theo wireframe mục 5, từ trên xuống (khung 375×812, máy tính cột giữa ≤ 480px):
 1. **Header** (56px): tên phòng + phụ đề trạng thái ván; chip đếm ngược hết hạn (khi còn ≤ 15 phút); nút **Mời** (host) và nút **Rời** (mọi người; host rời = đóng phòng – Q-057).
-2. **Panel số đã rao** (96px): số vừa rao cỡ lớn, "Số thứ n/90", đếm ngược số kế tiếp, 5 số gần nhất, link "Bảng 90".
+2. **Panel số đã rao** (96px): số vừa rao cỡ lớn, "Số thứ n/90", đếm ngược số kế tiếp, dãy số đã rao (vuốt ngang), link "Bảng 90".
 3. **Thanh điều khiển host** (chỉ host thấy): Bắt đầu / Tạm dừng / Tiếp tục + dòng gợi ý. Player thấy dòng trạng thái thay thế.
 4. **Vùng vé của tôi** (cuộn dọc): 0–2 vé thiết kế giống vé lô tô giấy: khung viền màu vé, dải tiêu đề "✦ VÉ {MÀU} {A/B} ✦"; 9 hàng × 9 cột chia **3 khối 3 hàng**, ngăn bằng dải hoa văn màu vé; ô trống tô **đặc màu vé (đậm)**, ô có số nền trắng, chữ số đen đậm cỡ lớn; ô đã đánh dấu nền tối chữ trắng (cập nhật theo mẫu vé user cung cấp).
 5. **Thanh KINH** (56px, cố định ngay trên thanh nút dưới) — chỉ khi ván `running`/`paused`/`awaiting_confirm` và mình có vé tham gia ván (NFR-12, Q-055). Luôn nằm trên mọi sheet.
@@ -25,7 +25,7 @@ Theo wireframe mục 5, từ trên xuống (khung 375×812, máy tính cột gi�
 | 4 | Nút "Rời" | button phụ | Mọi người. Player → mở 21; host → mở 23 (Q-057) | BR-21 |
 | 5 | Số vừa rao | số lớn (76px) | Phần tử cuối `rooms.called_numbers`; chưa có → "–" + "Chưa rao số nào" + "Nhịp quay {draw_interval_sec} giây/số" | BR-15 |
 | 6 | Chỉ số + đếm ngược | text | "Số thứ {len}/90"; "Số kế tiếp sau {n} giây" từ `games.next_call_at`; `paused` → "⏸ Host đã tạm dừng"; `awaiting_confirm` → "⏳ Chờ host duyệt KINH" | BR-16 |
-| 7 | 5 số gần nhất | chip list | 5 phần tử cuối trước số vừa rao, mới nhất bên trái | BR-20: số đã rao luôn hiển thị |
+| 7 | Dãy số đã rao | chip list cuộn ngang | Mọi số đã rao trước số vừa rao, mới nhất bên trái; vuốt ngang để xem số cũ hơn (Q-061) | BR-20: số đã rao luôn hiển thị |
 | 8 | Link "Bảng 90" | link | → 20 (A9) | — |
 | 9 | Thanh điều khiển host | button + hint | `waiting`: "▶ Bắt đầu" (A4) + "{x}/16 vé đã có chủ · {member_count} người trong phòng"; khóa + "Cần ít nhất 2 người lấy vé" khi < 2 người giữ vé (Q-059); ẩn nút khi `rooms.status = closing`. `running`: "⏸ Tạm dừng" (A5). `paused` (`pause_reason = host`): "▶ Tiếp tục" (A6). `awaiting_confirm`: ẩn (host duyệt trên SCR-09) | BR-14, BR-16 |
 | 10 | Dòng trạng thái của tôi | text | Player `waiting`: "Chờ host bắt đầu · {x} vé đã có chủ"; `paused`: "Host đã tạm dừng ván"; khi đang chơi: "Bạn đang chơi {n} vé · mode {Tự dò/Auto}" | — |
@@ -78,7 +78,7 @@ Theo wireframe mục 5, từ trên xuống (khung 375×812, máy tính cột gi�
 ## 5. Ghi chú UX
 - **Giữ 1 vé:** ô ≈ 38×32px (ô dọc như vé giấy), chữ 17px đậm; tiêu đề 24px; 3 khối 3 hàng cách nhau dải hoa văn 10px; vé cao ≈ 336px; panel số rao đầy đủ.
 - **Giữ 2 vé — bố cục chuẩn (Q-049):** 2 vé xếp dọc, **thấy cùng lúc không cần cuộn** để dò song song:
-  - Header gọn 52px; panel số rao rút thành **1 dòng 52px** (số vừa rao 44px + 5 số gần nhất + đếm ngược + "Bảng 90 ›").
+  - Header gọn 52px; panel số rao rút thành **1 dòng 52px** (số vừa rao 44px + dãy số đã rao cuộn ngang + đếm ngược + "Bảng 90 ›").
   - Mỗi vé: ô 38×28px, chữ 15px, tiêu đề 16px, dải ngăn khối 5px → cao ≈ 282px; 2 vé + khoảng cách 6px ≈ 570px, vừa giữa thanh số (dưới 144px) và thanh KINH (trên 732px) ở màn 375×812.
   - KINH và thanh nút dưới cố định (NFR-12). Ô cao 28px < 44px nhưng rộng 38px; chấp nhận để thấy đủ 2 vé. Màu đậm của ô trống: Đỏ #e2574c, Cam #f08a3c, Vàng #e6b800, Lục #4caf50, Ngọc #1aa39a, Lam #3f7fd1, Tím #8e5cc7, Hồng #e0609e. Hai vé xếp dọc, cuộn trong vùng 4; KINH và thanh nút dưới không cuộn.
 - Màu vé (8 màu: Đỏ, Cam, Vàng, Lục, Ngọc, Lam, Tím, Hồng – `red, orange, yellow, green, teal, blue, purple, pink`) là tông nhạt để chữ số đen đủ tương phản.

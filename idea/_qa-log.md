@@ -367,3 +367,9 @@
 - **Trả lời:** Giữ BR-11/BR-29 như cũ (vé người online tự giữ sang ván mới, người offline bị trả vé). Bên dưới vé của tôi ở SCR-04 khi ván `waiting` có nút "Bỏ vé" (gọi `releaseTicket`); không có nút "Giữ vé" (vé tự giữ).
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #11
+
+## Q-061 · implement · 2026-11-24
+- **Hỏi:** Panel số chỉ hiện 5 số gần nhất — có xem được các số đã rao trước đó ngay trên panel?
+- **Trả lời:** Có: dãy chip hiện mọi số đã rao (mới nhất bên trái), vuốt/scroll ngang để xem số cũ hơn. Bảng 90 giữ nguyên.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #7

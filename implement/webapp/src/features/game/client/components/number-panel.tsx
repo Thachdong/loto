@@ -32,8 +32,8 @@ function countdownText(game: GameView, nowMs: number, offsetMs: number): string 
 export function NumberPanel({ room, game, compact, nowMs, serverOffsetMs, onOpenBoard }: Props) {
   const numbers = visibleNumbers(room, game);
   const last = numbers.length > 0 ? numbers[numbers.length - 1] : null;
-  // 5 số gần nhất trước số vừa rao, mới nhất bên trái.
-  const recent = numbers.slice(Math.max(0, numbers.length - 6), -1).reverse();
+  // Mọi số đã rao trước số vừa rao, mới nhất bên trái; vuốt ngang để xem số cũ hơn.
+  const recent = numbers.slice(0, -1).reverse();
   const countdown = countdownText(game, nowMs, serverOffsetMs);
 
   const board = (
@@ -49,9 +49,13 @@ export function NumberPanel({ room, game, compact, nowMs, serverOffsetMs, onOpen
   );
 
   const recentChips = (
-    <ul data-testid="recent-numbers" className="flex items-center gap-1">
+    <ul
+      data-testid="recent-numbers"
+      aria-label={t("panel.recentScroll")}
+      className="flex min-w-0 touch-pan-x items-center gap-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       {recent.map((n) => (
-        <li key={n} className="rounded bg-muted px-1.5 py-0.5 text-xs leading-none font-semibold tabular-nums">
+        <li key={n} className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs leading-none font-semibold tabular-nums">
           {n}
         </li>
       ))}

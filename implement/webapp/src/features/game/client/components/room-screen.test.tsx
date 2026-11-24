@@ -134,7 +134,7 @@ describe("RoomScreen", () => {
     expect(screen.getByTestId("btn-leave")).toBeInTheDocument();
   });
 
-  it("running (host): countdown, last number, count, recent 5 newest-first, Tạm dừng", async () => {
+  it("running (host): countdown, last number, count, all earlier numbers newest-first (horizontal scroll), Tạm dừng", async () => {
     setState({
       room: makeRoom({ calledNumbers: [4, 8, 15, 16, 23, 42, 7] }),
       game: makeGame("running"),
@@ -144,7 +144,8 @@ describe("RoomScreen", () => {
     expect(screen.getByTestId("called-count")).toHaveTextContent("Số thứ 7/90");
     expect(screen.getByTestId("next-countdown")).toHaveTextContent(/Số kế tiếp sau [1-3] giây/);
     const recent = within(screen.getByTestId("recent-numbers")).getAllByRole("listitem").map((li) => li.textContent);
-    expect(recent).toEqual(["42", "23", "16", "15", "8"]);
+    expect(recent).toEqual(["42", "23", "16", "15", "8", "4"]);
+    expect(screen.getByTestId("recent-numbers").className).toContain("overflow-x-auto");
     await userEvent.click(screen.getByTestId("btn-pause"));
     expect(h.pause).toHaveBeenCalledWith({ roomId: "r1", gameId: "g1" });
   });
