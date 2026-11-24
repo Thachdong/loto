@@ -10,6 +10,8 @@ summary: null
 
 > AC theo **plan mới** (`backlog/plan/T-006-game-room.md` mục 5; † = viết lại theo specs mới, AC-34b/46/47 là AC mới). File task cũ lỗi thời về `claim_window`/`winners`/`leaveRoom` — KHÔNG dùng. Ranh giới: duyệt KINH (`confirmGame`/`rejectClaims`), overlay kết quả là T-007; ở T-006 ván `awaiting_confirm` chỉ có thẻ tạm, không có nút host duyệt.
 
+> **Cập nhật T-007:** thẻ tạm \`claim-card\` ("{tên} KINH!", "Đang chờ host duyệt…", "Vé đủ hàng/chưa đủ hàng") đã được thay bằng thẻ duyệt SCR-09 \`review-card\` — bước nào kiểm thẻ tạm thì kiểm theo \`backlog/testcases/T-007-game-result.md\`.
+
 ## 0. Môi trường chung
 - Lệnh: `npm run emulators` (nền) · `npm run dev` (nền, bắt buộc dev server: redirect login + `?debug=` + log `console.debug` chỉ có ở dev) · mỗi TC đầu tiên chạy `npm run seed -- reset && npm run seed -- <scenario>` (scenario ghi ở "Tiền điều kiện"; script in `roomId`, uid, email).
 - URL: `http://localhost:3000` · Emulator UI: `http://localhost:4000` · phòng chơi = `/room`.
