@@ -4,11 +4,14 @@ import "client-only";
 export const SOUND_KEY = "loto:sound";
 export const SOUND_UNLOCKED_KEY = "loto:soundUnlocked";
 
+/** localStorage bị chặn → giữ giá trị trong bộ nhớ trang (SCR-11.A1 lỗi). */
+let memorySound: boolean | null = null;
+
 export function isSoundOn(): boolean {
   try {
     return window.localStorage.getItem(SOUND_KEY) !== "off";
   } catch {
-    return true;
+    return memorySound ?? true;
   }
 }
 
@@ -33,6 +36,7 @@ export const SOUND_EVENT = "loto:sound-change";
 
 /** Nút "Tắt tiếng"/"Bật tiếng" ở thanh KINH: lưu `loto:sound` (on/off). */
 export function setSoundOn(on: boolean): void {
+  memorySound = on;
   try {
     window.localStorage.setItem(SOUND_KEY, on ? "on" : "off");
   } catch {
