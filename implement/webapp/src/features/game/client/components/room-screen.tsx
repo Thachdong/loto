@@ -9,6 +9,7 @@ import { writeLeaveReason } from "@/features/room/client";
 import { HistorySheet } from "@/features/history/client";
 import { MembersSheet } from "@/features/members/client";
 import { ChatSheet, useChatMessages, useChatUnread } from "@/features/chat/client";
+import { SettingsSheet } from "@/features/settings/client";
 import { TicketSheet } from "@/features/ticket/client";
 import { useGameActions } from "@/features/game/client/hooks/use-game-actions";
 import { useGameRoom } from "@/features/game/client/hooks/use-game-room";
@@ -93,6 +94,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [overlay, setOverlay] = useState<RoomOverlay | null>(null);
   const [soonTab, setSoonTab] = useState<Exclude<BottomTab, "tickets"> | null>(null);
   const mode = usePlayMode();
@@ -141,6 +143,19 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   const abortLeave = () => {
     leaveIntent.current = null;
     setLeaving(false);
+  };
+  const changeSound = (on: boolean) => {
+    if (on) {
+      // Chạm bật tiếng cũng là thao tác người dùng → mở khóa audio luôn (SCR-11.A2).
+      markSoundUnlocked();
+      void getAudioEngine().unlock().catch(() => undefined);
+    }
+    setSoundOn(on);
+  };
+  const changeMode = (next: "manual" | "auto") => {
+    // Tắt Tự dò: giữ nguyên các ô Auto đã tô (= số đã gọi có trên vé) thành dấu tay (Q-068).
+    if (mode === "auto" && next === "manual" && game.status !== "waiting") syncTicketMarks(game.id, myTickets, room.calledNumbers);
+    setPlayMode(next);
   };
   const expiryRemainingMs = room.expiresAt.getTime() - (nowMs + serverOffsetMs);
 
@@ -210,20 +225,9 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
           height={heights.kinhBar}
           sheetBottom={dockHeight}
           soundOn={soundOn}
-          onToggleSound={() => {
-            if (!soundOn) {
-              // Chạm "Bật tiếng" cũng là thao tác người dùng → mở khóa audio luôn.
-              markSoundUnlocked();
-              void getAudioEngine().unlock().catch(() => undefined);
-            }
-            setSoundOn(!soundOn);
-          }}
+          onToggleSound={() => changeSound(!soundOn)}
           mode={mode}
-          onToggleAuto={() => {
-            // Tắt Tự dò: giữ nguyên các ô Auto đã tô (= số đã gọi có trên vé) thành dấu tay (Q-068).
-            if (mode === "auto" && game.status !== "waiting") syncTicketMarks(game.id, myTickets, room.calledNumbers);
-            setPlayMode(mode === "auto" ? "manual" : "auto");
-          }}
+          onToggleAuto={() => changeMode(mode === "auto" ? "manual" : "auto")}
           canCheck={game.status !== "waiting" && room.calledNumbers.length > 0}
           onCheck={() => {
             syncTicketMarks(game.id, myTickets, room.calledNumbers);
@@ -242,11 +246,26 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
                   ? setMembersOpen(true)
                   : tab === "chat"
                     ? setChatOpen(true)
-                    : setSoonTab(tab)
+                    : tab === "settings"
+                      ? setSettingsOpen(true)
+                      : setSoonTab(tab)
           }
         />
       </div>
       <HistorySheet roomId={room.id} open={historyOpen} onClose={() => setHistoryOpen(false)} bottom={dockHeight} />
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        bottom={dockHeight}
+        roomId={room.id}
+        isHost={isHost}
+        drawIntervalSec={room.drawIntervalSec}
+        expiresAt={room.expiresAt}
+        mode={mode}
+        onModeChange={changeMode}
+        soundOn={soundOn}
+        onSoundChange={changeSound}
+      />
       <ChatSheet roomId={room.id} uid={uid} open={chatOpen} onClose={() => setChatOpen(false)} bottom={dockHeight} chat={chat} />
       <MembersSheet
         roomId={room.id}

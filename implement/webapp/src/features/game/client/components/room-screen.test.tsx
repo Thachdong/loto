@@ -30,6 +30,9 @@ vi.mock("@/features/chat/client", () => ({
   useChatMessages: () => ({ status: "ready", messages: [], hasMore: false, loadingOlder: false, loadOlder: async () => {}, retry: () => {} }),
   useChatUnread: () => chatMock.unread,
 }));
+vi.mock("@/features/settings/client", () => ({
+  SettingsSheet: (p: { open: boolean }) => (p.open ? <div data-testid="settings-sheet" /> : null),
+}));
 vi.mock("@/features/members/client", () => ({
   MembersSheet: (p: { open: boolean }) => (p.open ? <div data-testid="members-sheet" /> : null),
 }));
@@ -494,7 +497,7 @@ describe("RoomScreen", () => {
     expect(screen.queryByTestId("sheet-coming-soon")).not.toBeInTheDocument();
   });
 
-  it("bottom bar: 5 tabs; Vé opens the ticket sheet, the others open the 'Sắp có' frame", async () => {
+  it("bottom bar: 5 tabs; Vé opens the ticket sheet, Cài đặt opens settings (T-012)", async () => {
     render(<RoomScreen uid={ME} roomId="r1" />);
     const bar = screen.getByTestId("bottom-bar");
     for (const tab of ["tickets", "chat", "members", "history", "settings"]) {
@@ -503,7 +506,7 @@ describe("RoomScreen", () => {
     await userEvent.click(screen.getByTestId("tab-tickets"));
     expect(screen.getByTestId("ticket-sheet")).toBeInTheDocument();
     await userEvent.click(screen.getByTestId("tab-settings"));
-    expect(await screen.findByTestId("sheet-coming-soon")).toHaveTextContent(dict.bottomBar.comingSoon);
+    expect(await screen.findByTestId("settings-sheet")).toBeInTheDocument();
   });
 
   it("the skeleton already shows the bottom bar", () => {
