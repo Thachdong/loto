@@ -77,7 +77,7 @@ Theo wireframe mục 5, từ trên xuống (khung 375×812, máy tính cột gi�
 
 ## 5. Ghi chú UX
 - **Giữ 1 vé:** ô dọc 28×48px (cao hơn rộng, như vé giấy – Q-064/Q-065), chữ 22px đậm; tiêu đề 24px; 3 khối 3 hàng cách nhau dải "-------buddio.com-------" 12px; vé 256×484px; panel số rao đầy đủ.
-- **Giữ 2 vé — bố cục chuẩn (Q-049):** 2 vé xếp dọc, **thấy cùng lúc không cần cuộn** để dò song song:
+- **Giữ 2 vé — bố cục chuẩn (Q-049, Q-065):** 2 vé đứng song song, **thấy cùng lúc không cần cuộn** để dò song song:
   - Header gọn 52px; panel số rao rút thành **1 dòng 52px** (số vừa rao 44px + dãy số đã rao cuộn ngang + đếm ngược + "Bảng 90 ›").
   - **2 vé đứng song song** (Q-065): mỗi vé ô 18×48px, chữ 15px, tiêu đề 14px, dải ngăn 10px → 166×470px; 2 vé + khe 8px rộng 340px, vừa giữa thanh số (dưới 144px) và thanh KINH ở màn 375×812.
   - KINH và thanh nút dưới cố định (NFR-12). Ô cao 28px < 44px nhưng rộng 38px; chấp nhận để thấy đủ 2 vé. Màu đậm của ô trống: Đỏ #e2574c, Cam #f08a3c, Vàng #e6b800, Lục #4caf50, Ngọc #1aa39a, Lam #3f7fd1, Tím #8e5cc7, Hồng #e0609e. Hai vé xếp dọc, cuộn trong vùng 4; KINH và thanh nút dưới không cuộn.
