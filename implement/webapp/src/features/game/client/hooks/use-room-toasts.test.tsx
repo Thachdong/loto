@@ -67,7 +67,7 @@ describe("useRoomToasts", () => {
     rerender({ r: makeRoom({ lastEvent: ev("game_cancelled", 2) }) });
     expect(toast).not.toHaveBeenCalled();
     rerender({ r: makeRoom({ lastEvent: ev("claims_rejected", 3) }) });
-    expect(toast).toHaveBeenCalledWith(dict.toast.claimsRejected, { duration: 3000 });
+    expect(toast).toHaveBeenCalledWith(dict.toast.claimsRejectedFallback, { duration: 3000 });
   });
 
   it("room_closed host_left falls back to the host-left copy", () => {

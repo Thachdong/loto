@@ -48,6 +48,9 @@ export function makeGame(status: GameStatus, over: Partial<GameView> = {}): Game
     resumeStatus: status === "awaiting_confirm" ? "running" : null,
     claims: [],
     playerCount: 2,
+    result: null,
+    winners: [],
+    confirmedBy: null,
     ...over,
   };
 }

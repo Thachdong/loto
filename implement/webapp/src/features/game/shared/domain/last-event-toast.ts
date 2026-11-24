@@ -40,7 +40,7 @@ export function lastEventToast(lastEvent: LastEvent | null, me: { uid: string },
     case "game_resumed":
       return t("toast.gameResumed");
     case "claims_rejected":
-      return t("toast.claimsRejected");
+      return text ?? t("toast.claimsRejectedFallback");
     case "room_expiring":
       return t("toast.expiresSoon");
     case "room_closing":

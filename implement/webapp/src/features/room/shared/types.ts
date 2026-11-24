@@ -66,6 +66,21 @@ export type GameView = {
   /** Lượt KINH đang chờ host duyệt (TBL-05 `claims`). */
   claims: ClaimView[];
   playerCount: number;
+  /** TBL-05 `result`: null khi ván chưa kết thúc. */
+  result: "won" | "no_winner" | null;
+  /** TBL-05 `winners` (chỉ có khi `finished`). */
+  winners: WinnerView[];
+  confirmedBy: string | null;
+};
+
+/** Một người thắng (TBL-05 `winners`). */
+export type WinnerView = {
+  uid: string;
+  displayName: string;
+  ticketId: TicketId;
+  color: TicketColor;
+  row: number;
+  claimedAtMs: number;
 };
 
 /** Một lượt KINH (TBL-05 `claims`), `result` là gợi ý của hệ thống. */

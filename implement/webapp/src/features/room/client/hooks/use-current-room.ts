@@ -92,6 +92,16 @@ export function mapGameDoc(data: DocumentData, id: string): GameView {
       claimedAtMs: toDate(c.claimed_at as Timestampish).getTime(),
     })),
     playerCount: num(data.player_count),
+    result: data.result === "won" || data.result === "no_winner" ? data.result : null,
+    winners: (Array.isArray(data.winners) ? (data.winners as Record<string, unknown>[]) : []).map((w) => ({
+      uid: str(w.uid),
+      displayName: str(w.display_name),
+      ticketId: str(w.ticket_id) as TicketId,
+      color: str(w.color) as TicketColor,
+      row: num(w.row),
+      claimedAtMs: w.claimed_at ? toDate(w.claimed_at as Timestampish).getTime() : 0,
+    })),
+    confirmedBy: str(data.confirmed_by) || null,
   };
 }
 

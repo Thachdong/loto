@@ -26,7 +26,7 @@ describe("lastEventToast", () => {
     expect(lastEventToast(ev("game_finished"), me, { gameCount: 3 })).toBe("Ván 3 kết thúc");
     expect(lastEventToast(ev("game_paused"), me)).toBe(vi.toast.gamePaused);
     expect(lastEventToast(ev("game_resumed"), me)).toBe(vi.toast.gameResumed);
-    expect(lastEventToast(ev("claims_rejected"), me)).toBe(vi.toast.claimsRejected);
+    expect(lastEventToast(ev("claims_rejected"), me)).toBe(vi.toast.claimsRejectedFallback);
     expect(lastEventToast(ev("room_expiring"), me)).toBe(vi.toast.expiresSoon);
     expect(lastEventToast(ev("room_closing"), me)).toBe(vi.toast.roomClosing);
     expect(lastEventToast(ev("ticket_set_renewed"), me)).toBe(vi.event.ticketSetRenewed);

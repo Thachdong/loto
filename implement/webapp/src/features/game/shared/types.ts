@@ -1,4 +1,4 @@
-import type { GameStatus, TicketId } from "@/features/room/shared/types";
+import type { GameStatus, RoomStatus, TicketColor, TicketId } from "@/features/room/shared/types";
 
 /** api-contract › GameState (startGame / pauseGame / resumeGame). */
 export type GameState = {
@@ -25,4 +25,23 @@ export type ClaimResult = {
   ticketId: TicketId;
   row: number | null;
   gameStatus: GameStatus;
+};
+
+/** api-contract › Winner. */
+export type Winner = {
+  uid: string;
+  displayName: string;
+  ticketId: TicketId;
+  color: TicketColor;
+  row: number;
+  claimedAt: string;
+};
+
+/** api-contract › GameConfirmResult. `nextGameId = null` khi phòng quá hạn nên đã đóng (BR-04). */
+export type GameConfirmResult = {
+  finishedGameId: string;
+  result: "won" | "no_winner";
+  winners: Winner[];
+  nextGameId: string | null;
+  roomStatus: RoomStatus;
 };
