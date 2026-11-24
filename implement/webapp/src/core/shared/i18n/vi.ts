@@ -238,7 +238,6 @@ export const vi = {
     takeTaken: "Đã có người lấy",
     takeRunning: "Ván đang chạy",
     release: "Bỏ vé",
-    keep: "Giữ vé",
     releasing: "Đang bỏ vé…",
     back: "Quay lại danh sách vé",
     renew: "Tạo bộ vé mới",

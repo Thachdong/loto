@@ -364,6 +364,6 @@
 
 ## Q-060 · implement · 2026-11-24
 - **Hỏi:** Sau khi ván kết thúc, player giữ vé cũ sang ván mới; muốn bỏ vé phải mở sheet Vé — có cần nút bỏ vé nhanh?
-- **Trả lời:** Giữ BR-11/BR-29 như cũ (vé người online tự giữ sang ván mới, người offline bị trả vé). Bên dưới vé của tôi ở SCR-04 khi ván `waiting` có 2 nút: "Giữ vé" (ẩn 2 nút) và "Bỏ vé" (gọi `releaseTicket`).
+- **Trả lời:** Giữ BR-11/BR-29 như cũ (vé người online tự giữ sang ván mới, người offline bị trả vé). Bên dưới vé của tôi ở SCR-04 khi ván `waiting` có nút "Bỏ vé" (gọi `releaseTicket`); không có nút "Giữ vé" (vé tự giữ).
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #11

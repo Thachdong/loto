@@ -867,9 +867,8 @@ Ghi chú: không nghe được âm thanh qua Chrome tự động → chỉ xác 
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
 | 1 | P1 | H bấm "Xác nhận kết thúc ván" | Tab C: overlay "Vé của bạn vẫn được giữ cho ván 2"; bấm "Đóng" | ui |
-| 2 | P3 | Nhìn vé ở "Ván 2 · Chờ bắt đầu" | Vé Lam A, Lam B vẫn hiện (không phải chọn lại); bên dưới mỗi vé có 2 nút "Giữ vé" (`btn-keep-blue_a`) và "Bỏ vé" (`btn-release-blue_a`) | ui |
+| 2 | P3 | Nhìn vé ở "Ván 2 · Chờ bắt đầu" | Vé Lam A, Lam B vẫn hiện (không phải chọn lại); bên dưới mỗi vé có nút "Bỏ vé" (`btn-release-blue_a`), không có nút "Giữ vé" | ui |
 | 3 | P3 | Bấm "Bỏ vé" trên Lam B | Vé Lam B biến mất, còn Lam A; sheet Vé không mở; Emulator: `players/u_tk_c.ticket_ids = ["blue_a"]` | ui, emulator-ui |
-| 4 | P3 | Bấm "Giữ vé" dưới Lam A | Hàng 2 nút của Lam A ẩn, vé vẫn giữ | ui |
-| 5 | P1 | Bắt đầu ván 2 | Không còn nút Giữ/Bỏ dưới vé khi ván đang chạy | ui |
+| 4 | P1 | Bắt đầu ván 2 | Không còn nút "Bỏ vé" dưới vé khi ván đang chạy | ui |
 
 **Kết quả:** ⬜

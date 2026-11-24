@@ -248,7 +248,7 @@ describe("RoomScreen", () => {
     expect(localStorage.getItem("g1:red_a")).toBeNull();
   });
 
-  it("waiting with a kept ticket: 'Giữ vé' / 'Bỏ vé' below the ticket: Bỏ calls releaseTicket without opening the sheet, Giữ hides the choice; hidden once running", async () => {
+  it("waiting with a kept ticket: 'Bỏ vé' below the ticket calls releaseTicket without opening the sheet; hidden once running", async () => {
     setState({
       me: { uid: ME, displayName: "me", photoUrl: null, ticketIds: ["red_a"] },
       myTickets: [makeTicket("red_a", 0)],
@@ -257,8 +257,6 @@ describe("RoomScreen", () => {
     await userEvent.click(screen.getByTestId("btn-release-red_a"));
     expect(h.release).toHaveBeenCalledWith("red_a");
     expect(screen.queryByTestId("ticket-sheet")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByTestId("btn-keep-red_a"));
-    expect(screen.queryByTestId("ticket-choice-red_a")).not.toBeInTheDocument();
     unmount();
     setState({
       game: makeGame("running"),

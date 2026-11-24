@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/core/client/ui/button";
 import { Skeleton } from "@/core/client/ui/skeleton";
 import { t } from "@/core/shared/i18n/vi";
@@ -109,8 +109,6 @@ type TicketProps = {
 
 function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, onOpenTickets, releasing, releaseDisabled, onRelease }: TicketProps) {
   const manual = useMarks(gameId, ticket.id);
-  /** "Giữ vé": ẩn hàng Giữ/Bỏ của vé này trong ván chờ hiện tại (vé vốn đã được giữ – BR-11). */
-  const [kept, setKept] = useState(false);
   const auto = mode === "auto" && !waiting ? autoEffects(ticket.grid, called, last) : null;
   const marks = waiting ? new Set<number>() : auto ? auto.marked : manual.marks;
   const hit = auto?.hit ?? null;
@@ -143,31 +141,17 @@ function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, 
       <div role="button" tabIndex={0} data-testid={`ticket-open-${ticket.id}`} onClick={onOpenTickets} onKeyDown={(e) => e.key === "Enter" && onOpenTickets()}>
         {ticketNode}
       </div>
-      {!kept && (
-        <div data-testid={`ticket-choice-${ticket.id}`} className="flex gap-2">
-          <Button
-            type="button"
-            size="sm"
-            data-testid={`btn-keep-${ticket.id}`}
-            className="h-9 flex-1 text-xs"
-            disabled={releaseDisabled}
-            onClick={() => setKept(true)}
-          >
-            {t("ticket.keep")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            data-testid={`btn-release-${ticket.id}`}
-            className="h-9 flex-1 text-xs"
-            disabled={releaseDisabled}
-            onClick={onRelease}
-          >
-            {releasing ? t("ticket.releasing") : t("ticket.release")}
-          </Button>
-        </div>
-      )}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid={`btn-release-${ticket.id}`}
+        className="h-9 w-full text-xs"
+        disabled={releaseDisabled}
+        onClick={onRelease}
+      >
+        {releasing ? t("ticket.releasing") : t("ticket.release")}
+      </Button>
     </div>
   );
 }
