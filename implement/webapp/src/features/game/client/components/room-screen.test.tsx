@@ -24,6 +24,9 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/game/client/hooks/use-game-room", () => ({ useGameRoom: () => h.state }));
+vi.mock("@/features/members/client", () => ({
+  MembersSheet: (p: { open: boolean }) => (p.open ? <div data-testid="members-sheet" /> : null),
+}));
 vi.mock("@/features/history/client", () => ({
   HistorySheet: (p: { open: boolean }) => (p.open ? <div data-testid="history-sheet" /> : null),
 }));
@@ -466,6 +469,13 @@ describe("RoomScreen", () => {
     render(<RoomScreen uid={ME} roomId="r1" />);
     await userEvent.click(screen.getByTestId("tab-history"));
     expect(screen.getByTestId("history-sheet")).toBeInTheDocument();
+    expect(screen.queryByTestId("sheet-coming-soon")).not.toBeInTheDocument();
+  });
+
+  it("bottom bar: Người opens the members sheet (T-009)", async () => {
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    await userEvent.click(screen.getByTestId("tab-members"));
+    expect(screen.getByTestId("members-sheet")).toBeInTheDocument();
     expect(screen.queryByTestId("sheet-coming-soon")).not.toBeInTheDocument();
   });
 
