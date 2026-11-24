@@ -1,10 +1,10 @@
 ---
 task: T-012
 title: Cài đặt trong phòng — mode dò, tiếng rao, nhịp quay (SCR-11)
-status: approved
+status: done
 approved_at: 2026-11-24       # dev yêu cầu làm trực tiếp ("làm tính năng tab Cài đặt")
 branch: feature/dongt/T-012-room-settings
-plan_commit:
+plan_commit: 4dc2d38
 ---
 
 # Plan T-012 · Cài đặt (SCR-11)
@@ -31,4 +31,6 @@ Task `backlog/tasks/T-012-room-settings.md`; api-contract `updateRoom`, `RoomSet
 - Seed: dùng lại `game-running` (T-006) thay cho `room-running-auto`.
 
 ## 8. Kết quả
-(điền khi xong)
+- `updateRoomAction` mới; feature `settings` (hook debounce/revert, sheet). Mode/tiếng dùng chung handler với thanh KINH; thêm fallback bộ nhớ khi localStorage bị chặn.
+- Unit + emulator 755/755 pass, build OK. Bỏ chrome-tester; QC test tay theo `backlog/testcases/T-012-room-settings.md`.
+- Còn mở: "Hồ sơ cá nhân ›" khóa ("Sắp có") tới khi T-011 làm `/profile`.

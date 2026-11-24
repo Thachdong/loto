@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-10 | M2 | 3 | T-011 | TODO |
+| EPIC-10 | M2 | 3 | T-011 | REVIEW |
 
 ## 1. Mục tiêu demo
 Sau task này: **player mở SCR-04 → bấm "Cài đặt" → chuyển "Tự dò" sang "Auto" giữa ván → mọi số đã rao trên vé tự được đánh dấu, số vừa rao nổi bật, hàng thiếu 1 số có viền "chờ"; tắt "Tiếng rao" → số vẫn hiện nhưng không phát tiếng. Host bấm + trên "Nhịp quay" lên 8 giây → cả phòng thấy toast "Nhịp quay: 8 giây/số", các số sau cách nhau 8 giây. "Hồ sơ cá nhân ›" mở SCR-10 và ← quay lại phòng.**
@@ -27,28 +27,28 @@ Sau task này: **player mở SCR-04 → bấm "Cài đặt" → chuyển "Tự d
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Sheet thấp SCR-11 mở từ nút "Cài đặt" ở SCR-04, nằm trên thanh KINH/thanh nút dưới: tiêu đề "Cài đặt" + ✕.
-- [ ] Segmented "Tự dò" (mặc định) / "Auto" + mô tả "Auto tự đánh dấu số đã rao trên vé; bạn vẫn phải tự bấm KINH." Ghi `loto.trackMode`; T-006 đổi từ đọc hằng mặc định sang đọc store cài đặt (React context + localStorage).
-- [ ] Chuyển sang Auto khi ván không `waiting`: vé hiển thị ô đánh dấu = các số đã rao có trên vé (tính từ `called_numbers`), bật hiệu ứng SUP-10 (số vừa rao viền đỏ + `navigator.vibrate`, hàng thiếu 1 số viền "chờ"); ô Tự dò không bị chạm được trong Auto `[ASSUMED]` (theo SCR-04: chạm ô chỉ khi Tự dò).
-- [ ] Chuyển Auto → Tự dò: chép các số đã rao có trên vé vào localStorage `{gameId}:{ticketId}` (gộp với ô đã tự đánh dấu trước đó) để giữ nguyên ô đánh dấu, tắt hiệu ứng (FLOW-15 A1, Q-050).
-- [ ] Switch "Tiếng rao" Bật (mặc định)/Tắt + "Chỉ áp dụng trên máy của bạn"; ghi `loto.sound`. Tắt → dừng âm đang phát ngay, không phát số mới. Bật khi chưa có `AudioContext` → chạy SCR-04.A1 (tạo `AudioContext` + tải manifest) trong chính lần chạm đó.
-- [ ] Nhịp quay: host → stepper −/+ bước 1, giới hạn 3–15 (nút − khóa ở 3, + khóa ở 15), hiện "{n} giây" + "áp dụng từ số kế tiếp"; player → text "{n} giây/số (host chỉnh)" theo `rooms.draw_interval_sec` realtime.
-- [ ] Debounce 600 ms sau lần bấm cuối rồi gọi `updateRoomAction` (Q-050); hiển thị giá trị lạc quan trong lúc chờ. Lỗi mạng/khác → trả stepper về giá trị server + toast "Chưa đổi được nhịp quay"; `NOT_ROOM_HOST` → chuyển sang dạng chỉ đọc.
+- [x] Sheet thấp SCR-11 mở từ nút "Cài đặt" ở SCR-04, nằm trên thanh KINH/thanh nút dưới: tiêu đề "Cài đặt" + ✕.
+- [x] Segmented "Tự dò" (mặc định) / "Auto" + mô tả "Auto tự đánh dấu số đã rao trên vé; bạn vẫn phải tự bấm KINH." Ghi `loto.trackMode`; T-006 đổi từ đọc hằng mặc định sang đọc store cài đặt (React context + localStorage).
+- [x] Chuyển sang Auto khi ván không `waiting`: vé hiển thị ô đánh dấu = các số đã rao có trên vé (tính từ `called_numbers`), bật hiệu ứng SUP-10 (số vừa rao viền đỏ + `navigator.vibrate`, hàng thiếu 1 số viền "chờ"); ô Tự dò không bị chạm được trong Auto `[ASSUMED]` (theo SCR-04: chạm ô chỉ khi Tự dò).
+- [x] Chuyển Auto → Tự dò: chép các số đã rao có trên vé vào localStorage `{gameId}:{ticketId}` (gộp với ô đã tự đánh dấu trước đó) để giữ nguyên ô đánh dấu, tắt hiệu ứng (FLOW-15 A1, Q-050).
+- [x] Switch "Tiếng rao" Bật (mặc định)/Tắt + "Chỉ áp dụng trên máy của bạn"; ghi `loto.sound`. Tắt → dừng âm đang phát ngay, không phát số mới. Bật khi chưa có `AudioContext` → chạy SCR-04.A1 (tạo `AudioContext` + tải manifest) trong chính lần chạm đó.
+- [x] Nhịp quay: host → stepper −/+ bước 1, giới hạn 3–15 (nút − khóa ở 3, + khóa ở 15), hiện "{n} giây" + "áp dụng từ số kế tiếp"; player → text "{n} giây/số (host chỉnh)" theo `rooms.draw_interval_sec` realtime.
+- [x] Debounce 600 ms sau lần bấm cuối rồi gọi `updateRoomAction` (Q-050); hiển thị giá trị lạc quan trong lúc chờ. Lỗi mạng/khác → trả stepper về giá trị server + toast "Chưa đổi được nhịp quay"; `NOT_ROOM_HOST` → chuyển sang dạng chỉ đọc.
 - [ ] Hàng "Hồ sơ cá nhân ›" → `/profile` (SCR-10); ← ở SCR-10 về lại `/room` (Q-050; bổ sung cạnh SCR-11 → SCR-10).
-- [ ] Dòng "Phòng hết hạn lúc HH:mm" từ `rooms.expires_at` GMT+7.
-- [ ] localStorage không khả dụng (throw) → giữ cài đặt trong bộ nhớ trang, không vỡ UI.
-- [ ] Toast `interval_changed` "Nhịp quay: {n} giây/số" trong bảng toast SCR-04 (kiểm đã có từ T-006, thiếu thì thêm).
+- [x] Dòng "Phòng hết hạn lúc HH:mm" từ `rooms.expires_at` GMT+7.
+- [x] localStorage không khả dụng (throw) → giữ cài đặt trong bộ nhớ trang, không vỡ UI.
+- [x] Toast `interval_changed` "Nhịp quay: {n} giây/số" trong bảng toast SCR-04 (kiểm đã có từ T-006, thiếu thì thêm).
 
 ### API / Backend
-- [ ] `updateRoomAction({roomId, drawIntervalSec})` theo `updateRoom`: phiên → Zod (`drawIntervalSec` integer, `additionalProperties false`; sai kiểu → `VALIDATION_FAILED`) → ngoài 3–15 → `422 DRAW_INTERVAL_INVALID` `[ASSUMED]` (bảng mã lỗi; Zod chỉ kiểm kiểu) → transaction: lazy expiry; không phải thành viên → `NOT_ROOM_MEMBER`; không phải host → `NOT_ROOM_HOST`.
-- [ ] Ghi `draw_interval_sec`, `updated_at`, `last_event = {type: interval_changed, text: "Nhịp quay: {n} giây/số", actor_uid, at}`. Không sửa `games.next_call_at` đang hẹn — nhịp mới áp dụng từ lần `drawNumber` kế tiếp (`next_call_at = now + draw_interval_sec`, ADR-05). Đổi khi ván chưa chạy/đang tạm dừng vẫn được.
-- [ ] Giá trị không đổi → vẫn trả 200, không ghi `last_event` `[ASSUMED]`.
-- [ ] Trả `RoomSettings {roomId, drawIntervalSec}`.
-- [ ] Kiểm `drawNumber` (T-006) đọc `draw_interval_sec` mới nhất trong transaction (không cache).
+- [x] `updateRoomAction({roomId, drawIntervalSec})` theo `updateRoom`: phiên → Zod (`drawIntervalSec` integer, `additionalProperties false`; sai kiểu → `VALIDATION_FAILED`) → ngoài 3–15 → `422 DRAW_INTERVAL_INVALID` `[ASSUMED]` (bảng mã lỗi; Zod chỉ kiểm kiểu) → transaction: lazy expiry; không phải thành viên → `NOT_ROOM_MEMBER`; không phải host → `NOT_ROOM_HOST`.
+- [x] Ghi `draw_interval_sec`, `updated_at`, `last_event = {type: interval_changed, text: "Nhịp quay: {n} giây/số", actor_uid, at}`. Không sửa `games.next_call_at` đang hẹn — nhịp mới áp dụng từ lần `drawNumber` kế tiếp (`next_call_at = now + draw_interval_sec`, ADR-05). Đổi khi ván chưa chạy/đang tạm dừng vẫn được.
+- [x] Giá trị không đổi → vẫn trả 200, không ghi `last_event` `[ASSUMED]`.
+- [x] Trả `RoomSettings {roomId, drawIntervalSec}`.
+- [x] Kiểm `drawNumber` (T-006) đọc `draw_interval_sec` mới nhất trong transaction (không cache).
 
 ### Data
-- [ ] Không thêm field. `firestore.rules` không đổi (client cấm ghi `rooms`).
-- [ ] Seed `room-running-auto`: ván `running`, đã rao 10 số, trong đó vé Bình có 4 số và một hàng thiếu 1 số `[ASSUMED]`.
+- [x] Không thêm field. `firestore.rules` không đổi (client cấm ghi `rooms`).
+- [x] Seed `room-running-auto`: ván `running`, đã rao 10 số, trong đó vé Bình có 4 số và một hàng thiếu 1 số `[ASSUMED]`.
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -105,9 +105,9 @@ Môi trường: localhost + Emulator, viewport 375×812. **P1 = Host An**, **P2 
 - Seed `room-running-auto`, `room-waiting` (T-011); bộ audio mẫu từ T-006.
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Test deny `updateRoom` cho player và người ngoài
-- [ ] T-006 đọc mode/tiếng từ store cài đặt (không còn hằng mặc định); smoke lại kịch bản chính T-006
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Test deny `updateRoom` cho player và người ngoài
+- [x] T-006 đọc mode/tiếng từ store cài đặt (không còn hằng mặc định); smoke lại kịch bản chính T-006
 
 ## 7. Ghi chú
 - `[ASSUMED]` Ngoài 3–15 trả `422 DRAW_INTERVAL_INVALID` theo bảng mã lỗi (SCR-11 ghi `VALIDATION_FAILED`, không xảy ra trên UI vì stepper giới hạn).
@@ -115,3 +115,5 @@ Môi trường: localhost + Emulator, viewport 375×812. **P1 = Host An**, **P2 
 - `[ASSUMED]` Đổi về cùng giá trị không ghi `last_event`.
 - `[ASSUMED]` Mode Auto không cho chạm ô tự đánh dấu.
 - Point 3 khớp checklist (logic hiệu ứng Auto đã có ở T-006).
+
+> QC: chạy test case tay theo [T-012-room-settings.md](../testcases/T-012-room-settings.md). Hàng "Hồ sơ cá nhân ›" chờ T-011 (`/profile`).
