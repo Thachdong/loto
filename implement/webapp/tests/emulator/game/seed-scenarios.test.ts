@@ -109,6 +109,16 @@ describe("T-006 seed scenarios", () => {
     expect(cards[3].time).toEqual({ kind: "range", from: "23:00", to: "23:08" });
   });
 
+  it("room-members (T-009): 4 members, Bình red_a + Chi blue_b, waiting", async () => {
+    const result = run("room-members");
+    expect(result.status, result.stderr).toBe(0);
+    const { room, game } = await read("r_members");
+    expect(room).toMatchObject({ host_uid: "u_mb_an", member_count: 4, status: "active" });
+    expect(game?.status).toBe("waiting");
+    const players = await db.collection(`rooms/r_members/games/${room?.current_game_id}/players`).get();
+    expect(Object.fromEntries(players.docs.map((d) => [d.id, d.data().ticket_ids]))).toEqual({ u_mb_binh: ["red_a"], u_mb_chi: ["blue_b"] });
+  });
+
   it("existing scenarios keep their defaults (tickets-basic: draw_interval_sec 5, no called numbers)", async () => {
     run("tickets-basic");
     const { room, game } = await read("r_tk_basic");

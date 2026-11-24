@@ -28,6 +28,7 @@ import {
   resultHostOffline,
 } from "./scenarios/t006";
 import { ticketsBasic, ticketsCarry, ticketsRunning } from "./scenarios/t005";
+import { roomMembers } from "./scenarios/t009";
 
 const SCENARIOS: Record<string, () => Promise<void>> = {
   reset,
@@ -59,6 +60,8 @@ const SCENARIOS: Record<string, () => Promise<void>> = {
   t007: resultAwaitingWin,
   history,
   t010: history,
+  "room-members": roomMembers,
+  t009: roomMembers,
 };
 
 async function main(): Promise<number> {
