@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-08 | M2 | 2 | T-009 | TODO |
+| EPIC-08 | M2 | 2 | T-009 | REVIEW |
 
 ## 1. Mục tiêu demo
 Sau task này: **thành viên chơi xong 2 ván, mở SCR-04 → bấm "Lịch sử" → thấy thẻ "Ván 2" trên "Ván 1", mỗi thẻ có giờ bắt đầu–kết thúc (GMT+7) và người thắng (ảnh, tên, chip "Vé {màu} {cạnh}") hoặc "Không ai thắng" / "Đã hủy"; ván vừa được host xác nhận tự xuất hiện trên cùng mà không cần tải lại.**

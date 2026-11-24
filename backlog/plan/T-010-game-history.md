@@ -4,7 +4,7 @@ title: Lịch sử ván trong phòng (SCR-08)
 status: done
 approved_at: 2026-11-24       # dev yêu cầu làm trực tiếp ("hãy làm tính năng trong tab Lịch sử")
 branch: feature/dongt/T-010-game-history
-plan_commit: null
+plan_commit: 8c573f5
 ---
 
 # Plan T-010 · Lịch sử ván (SCR-08)
