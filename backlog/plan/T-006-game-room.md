@@ -1,10 +1,10 @@
 ---
 task: T-006
 title: Chơi trọn ván ở Phòng chơi (SCR-04): bắt đầu, rao số, dò vé, báo KINH, rời phòng, hết hạn
-status: approved            # draft | approved | in-progress | done
+status: done            # draft | approved | in-progress | done
 approved_at: 2026-11-22        # YYYY-MM-DD khi dev duyệt
 branch: feature/dongt/T-006-game-room
-plan_commit: null        # hash commit plan
+plan_commit: 24226fa        # hash commit plan
 ---
 
 # Plan T-006 · Phòng chơi SCR-04
@@ -257,8 +257,8 @@ AC viết lại theo specs mới (đánh số theo task file; thay đổi so v�
 - Số đầu của ván do `startGame` rao: client phải phát tiếng cho "số mới sau lần tải đầu" kể cả số này (tăng `called_numbers` từ rỗng/giữ cũ của ván trước → xét `len` giảm/đổi ván).
 - `called_numbers` giữ tới lần Bắt đầu kế tiếp (TBL-02): UI ván mới `waiting` phải không hiện số cũ như số "đang rao" (dựa `game.status=waiting` ẩn panel).
 
-## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test: …
-- QC: `backlog/testcases/T-006-*.md` — P0 x/y, P1 x/y
-- Còn lại cho dev review: …
+## 8. Kết quả
+- Commits: `git log --oneline 24226fa^..HEAD` (26 step B1–B8, C1–C7, S1, M).
+- Lint/typecheck/test: typecheck ✓, lint ✓, unit 401/401 ✓, emulator 252/252 ✓.
+- QC: `backlog/testcases/T-006-game-room.md` — 44 TC, chưa chạy tay (dev bỏ bước chrome-tester, 2026-11-24).
+- Còn lại cho dev review: màn duyệt KINH/xác nhận ván thuộc T-007; host chơi 1 mình hợp lệ theo BR-14.

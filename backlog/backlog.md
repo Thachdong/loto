@@ -54,7 +54,7 @@
 | T-003 | Trang chủ & tạo phòng | SCR-02 | EPIC-02 | M1 | 8 | T-002 | DONE | [T-003](tasks/T-003-home-create-room.md) |
 | T-004 | Lời mời & vào phòng | SCR-03 | EPIC-03 | M1 | 5 | T-003 | DONE | [T-004](tasks/T-004-invite-join-room.md) |
 | T-005 | Chọn vé | SCR-05 | EPIC-04 | M1 | 8 | T-004 | DONE | [T-005](tasks/T-005-ticket-selection.md) |
-| T-006 | Phòng chơi | SCR-04 | EPIC-05 | M1 | 21 | T-005 | TODO | [T-006](tasks/T-006-game-room.md) |
+| T-006 | Phòng chơi | SCR-04 | EPIC-05 | M1 | 21 | T-005 | REVIEW | [T-006](tasks/T-006-game-room.md) |
 | T-007 | Kết quả ván | SCR-09 | EPIC-05 | M1 | 8 | T-006 | TODO | [T-007](tasks/T-007-game-result.md) |
 | T-008 | Chat | SCR-06 | EPIC-06 | M2 | 3 | T-007 | TODO | [T-008](tasks/T-008-room-chat.md) |
 | T-009 | Người trong phòng | SCR-07 | EPIC-07 | M2 | 5 | T-008 | TODO | [T-009](tasks/T-009-room-members.md) |
