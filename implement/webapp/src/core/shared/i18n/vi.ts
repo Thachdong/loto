@@ -122,11 +122,7 @@ export const vi = {
     closed: "KINH (đã đóng)",
   },
   claim: {
-    title: "{name} KINH!",
-    waitingHost: "Đang chờ host duyệt…",
     item: "{name} · vé {color} {side}",
-    hintWin: "Vé đủ hàng",
-    hintMiss: "Vé chưa đủ hàng",
   },
   review: {
     title: "KINH! · Chờ host duyệt ({k} lượt)",
