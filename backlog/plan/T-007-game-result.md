@@ -1,10 +1,10 @@
 ---
 task: T-007
 title: Kết quả ván (SCR-09): host duyệt KINH — xác nhận kết thúc / bác bỏ quay tiếp, chúc mừng, ván mới
-status: approved          # draft | approved | in-progress | done
+status: done          # draft | approved | in-progress | done
 approved_at: 2026-11-24       # YYYY-MM-DD khi dev duyệt
 branch: feature/dongt/T-007-game-result
-plan_commit: null        # hash commit plan
+plan_commit: b389426       # hash commit plan
 ---
 
 # Plan T-007 · Kết quả ván SCR-09
@@ -96,7 +96,9 @@ WinnerView = {uid, displayName, ticketId, color, row, claimedAtMs}
 - Listener ván cũ sau khi `current_game_id` đổi: nếu client vào lại sau khi ván đã xong sẽ không thấy overlay (chấp nhận — chỉ hiện khi đang theo dõi lúc chuyển).
 - Tạo ván mới + chép player chung transaction với nhánh closing → test emulator cả 2 nhánh.
 
-## 8. Kết quả (orchestrator điền khi xong)
-- Commits: …
-- Lint/typecheck/test: …
-- QC: …
+## 8. Kết quả
+- Commits: `git log --oneline b389426^..HEAD` (plan, S1, B1, B2, C1, C2, C3, QC, đóng task).
+- Lint/typecheck/test/build: typecheck ✓, lint ✓, unit + emulator 676/676 ✓ (96 file), `next build` ✓.
+- QC: `backlog/testcases/T-007-game-result.md` — 10 TC (P0 3, P1 4, P2 3), chạy tay (bỏ chrome-tester theo dev).
+- Lệch plan: seed T-007 đặt trong `scripts/seed/scenarios/t006.ts` (dùng chung helper `room()`), không tạo `t007.ts`.
+- Dev review: nhánh `confirmGame` khi phòng `closing` (đóng phòng, không ván mới); overlay chỉ hiện khi đang mở phòng lúc ván chuyển.

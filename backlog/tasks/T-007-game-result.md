@@ -1,10 +1,12 @@
 # T-007 · Kết quả ván: đồng kinh 5 giây, host xác nhận, chúc mừng và ván mới
 
+> ✅ **Đã implement theo specs mới** — xem `backlog/plan/T-007-game-result.md` (AC mục 5) và test case `backlog/testcases/T-007-game-result.md`.
+>
 > ⚠ **Cần cập nhật (2026-11-19, Q-055..Q-058 – đối chiếu specs/actions.md):** Viết lại task: bỏ cửa sổ đồng kinh 5 giây và `closeClaimWindow`/SCR-09.A2; SCR-09 thành "Chờ host duyệt" (danh sách `claims` + gợi ý), host `confirmGame` (khi có vé đúng, lỗi `NO_WINNING_CLAIM`) hoặc `rejectClaims` mới (SCR-09.A3, khi toàn hụt, lỗi `CLAIM_HAS_WIN`) (Q-055); `confirmGame` chỉ chép player online (BR-29, Q-058).
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-05 | M1 | 8 | T-006 | TODO |
+| EPIC-05 | M1 | 8 | T-006 | REVIEW |
 
 ## 1. Mục tiêu demo
 Sau task này: **khi một player KINH đúng, mọi người trong phòng thấy thẻ "KINH! 🎉" đếm ngược 5 giây; player khác KINH đúng trong 5 giây được thêm vào danh sách đồng thắng; hết giờ thiết bị tự gọi `closeClaimWindow`, host thấy overlay với vé thắng (hàng thắng viền xanh) và bấm "Xác nhận kết thúc ván" → cả phòng thấy "🎊 Chúc mừng! 🎊", nghe tiếng chúc mừng, bấm "Đóng" về phòng với ván mới `waiting` và vé vẫn thuộc người giữ. Host offline lúc chờ xác nhận → player thấy "Đang chờ host xác nhận" + "Host đang offline".**
