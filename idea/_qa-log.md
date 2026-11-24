@@ -361,3 +361,9 @@
 - **Trả lời:** Cần **≥ 2 người giữ vé** (đếm người khác nhau có vé trong ván, host có vé cũng tính) mới bắt đầu được. Không thêm mã lỗi mới: dùng lại `NO_TICKETS_HELD` (422) với câu "Cần ít nhất 2 người lấy vé".
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** BR-14, ENT (Ván › Các vé tham gia), FLOW-05→06, FLOW-06 E1, api-contract (startGame, NO_TICKETS_HELD), SCR-04 #9 / A4
+
+## Q-060 · implement · 2026-11-24
+- **Hỏi:** Sau khi ván kết thúc, player giữ vé cũ sang ván mới; muốn bỏ vé phải mở sheet Vé — có cần nút bỏ vé nhanh?
+- **Trả lời:** Giữ BR-11/BR-29 như cũ (vé người online tự giữ sang ván mới, người offline bị trả vé). Thêm nút "Bỏ vé" ngay trên vé của tôi ở SCR-04 khi ván `waiting` (gọi `releaseTicket`).
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #11
