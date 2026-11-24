@@ -180,8 +180,6 @@ export const vi = {
     decrease: "Giảm nhịp quay",
     increase: "Tăng nhịp quay",
     intervalFailed: "Chưa đổi được nhịp quay",
-    profile: "Hồ sơ cá nhân",
-    soon: "Sắp có",
     expires: "Phòng hết hạn lúc {time}",
   },
   chat: {
@@ -441,7 +439,7 @@ export const vi = {
     TICKET_LIMIT_REACHED: "Mỗi người giữ tối đa 2 vé",
     CANNOT_TARGET_SELF: "Bạn không thể thực hiện thao tác này với chính mình",
     ROOM_NAME_INVALID: "Tên phòng phải từ 1 đến 50 ký tự",
-    DRAW_INTERVAL_INVALID: "Nhịp quay phải từ 3 đến 15 giây",
+    DRAW_INTERVAL_INVALID: "Nhịp quay chỉ được 5, 10 hoặc 15 giây",
     DISPLAY_NAME_INVALID: "Tên hiển thị phải từ 2 đến 30 ký tự",
     AVATAR_INVALID: "Ảnh đại diện không hợp lệ",
     MESSAGE_EMPTY: "Tin nhắn không được để trống",

@@ -15,7 +15,7 @@ import { planLazyExpiry, type LazyExpiryPlan } from "./room-expiry.service";
 type Outcome = { kind: "ok"; plan: LazyExpiryPlan } | { kind: "error"; code: ErrorCode; plan: LazyExpiryPlan | null };
 
 /**
- * api-contract › updateRoom (BR-15). 3–15 → transaction: thành viên (kể cả phòng vừa hết hạn) → host → ghi
+ * api-contract › updateRoom (BR-15, Q-070). 5 / 10 / 15 → transaction: thành viên (kể cả phòng vừa hết hạn) → host → ghi
  * `draw_interval_sec` + `last_event = interval_changed`. Không đụng `games.next_call_at` (nhịp mới áp dụng từ lần
  * `drawNumber` kế tiếp — ADR-05). Giá trị không đổi → trả 200, không ghi.
  */

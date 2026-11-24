@@ -14,25 +14,24 @@ describe("useDrawInterval (SCR-11.A3)", () => {
     toastError.mockClear();
   });
 
-  it("AC-6: 3 quick + → one call with 8 after 600 ms, optimistic value meanwhile", async () => {
-    const update = vi.fn(async () => ({ ok: true as const, data: { roomId: "r1", drawIntervalSec: 8 } }));
+  it("AC-6: 2 quick + (5 → 10 → 15) → one call with 15 after 600 ms, optimistic value meanwhile", async () => {
+    const update = vi.fn(async () => ({ ok: true as const, data: { roomId: "r1", drawIntervalSec: 15 } }));
     const { result } = renderHook(() => useDrawInterval("r1", 5, update));
     act(() => result.current.step(1));
     act(() => result.current.step(1));
-    act(() => result.current.step(1));
-    expect(result.current.value).toBe(8);
+    expect(result.current.value).toBe(15);
     await act(async () => vi.advanceTimersByTime(599));
     expect(update).not.toHaveBeenCalled();
     await act(async () => vi.advanceTimersByTime(1));
     expect(update).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenCalledWith({ roomId: "r1", drawIntervalSec: 8 });
+    expect(update).toHaveBeenCalledWith({ roomId: "r1", drawIntervalSec: 15 });
   });
 
-  it("AC-7: clamped to 3–15", () => {
+  it("AC-7: stays at 5 / 15", () => {
     const update = vi.fn();
-    const { result } = renderHook(() => useDrawInterval("r1", 3, update as never));
+    const { result } = renderHook(() => useDrawInterval("r1", 5, update as never));
     act(() => result.current.step(-1));
-    expect(result.current.value).toBe(3);
+    expect(result.current.value).toBe(5);
     const high = renderHook(() => useDrawInterval("r1", 15, update as never));
     act(() => high.result.current.step(1));
     expect(high.result.current.value).toBe(15);

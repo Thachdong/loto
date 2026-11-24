@@ -30,12 +30,12 @@ function setup(over: Partial<Parameters<typeof SettingsSheet>[0]> = {}) {
 describe("SettingsSheet", () => {
   afterEach(cleanup);
 
-  it("AC-8/AC-12: player sees read-only interval, expiry time GMT+7, profile row disabled", () => {
+  it("AC-8/AC-12: player sees read-only interval and expiry time GMT+7; no profile row (Q-069)", () => {
     setup();
     expect(screen.getByTestId("settings-interval-readonly")).toHaveTextContent("5 giây/số (host chỉnh)");
     expect(screen.queryByTestId("settings-interval-stepper")).not.toBeInTheDocument();
     expect(screen.getByTestId("settings-expires")).toHaveTextContent("Phòng hết hạn lúc 22:00");
-    expect(screen.getByTestId("settings-profile")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.queryByTestId("settings-profile")).not.toBeInTheDocument();
   });
 
   it("AC-1/AC-2: mode segmented calls onModeChange; current mode is checked", async () => {
@@ -55,10 +55,10 @@ describe("SettingsSheet", () => {
     expect(props.onSoundChange).toHaveBeenCalledWith(true);
   });
 
-  it("AC-7: host stepper — minus disabled at 3, plus disabled at 15", async () => {
+  it("AC-7: host stepper 5/10/15 — minus disabled at 5, plus disabled at 15", async () => {
     const step = vi.fn();
-    setup({ isHost: true, interval: { value: 3, step, forbidden: false } });
-    expect(screen.getByTestId("settings-interval-value")).toHaveTextContent("3 giây");
+    setup({ isHost: true, interval: { value: 5, step, forbidden: false } });
+    expect(screen.getByTestId("settings-interval-value")).toHaveTextContent("5 giây");
     expect(screen.getByTestId("btn-interval-minus")).toBeDisabled();
     await userEvent.click(screen.getByTestId("btn-interval-plus"));
     expect(step).toHaveBeenCalledWith(1);

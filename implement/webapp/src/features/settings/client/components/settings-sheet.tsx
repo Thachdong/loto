@@ -1,11 +1,11 @@
 "use client";
 
-import { ChevronRightIcon, MinusIcon, PlusIcon } from "lucide-react";
+import { MinusIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/core/client/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/core/client/ui/sheet";
 import { t } from "@/core/shared/i18n/vi";
 import { formatTimeVN } from "@/core/shared/time";
-import { DRAW_INTERVAL_MAX, DRAW_INTERVAL_MIN } from "@/features/room/shared/domain/draw-interval";
+import { stepDrawInterval } from "@/features/room/shared/domain/draw-interval";
 import { useDrawInterval, type DrawIntervalState } from "@/features/settings/client/hooks/use-draw-interval";
 
 export type TrackMode = "manual" | "auto";
@@ -27,7 +27,7 @@ type Props = {
   interval?: DrawIntervalState;
 };
 
-/** SCR-11 Cài đặt (sheet thấp trên SCR-04): cách dò, tiếng rao, nhịp quay, hồ sơ, giờ hết hạn phòng. */
+/** SCR-11 Cài đặt (sheet thấp trên SCR-04): cách dò, tiếng rao, nhịp quay (5/10/15 — Q-070), giờ hết hạn phòng. */
 export function SettingsSheet(props: Props) {
   const { open, onClose, bottom, isHost, mode, soundOn } = props;
   const live = useDrawInterval(props.roomId, props.drawIntervalSec);
@@ -93,7 +93,7 @@ export function SettingsSheet(props: Props) {
                   variant="outline"
                   aria-label={t("settings.decrease")}
                   data-testid="btn-interval-minus"
-                  disabled={interval.value <= DRAW_INTERVAL_MIN}
+                  disabled={stepDrawInterval(interval.value, -1) === interval.value}
                   onClick={() => interval.step(-1)}
                 >
                   <MinusIcon />
@@ -107,7 +107,7 @@ export function SettingsSheet(props: Props) {
                   variant="outline"
                   aria-label={t("settings.increase")}
                   data-testid="btn-interval-plus"
-                  disabled={interval.value >= DRAW_INTERVAL_MAX}
+                  disabled={stepDrawInterval(interval.value, 1) === interval.value}
                   onClick={() => interval.step(1)}
                 >
                   <PlusIcon />
@@ -121,14 +121,6 @@ export function SettingsSheet(props: Props) {
           </section>
 
           <hr />
-          {/* T-011 chưa có `/profile` — hàng hiện sẵn nhưng khóa. */}
-          <div data-testid="settings-profile" aria-disabled="true" className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{t("settings.profile")}</span>
-            <span className="flex items-center gap-1 text-xs">
-              {t("settings.soon")}
-              <ChevronRightIcon className="size-4" aria-hidden="true" />
-            </span>
-          </div>
           <p data-testid="settings-expires" className="text-xs text-muted-foreground">
             {t("settings.expires", { time: formatTimeVN(props.expiresAt, "HH:mm") })}
           </p>

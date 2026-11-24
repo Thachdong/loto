@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { t } from "@/core/shared/i18n/vi";
 import type { ActionResult } from "@/core/shared/action-result";
 import { updateRoomAction } from "@/features/room/server/actions/update-room.action";
-import { clampDrawInterval } from "@/features/room/shared/domain/draw-interval";
+import { stepDrawInterval } from "@/features/room/shared/domain/draw-interval";
 import type { RoomSettings } from "@/features/room/shared/types";
 
 /** Q-050: gửi sau 600 ms kể từ lần bấm cuối. */
@@ -52,7 +52,7 @@ export function useDrawInterval(roomId: string, serverValue: number, update: Upd
 
   const step = useCallback(
     (delta: 1 | -1) => {
-      const next = clampDrawInterval(value + delta);
+      const next = stepDrawInterval(value, delta);
       if (next === value) return;
       setDraft(next);
       if (timer.current) clearTimeout(timer.current);
