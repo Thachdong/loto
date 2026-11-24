@@ -59,7 +59,7 @@
 | T-008 | Chat | SCR-06 | EPIC-06 | M2 | 3 | T-007 | REVIEW | [T-008](tasks/T-008-room-chat.md) |
 | T-009 | Người trong phòng | SCR-07 | EPIC-07 | M2 | 5 | T-008 | REVIEW | [T-009](tasks/T-009-room-members.md) |
 | T-010 | Lịch sử ván | SCR-08 | EPIC-08 | M2 | 2 | T-009 | REVIEW | [T-010](tasks/T-010-game-history.md) |
-| T-011 | Hồ sơ cá nhân & đăng xuất | SCR-10 | EPIC-09 | M2 | 5 | T-010 | TODO | [T-011](tasks/T-011-profile-and-sign-out.md) |
+| T-011 | Hồ sơ cá nhân & đăng xuất | SCR-10 | EPIC-09 | M2 | 5 | T-010 | TODO ⚠ hồ sơ bị bỏ (Q-069) | [T-011](tasks/T-011-profile-and-sign-out.md) |
 | T-012 | Cài đặt | SCR-11 | EPIC-10 | M2 | 3 | T-011 | REVIEW | [T-012](tasks/T-012-room-settings.md) |
 | T-013 | Vận hành: thống kê ngày, TTL, theo dõi lỗi | — | EPIC-11 | M2 | 3 | T-012 | TODO | [T-013](tasks/T-013-ops-stats-ttl-logging.md) |
 

@@ -27,10 +27,9 @@ Task `backlog/tasks/T-012-room-settings.md`; api-contract `updateRoom`, `RoomSet
 
 ## 5. Giả định
 - Tên chế độ theo quyết định trước của dev: "Dò tay" (manual) / "Tự dò" (auto) — spec ghi "Tự dò"/"Auto".
-- `/profile` (T-011) chưa có → hàng "Hồ sơ cá nhân ›" hiện khóa kèm "Sắp có".
 - Seed: dùng lại `game-running` (T-006) thay cho `room-running-auto`.
 
 ## 8. Kết quả
 - `updateRoomAction` mới; feature `settings` (hook debounce/revert, sheet). Mode/tiếng dùng chung handler với thanh KINH; thêm fallback bộ nhớ khi localStorage bị chặn.
 - Unit + emulator 755/755 pass, build OK. Bỏ chrome-tester; QC test tay theo `backlog/testcases/T-012-room-settings.md`.
-- Còn mở: "Hồ sơ cá nhân ›" khóa ("Sắp có") tới khi T-011 làm `/profile`.
+- Sau khi làm, dev đổi: bỏ hàng "Hồ sơ cá nhân ›" (Q-069); nhịp quay 5 / 10 / 15 (Q-070).

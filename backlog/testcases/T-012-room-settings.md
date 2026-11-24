@@ -10,9 +10,10 @@ summary: null
 
 ## 0. Môi trường
 - Như `backlog/testcases/T-006-game-room.md` mục 0. Seed `game-running` (T-006, phòng `r_gm_run`, nhịp 3 giây): H = host, B giữ Đỏ A, C giữ Lam A + Lam B. Seed `game-waiting` cho TC-05.
+- Nhịp quay chỉ 5 / 10 / 15 giây (Q-070). Seed T-006 đặt sẵn 3 giây (giá trị cũ) — bấm + sẽ lên 5.
 - Tên chế độ theo quyết định dev: **"Dò tay"** (= "Tự dò" trong spec) / **"Tự dò"** (= "Auto" trong spec).
-- Chữ: "Cài đặt" · "Cách dò số" · "Dò tay" / "Tự dò" · "Tự dò tự đánh dấu số đã rao trên vé; bạn vẫn phải tự bấm KINH." · "Tiếng rao" · "Chỉ áp dụng trên máy của bạn" · "Nhịp quay" · "{n} giây" · "áp dụng từ số kế tiếp" · "{n} giây/số (host chỉnh)" · "Chưa đổi được nhịp quay" · "Hồ sơ cá nhân" + "Sắp có" · "Phòng hết hạn lúc HH:mm" · toast "Nhịp quay: {n} giây/số".
-- `data-testid`: `tab-settings`, `settings-sheet`, `settings-mode-manual`, `settings-mode-auto` (`aria-checked`), `settings-sound` (`aria-checked`), `settings-interval-stepper`, `btn-interval-minus`, `btn-interval-plus`, `settings-interval-value`, `settings-interval-readonly`, `settings-profile`, `settings-expires`.
+- Chữ: "Cài đặt" · "Cách dò số" · "Dò tay" / "Tự dò" · "Tự dò tự đánh dấu số đã rao trên vé; bạn vẫn phải tự bấm KINH." · "Tiếng rao" · "Chỉ áp dụng trên máy của bạn" · "Nhịp quay" · "{n} giây" · "áp dụng từ số kế tiếp" · "{n} giây/số (host chỉnh)" · "Chưa đổi được nhịp quay" · "Phòng hết hạn lúc HH:mm" · toast "Nhịp quay: {n} giây/số".
+- `data-testid`: `tab-settings`, `settings-sheet`, `settings-mode-manual`, `settings-mode-auto` (`aria-checked`), `settings-sound` (`aria-checked`), `settings-interval-stepper`, `btn-interval-minus`, `btn-interval-plus`, `settings-interval-value`, `settings-interval-readonly`, `settings-expires`.
 
 ## 1. Ma trận phủ
 | AC | TC / test tự động |
@@ -25,7 +26,7 @@ summary: null
 | AC-8 | TC-T012-01 bước 1 · `update-room.test.ts` (automated) |
 | AC-9 | TC-T012-05 |
 | AC-10 | TC-T012-04 bước 4 · `use-draw-interval.test.ts` |
-| AC-11 | chưa làm — `/profile` thuộc T-011; hàng hiện "Sắp có" |
+| AC-11 | bỏ — dev bỏ tính năng hồ sơ cá nhân (Q-069) |
 | AC-12 | TC-T012-01 bước 1 · `settings-sheet.test.tsx` |
 
 ## 3. Test case
@@ -39,7 +40,7 @@ summary: null
 
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
-| 1 | P2 | Bấm tab "Cài đặt" | "Dò tay" đang chọn, Tiếng rao bật, "3 giây/số (host chỉnh)" (không có −/+), "Hồ sơ cá nhân · Sắp có", "Phòng hết hạn lúc HH:mm" = `expires_at` giờ VN | ui |
+| 1 | P2 | Bấm tab "Cài đặt" | "Dò tay" đang chọn, Tiếng rao bật, "3 giây/số (host chỉnh)" (không có −/+), không có hàng "Hồ sơ cá nhân", "Phòng hết hạn lúc HH:mm" = `expires_at` giờ VN | ui |
 | 2 | P2 | Chọn "Tự dò", đóng sheet | Các số đã rao có trên vé được tô; nút "Tự dò" ở thanh KINH đang bật; KINH không tự gửi | ui |
 | 3 | P2 | Cài đặt → "Dò tay"; chờ thêm số | Ô đã tô giữ nguyên; số mới không tự tô; chạm ô tô được | ui |
 
@@ -73,9 +74,9 @@ summary: null
 
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
-| 1 | P1 | H mở Cài đặt, bấm + 5 lần nhanh (3 → 8) | Hiện "8 giây"; sau ~600 ms toast "Nhịp quay: 8 giây/số" ở P1 và P2; P2 thấy "8 giây/số (host chỉnh)"; Emulator: `draw_interval_sec = 8`, chỉ 1 lần ghi | ui, emulator |
-| 2 | P1 | Quan sát 3 số tiếp theo | Số đầu theo hẹn cũ, các khoảng sau ≈ 8 giây | ui |
-| 3 | P1 | Bấm − tới 3, + tới 15 | − khóa ở 3; + khóa ở 15 | ui |
+| 1 | P1 | H mở Cài đặt (seed đang 3 giây), bấm + 2 lần nhanh (3 → 5 → 10) | Hiện "10 giây"; sau ~600 ms toast "Nhịp quay: 10 giây/số" ở P1 và P2; P2 thấy "10 giây/số (host chỉnh)"; Emulator: `draw_interval_sec = 10`, chỉ 1 lần ghi | ui, emulator |
+| 2 | P1 | Quan sát 3 số tiếp theo | Số đầu theo hẹn cũ, các khoảng sau ≈ 10 giây | ui |
+| 3 | P1 | Bấm − / + | Chỉ đi qua 5 → 10 → 15; − khóa ở 5; + khóa ở 15 | ui |
 | 4 | P1 | DevTools Offline, bấm − | Về giá trị server, toast "Chưa đổi được nhịp quay" | ui |
 
 **Kết quả:** ⬜

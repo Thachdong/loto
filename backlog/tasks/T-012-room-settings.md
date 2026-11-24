@@ -34,7 +34,7 @@ Sau task này: **player mở SCR-04 → bấm "Cài đặt" → chuyển "Tự d
 - [x] Switch "Tiếng rao" Bật (mặc định)/Tắt + "Chỉ áp dụng trên máy của bạn"; ghi `loto.sound`. Tắt → dừng âm đang phát ngay, không phát số mới. Bật khi chưa có `AudioContext` → chạy SCR-04.A1 (tạo `AudioContext` + tải manifest) trong chính lần chạm đó.
 - [x] Nhịp quay: host → stepper −/+ bước 1, giới hạn 3–15 (nút − khóa ở 3, + khóa ở 15), hiện "{n} giây" + "áp dụng từ số kế tiếp"; player → text "{n} giây/số (host chỉnh)" theo `rooms.draw_interval_sec` realtime.
 - [x] Debounce 600 ms sau lần bấm cuối rồi gọi `updateRoomAction` (Q-050); hiển thị giá trị lạc quan trong lúc chờ. Lỗi mạng/khác → trả stepper về giá trị server + toast "Chưa đổi được nhịp quay"; `NOT_ROOM_HOST` → chuyển sang dạng chỉ đọc.
-- [ ] Hàng "Hồ sơ cá nhân ›" → `/profile` (SCR-10); ← ở SCR-10 về lại `/room` (Q-050; bổ sung cạnh SCR-11 → SCR-10).
+- [x] ~~Hàng "Hồ sơ cá nhân ›" → `/profile` (SCR-10); ← ở SCR-10 về lại `/room` (Q-050; bổ sung cạnh SCR-11 → SCR-10).~~ — bỏ (Q-069)
 - [x] Dòng "Phòng hết hạn lúc HH:mm" từ `rooms.expires_at` GMT+7.
 - [x] localStorage không khả dụng (throw) → giữ cài đặt trong bộ nhớ trang, không vỡ UI.
 - [x] Toast `interval_changed` "Nhịp quay: {n} giây/số" trong bảng toast SCR-04 (kiểm đã có từ T-006, thiếu thì thêm).
@@ -116,4 +116,5 @@ Môi trường: localhost + Emulator, viewport 375×812. **P1 = Host An**, **P2 
 - `[ASSUMED]` Mode Auto không cho chạm ô tự đánh dấu.
 - Point 3 khớp checklist (logic hiệu ứng Auto đã có ở T-006).
 
-> QC: chạy test case tay theo [T-012-room-settings.md](../testcases/T-012-room-settings.md). Hàng "Hồ sơ cá nhân ›" chờ T-011 (`/profile`).
+> QC: chạy test case tay theo [T-012-room-settings.md](../testcases/T-012-room-settings.md).
+> Đổi sau khi làm (2026-11-24): bỏ hàng "Hồ sơ cá nhân ›" (Q-069); nhịp quay chỉ 5 / 10 / 15 giây (Q-070) — các chỗ ghi "3–15" trong task này đã lỗi thời.
