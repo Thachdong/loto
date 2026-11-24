@@ -122,3 +122,39 @@ export function createNextGameInTx(tx: Transaction, roomId: string, next: NextGa
   tx.create(gameRef(roomId, next.gameId), doc);
   setRoomGameInTx(tx, roomId, { gameId: next.gameId, gameCount: next.seqNo }, event);
 }
+
+/**
+ * confirmGame (BR-28): ván `awaiting_confirm` → `finished`/`won`; `winners` = lượt `win`, `confirmed_by`, `ended_at`.
+ * Không đụng phòng (người gọi tạo ván mới hoặc đóng phòng).
+ */
+export function confirmGameInTx(
+  tx: Transaction,
+  roomId: string,
+  gameId: string,
+  claims: readonly ClaimRecord[],
+  confirmedBy: string,
+  now: Date,
+): void {
+  const patch: Partial<GameDoc> = { ...finishedGamePatch(resultOfClaims(claims), now), confirmed_by: confirmedBy };
+  tx.update(gameRef(roomId, gameId), patch);
+}
+
+/**
+ * rejectClaims (BR-28, Q-055): `claims = []`, ván về `resume_status`; `running` → `next_call_at`, `paused` →
+ * `pause_reason = host`. `resume_status = null`.
+ */
+export function rejectClaimsInTx(
+  tx: Transaction,
+  roomId: string,
+  gameId: string,
+  resume: { status: "running"; nextCallAt: Date } | { status: "paused" },
+): void {
+  const patch: Partial<GameDoc> = {
+    claims: [],
+    resume_status: null,
+    status: resume.status,
+    next_call_at: resume.status === "running" ? Timestamp.fromDate(resume.nextCallAt) : null,
+    pause_reason: resume.status === "paused" ? "host" : null,
+  };
+  tx.update(gameRef(roomId, gameId), patch);
+}

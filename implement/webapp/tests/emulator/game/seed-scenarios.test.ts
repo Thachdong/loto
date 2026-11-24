@@ -40,6 +40,9 @@ const CASES: [string, string, string, string][] = [
   ["game-expiring-running", "r_gm_expr", "active", "running"],
   ["game-expired-idle", "r_gm_idle", "active", "waiting"],
   ["game-awaiting-expiring", "r_gm_awexp", "active", "awaiting_confirm"],
+  ["result-awaiting-win", "r_rs_win", "active", "awaiting_confirm"],
+  ["result-awaiting-miss", "r_rs_miss", "active", "awaiting_confirm"],
+  ["result-host-offline", "r_rs_off", "active", "awaiting_confirm"],
 ];
 
 describe("T-006 seed scenarios", () => {

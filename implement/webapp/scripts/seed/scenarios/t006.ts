@@ -45,6 +45,8 @@ type Options = {
   claims?: SeedClaim[];
   resumeStatus?: "running" | "paused" | null;
   lastEvent?: SeedLastEvent;
+  /** RTDB presence; mặc định cả 3 online. */
+  presence?: Record<string, boolean>;
   note: string;
 };
 
@@ -80,7 +82,7 @@ async function room(scenario: string, o: Options): Promise<void> {
     claims: o.claims,
     resumeStatus: o.resumeStatus ?? null,
     lastEvent: o.lastEvent,
-    presence: { [H.uid]: true, [B.uid]: true, [C.uid]: true },
+    presence: o.presence ?? { [H.uid]: true, [B.uid]: true, [C.uid]: true },
   });
   console.log(`[${scenario}] roomId=${o.roomId} (${o.note})`);
   for (const [role, p] of [["H (host)", H], ["B", B], ["C", C]] as const) {
@@ -268,4 +270,54 @@ export const gameAwaitingExpiring = () =>
     lastEvent: { type: "claim_submitted", text: `${C.name} KINH!`, actorUid: C.uid },
     expiresIn: MIN,
     note: "awaiting_confirm; expires_at = +60s",
+  });
+
+// ── T-007 (SCR-09 duyệt KINH & kết quả) ──
+const missB: SeedClaim = { uid: B.uid, displayName: B.name, ticketId: "red_a", color: "red", result: "miss", row: null };
+const kinhOf = (name: string) => ({ type: "claim_submitted", text: `${name} KINH!`, actorUid: C.uid }) as SeedLastEvent;
+
+/** T-007: chờ duyệt, B hụt + C đúng → host thấy "Xác nhận kết thúc ván". */
+export const resultAwaitingWin = () =>
+  room("result-awaiting-win", {
+    roomId: "r_rs_win",
+    joinCode: "RSW234",
+    inviteCode: "RESULTWININVITE000000",
+    name: "Kết quả (có vé đúng)",
+    gameStatus: "awaiting_confirm",
+    resumeStatus: "running",
+    calledNumbers: five,
+    claims: [missB, claimOf("win", 0)],
+    lastEvent: kinhOf(C.name),
+    note: "awaiting_confirm; claims = [B red_a miss, C blue_a win row 0]",
+  });
+
+/** T-007: chờ duyệt, chỉ B hụt → host thấy "Bác bỏ – quay tiếp"; C còn KINH được. */
+export const resultAwaitingMiss = () =>
+  room("result-awaiting-miss", {
+    roomId: "r_rs_miss",
+    joinCode: "RSM234",
+    inviteCode: "RESULTMISSINVITE00000",
+    name: "Kết quả (toàn hụt)",
+    gameStatus: "awaiting_confirm",
+    resumeStatus: "running",
+    calledNumbers: five,
+    claims: [missB],
+    lastEvent: kinhOf(B.name),
+    note: "awaiting_confirm; claims = [B red_a miss]; resume_status = running",
+  });
+
+/** T-007: chờ duyệt (C đúng), host H offline → B/C thấy dòng host offline. */
+export const resultHostOffline = () =>
+  room("result-host-offline", {
+    roomId: "r_rs_off",
+    joinCode: "RSO234",
+    inviteCode: "RESULTOFFLINEINVITE00",
+    name: "Kết quả (host offline)",
+    gameStatus: "awaiting_confirm",
+    resumeStatus: "running",
+    calledNumbers: five,
+    claims: [claimOf("win", 0)],
+    lastEvent: kinhOf(C.name),
+    presence: { [H.uid]: false, [B.uid]: true, [C.uid]: true },
+    note: "awaiting_confirm; C win; presence H offline",
   });

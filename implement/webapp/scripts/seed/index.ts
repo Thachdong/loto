@@ -22,6 +22,9 @@ import {
   gameRowReady,
   gameRunning,
   gameWaiting,
+  resultAwaitingMiss,
+  resultAwaitingWin,
+  resultHostOffline,
 } from "./scenarios/t006";
 import { ticketsBasic, ticketsCarry, ticketsRunning } from "./scenarios/t005";
 
@@ -49,6 +52,10 @@ const SCENARIOS: Record<string, () => Promise<void>> = {
   "game-expiring-running": gameExpiringRunning,
   "game-expired-idle": gameExpiredIdle,
   "game-awaiting-expiring": gameAwaitingExpiring,
+  "result-awaiting-win": resultAwaitingWin,
+  "result-awaiting-miss": resultAwaitingMiss,
+  "result-host-offline": resultHostOffline,
+  t007: resultAwaitingWin,
 };
 
 async function main(): Promise<number> {
