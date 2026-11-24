@@ -71,6 +71,7 @@ export function makeState(over: Partial<GameRoomState> = {}): GameRoomState {
     me: null,
     myTickets: [],
     ticketsReady: true,
+    tickets: [],
     ...over,
   };
 }

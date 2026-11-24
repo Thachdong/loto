@@ -42,6 +42,8 @@ export type GameRoomState = CurrentRoomState & {
   /** Vé tham gia ván của mình (theo thứ tự `ticketIds`), kèm grid; vé chưa tải xong bị bỏ qua. */
   myTickets: TicketView[];
   ticketsReady: boolean;
+  /** Mọi vé của phòng (TBL-03) — vé của lượt KINH / người thắng (SCR-09 #4). */
+  tickets: TicketView[];
 };
 
 type Options = {
@@ -78,5 +80,6 @@ export function useGameRoom({ uid, initialRoomId, fallbackRoomId, onLeave }: Opt
     me,
     myTickets,
     ticketsReady: ticketsState.status === "ready",
+    tickets: ticketsState.data,
   };
 }

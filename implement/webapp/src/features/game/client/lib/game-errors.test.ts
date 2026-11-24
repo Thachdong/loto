@@ -20,4 +20,11 @@ describe("gameErrorMessage", () => {
     expect(gameErrorMessage("start", { code: NETWORK_ERROR })).toBe(vi.err.generic);
     expect(gameErrorMessage("claim", { code: "INTERNAL_ERROR" })).toBe(vi.err.claimNetwork);
   });
+  it("SCR-09: CLAIM_HAS_WIN toast, confirm/reject races ignored, network messages", () => {
+    expect(gameErrorMessage("reject", { code: "CLAIM_HAS_WIN" })).toBe(vi.err.claimHasWin);
+    expect(gameErrorMessage("confirm", { code: "GAME_NOT_AWAITING_CONFIRM" })).toBeNull();
+    expect(gameErrorMessage("confirm", { code: "NO_WINNING_CLAIM" })).toBeNull();
+    expect(gameErrorMessage("confirm", { code: NETWORK_ERROR })).toBe(vi.err.confirmNetwork);
+    expect(gameErrorMessage("reject", { code: NETWORK_ERROR })).toBe(vi.err.rejectNetwork);
+  });
 });

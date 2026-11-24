@@ -5,7 +5,9 @@ import "client-only";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ActionResult } from "@/core/shared/action-result";
+import { confirmGameAction } from "@/features/game/server/actions/confirm-game.action";
 import { createClaimAction } from "@/features/game/server/actions/create-claim.action";
+import { rejectClaimsAction } from "@/features/game/server/actions/reject-claims.action";
 import { pauseGameAction } from "@/features/game/server/actions/pause-game.action";
 import { resumeGameAction } from "@/features/game/server/actions/resume-game.action";
 import { startGameAction } from "@/features/game/server/actions/start-game.action";
@@ -19,9 +21,13 @@ export type GameActions = {
   pause: () => Promise<boolean>;
   resume: () => Promise<boolean>;
   claim: (ticketId: TicketId) => Promise<boolean>;
+  /** SCR-09.A1 host xác nhận kết thúc ván. */
+  confirm: () => Promise<boolean>;
+  /** SCR-09.A3 host bác bỏ – quay tiếp. */
+  reject: () => Promise<boolean>;
 };
 
-/** Gọi 4 Server Action của ván; một thao tác tại một thời điểm (chống bấm đúp), lỗi → toast theo SCR-04 §3. */
+/** Gọi 6 Server Action của ván; một thao tác tại một thời điểm (chống bấm đúp), lỗi → toast theo SCR-04 §3. */
 export function useGameActions(roomId: string, gameId: string): GameActions {
   const [pending, setPending] = useState<string | null>(null);
   const lock = useRef(false);
@@ -57,5 +63,8 @@ export function useGameActions(roomId: string, gameId: string): GameActions {
     [run, roomId, gameId],
   );
 
-  return { pending, start, pause, resume, claim };
+  const confirm = useCallback(() => run("confirm", "confirm", () => confirmGameAction({ roomId, gameId })), [run, roomId, gameId]);
+  const reject = useCallback(() => run("reject", "reject", () => rejectClaimsAction({ roomId, gameId })), [run, roomId, gameId]);
+
+  return { pending, start, pause, resume, claim, confirm, reject };
 }
