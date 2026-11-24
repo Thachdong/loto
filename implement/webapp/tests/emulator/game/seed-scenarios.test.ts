@@ -119,6 +119,21 @@ describe("T-006 seed scenarios", () => {
     expect(Object.fromEntries(players.docs.map((d) => [d.id, d.data().ticket_ids]))).toEqual({ u_mb_binh: ["red_a"], u_mb_chi: ["blue_b"] });
   });
 
+  it("chat-history (T-008): 120 messages, pages of 50 newest-first reach message 1", async () => {
+    const result = run("chat-history");
+    expect(result.status, result.stderr).toBe(0);
+    const col = db.collection("rooms/r_chat/messages").orderBy("created_at");
+    expect((await col.get()).size).toBe(120);
+    const last = await col.limitToLast(50).get();
+    expect(last.docs[0].data().text).toBe("Tin số 71");
+    const page2 = await col.endBefore(last.docs[0].data().created_at).limitToLast(50).get();
+    expect(page2.docs[0].data().text).toBe("Tin số 21");
+    const page3 = await col.endBefore(page2.docs[0].data().created_at).limitToLast(50).get();
+    expect(page3.size).toBe(20);
+    expect(page3.docs[0].data().text).toBe("Tin số 1");
+    expect((await db.doc("users/u_ch_chi").get()).data()?.current_room_id).toBeNull();
+  });
+
   it("existing scenarios keep their defaults (tickets-basic: draw_interval_sec 5, no called numbers)", async () => {
     run("tickets-basic");
     const { room, game } = await read("r_tk_basic");

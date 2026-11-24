@@ -29,6 +29,7 @@ import {
 } from "./scenarios/t006";
 import { ticketsBasic, ticketsCarry, ticketsRunning } from "./scenarios/t005";
 import { roomMembers } from "./scenarios/t009";
+import { chatHistory } from "./scenarios/t008";
 
 const SCENARIOS: Record<string, () => Promise<void>> = {
   reset,
@@ -62,6 +63,8 @@ const SCENARIOS: Record<string, () => Promise<void>> = {
   t010: history,
   "room-members": roomMembers,
   t009: roomMembers,
+  "chat-history": chatHistory,
+  t008: chatHistory,
 };
 
 async function main(): Promise<number> {
