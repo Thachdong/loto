@@ -4,6 +4,8 @@ import type { GameStatus, RoomStatus } from "@/features/room/shared/types";
 import { seedRoom, type SeedClaim, type SeedLastEvent, type SeedPlayer } from "../lib/seed-room";
 import { seedUser } from "../lib/seed-user";
 import { seedUserDoc } from "../lib/seed-user-doc";
+import { seedFirestore } from "../lib/admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 const H = { uid: "u_tk_h", email: "h@example.com", name: "Host H" };
 const B = { uid: "u_tk_b", email: "b@example.com", name: "Bình B" };
@@ -45,6 +47,7 @@ type Options = {
   claims?: SeedClaim[];
   resumeStatus?: "running" | "paused" | null;
   lastEvent?: SeedLastEvent;
+  gameSeqNo?: number;
   /** RTDB presence; mặc định cả 3 online. */
   presence?: Record<string, boolean>;
   note: string;
@@ -81,6 +84,7 @@ async function room(scenario: string, o: Options): Promise<void> {
     pauseReason: o.pauseReason ?? null,
     claims: o.claims,
     resumeStatus: o.resumeStatus ?? null,
+    gameSeqNo: o.gameSeqNo,
     lastEvent: o.lastEvent,
     presence: o.presence ?? { [H.uid]: true, [B.uid]: true, [C.uid]: true },
   });
@@ -321,3 +325,70 @@ export const resultHostOffline = () =>
     presence: { [H.uid]: false, [B.uid]: true, [C.uid]: true },
     note: "awaiting_confirm; C win; presence H offline",
   });
+
+// ── T-010 (SCR-08 lịch sử ván) ──
+/**
+ * `history`: ván 1 won (C), ván 2 won (B + C đồng thắng; B có ảnh, C không), ván 3 no_winner, ván 4 cancelled
+ * (không started_at), ván 5 waiting (hiện tại). Giờ UTC 16:00 + n×10 phút → hiển thị 23:xx GMT+7 (hôm nay).
+ */
+export const history = async () => {
+  await room("history", {
+    roomId: "r_hist",
+    joinCode: "HST234",
+    inviteCode: "HISTORYINVITE00000000",
+    name: "Lịch sử ván",
+    gameSeqNo: 5,
+    note: "ván 1–4 đã kết thúc (won 1 / won 2 / no_winner / cancelled), ván 5 waiting",
+  });
+  const db = seedFirestore();
+  const day = new Date();
+  day.setUTCHours(16, 0, 0, 0);
+  const at = (min: number) => Timestamp.fromDate(new Date(day.getTime() + min * 60_000));
+  const winner = (p: typeof B, ticketId: string, row: number, min: number) => ({
+    uid: p.uid,
+    display_name: p.name,
+    ticket_id: ticketId,
+    color: ticketId.split("_")[0],
+    row,
+    claimed_at: at(min),
+  });
+  const game = (seq: number, fields: Record<string, unknown>) => ({
+    seq_no: seq,
+    pause_reason: null,
+    next_call_at: null,
+    claims: [],
+    resume_status: null,
+    winners: [],
+    result: null,
+    player_count: 2,
+    started_at: null,
+    ended_at: null,
+    confirmed_by: null,
+    created_at: at(seq * 10 - 5),
+    expire_at: at(60 * 24),
+    ...fields,
+  });
+  const games = {
+    r_hist_h1: game(1, { status: "finished", result: "won", winners: [winner(C, "blue_a", 0, 8)], started_at: at(0), ended_at: at(8), confirmed_by: H.uid }),
+    r_hist_h2: game(2, {
+      status: "finished",
+      result: "won",
+      winners: [winner(B, "red_a", 2, 18), winner(C, "blue_b", 4, 18)],
+      started_at: at(10),
+      ended_at: at(18),
+      confirmed_by: H.uid,
+    }),
+    r_hist_h3: game(3, { status: "finished", result: "no_winner", started_at: at(20), ended_at: at(29) }),
+    r_hist_h4: game(4, { status: "cancelled", player_count: 0, ended_at: at(33) }),
+  };
+  const batch = db.batch();
+  for (const [id, doc] of Object.entries(games)) batch.set(db.doc(`rooms/r_hist/games/${id}`), doc);
+  batch.set(db.doc(`rooms/r_hist/games/r_hist_h2/players/${B.uid}`), {
+    display_name: B.name,
+    photo_url: "https://api.dicebear.com/9.x/initials/svg?seed=B",
+    ticket_ids: ["red_a"],
+    joined_at: at(9),
+    expire_at: at(60 * 24),
+  });
+  await batch.commit();
+};

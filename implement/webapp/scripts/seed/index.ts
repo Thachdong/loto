@@ -22,6 +22,7 @@ import {
   gameRowReady,
   gameRunning,
   gameWaiting,
+  history,
   resultAwaitingMiss,
   resultAwaitingWin,
   resultHostOffline,
@@ -56,6 +57,8 @@ const SCENARIOS: Record<string, () => Promise<void>> = {
   "result-awaiting-miss": resultAwaitingMiss,
   "result-host-offline": resultHostOffline,
   t007: resultAwaitingWin,
+  history,
+  t010: history,
 };
 
 async function main(): Promise<number> {

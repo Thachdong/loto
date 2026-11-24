@@ -43,6 +43,7 @@ const CASES: [string, string, string, string][] = [
   ["result-awaiting-win", "r_rs_win", "active", "awaiting_confirm"],
   ["result-awaiting-miss", "r_rs_miss", "active", "awaiting_confirm"],
   ["result-host-offline", "r_rs_off", "active", "awaiting_confirm"],
+  ["history", "r_hist", "active", "waiting"],
 ];
 
 describe("T-006 seed scenarios", () => {
@@ -88,6 +89,24 @@ describe("T-006 seed scenarios", () => {
     expect((await read("r_gm_near")).room?.called_numbers).toHaveLength(89);
     run("game-expired-idle");
     expect((await read("r_gm_idle")).room?.expires_at.toMillis()).toBeLessThan(Date.now());
+  });
+
+  it("history (T-010): games 1–4 finished/cancelled mapped to cards newest-first, current game 5 waiting excluded", async () => {
+    run("history");
+    const { mapHistoryDoc } = await import("@/features/history/client/hooks/use-game-history");
+    const { sortHistory, toHistoryCard } = await import("@/features/history/shared/domain/history-card");
+    const snap = await db.collection("rooms/r_hist/games").get();
+    const games = sortHistory(snap.docs.map((d) => mapHistoryDoc(d.data(), d.id)).filter((g) => g !== null));
+    const cards = games.map((g) => toHistoryCard(g));
+    expect(cards.map((c) => [c.seqNo, c.outcome])).toEqual([
+      [4, "cancelled"],
+      [3, "no_winner"],
+      [2, "won"],
+      [1, "won"],
+    ]);
+    expect(cards[0].time).toEqual({ kind: "cancelled", at: "23:33" });
+    expect(cards[2].winners.map((w) => w.ticketId)).toEqual(["red_a", "blue_b"]);
+    expect(cards[3].time).toEqual({ kind: "range", from: "23:00", to: "23:08" });
   });
 
   it("existing scenarios keep their defaults (tickets-basic: draw_interval_sec 5, no called numbers)", async () => {
