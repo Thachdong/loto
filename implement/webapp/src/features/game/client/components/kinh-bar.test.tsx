@@ -47,6 +47,22 @@ function setup(
 describe("KinhBar", () => {
   afterEach(cleanup);
 
+  it("Check cooldown: disabled with a countdown for 10 seconds, then usable again", () => {
+    vi.useFakeTimers();
+    try {
+      setup();
+      act(() => screen.getByTestId("btn-check").click());
+      expect(screen.getByTestId("btn-check")).toBeDisabled();
+      act(() => void vi.advanceTimersByTime(3000));
+      expect(screen.getByTestId("btn-check")).toHaveTextContent("Check (7s)");
+      act(() => void vi.advanceTimersByTime(7000));
+      expect(screen.getByTestId("btn-check")).toBeEnabled();
+      expect(screen.getByTestId("btn-check")).toHaveTextContent("Check");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("Check, Auto and KINH sit in one row; Check syncs, Auto toggles; Check disabled in auto mode or before any call", async () => {
     setup();
     const bar = screen.getByTestId("kinh-bar");
@@ -54,6 +70,8 @@ describe("KinhBar", () => {
     expect([...bar.querySelectorAll("button")].map((b) => b.dataset.testid)).toEqual(["btn-check", "btn-auto", "btn-kinh"]);
     await userEvent.click(screen.getByTestId("btn-check"));
     expect(extra.onCheck).toHaveBeenCalled();
+    expect(screen.getByTestId("btn-check")).toBeDisabled();
+    expect(screen.getByTestId("btn-check")).toHaveTextContent("Check (10s)");
     await userEvent.click(screen.getByTestId("btn-auto"));
     expect(extra.onToggleAuto).toHaveBeenCalled();
     expect(screen.getByTestId("btn-auto")).toHaveAttribute("aria-pressed", "false");

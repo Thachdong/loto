@@ -17,6 +17,9 @@ export function isKinhVisible(status: GameStatus, ticketCount: number): boolean 
   return CLAIMABLE.includes(status) && ticketCount > 0;
 }
 
+/** Nút "Check" chỉ bấm lại được sau 10 giây (Q-062). */
+export const CHECK_COOLDOWN_SEC = 10;
+
 type Props = {
   status: GameStatus;
   myTickets: TicketView[];
@@ -41,13 +44,32 @@ type Props = {
 export function KinhBar({ status, myTickets, claims, pending, onClaim, height, sheetBottom, mode, onToggleAuto, onCheck, canCheck }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [locked, setLocked] = useState(false);
+  /** Giây còn lại trước khi bấm "Check" lại được (0 = bấm được). */
+  const [checkWait, setCheckWait] = useState(0);
+  const checkTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
+      if (checkTimer.current) clearInterval(checkTimer.current);
     },
     [],
   );
+
+  function check() {
+    onCheck();
+    setCheckWait(CHECK_COOLDOWN_SEC);
+    if (checkTimer.current) clearInterval(checkTimer.current);
+    checkTimer.current = setInterval(() => {
+      setCheckWait((s) => {
+        if (s <= 1 && checkTimer.current) {
+          clearInterval(checkTimer.current);
+          checkTimer.current = null;
+        }
+        return Math.max(0, s - 1);
+      });
+    }, 1000);
+  }
 
   if (!isKinhVisible(status, myTickets.length)) return null;
 
@@ -78,10 +100,10 @@ export function KinhBar({ status, myTickets, claims, pending, onClaim, height, s
         variant="outline"
         data-testid="btn-check"
         className="h-full text-sm font-semibold"
-        disabled={mode === "auto" || !canCheck}
-        onClick={onCheck}
+        disabled={mode === "auto" || !canCheck || checkWait > 0}
+        onClick={check}
       >
-        {t("kinh.check")}
+        {checkWait > 0 ? t("kinh.checkWait", { n: checkWait }) : t("kinh.check")}
       </Button>
       <Button
         type="button"

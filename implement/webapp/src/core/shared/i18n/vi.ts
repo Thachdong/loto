@@ -122,6 +122,7 @@ export const vi = {
     claimed: "Đã KINH vé này",
     closed: "KINH (đã đóng)",
     check: "Check",
+    checkWait: "Check ({n}s)",
     checkDone: "Đã đồng bộ vé với số đã gọi",
     auto: "Auto",
   },

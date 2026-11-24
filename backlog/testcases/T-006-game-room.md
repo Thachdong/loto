@@ -885,7 +885,7 @@ Ghi chú: không nghe được âm thanh qua Chrome tự động → chỉ xác 
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
 | 1 | P2 | Đăng nhập B, mở `/room` | Hàng dưới vé có 3 nút bằng nhau: "Check", "Auto", "KINH" (đỏ) | ui |
-| 2 | P2 | Chạm 1 ô chưa được gọi trên vé Đỏ A (đánh sai), rồi bấm "Check" | Toast "Đã đồng bộ vé với số đã gọi"; ô sai bỏ đánh dấu; mọi số đã gọi có trên vé được đánh dấu | ui, toast |
+| 2 | P2 | Chạm 1 ô chưa được gọi trên vé Đỏ A (đánh sai), rồi bấm "Check" | Toast "Đã đồng bộ vé với số đã gọi"; ô sai bỏ đánh dấu; mọi số đã gọi có trên vé được đánh dấu; nút thành "Check (10s)" khóa, đếm lùi, sau 10 giây bấm lại được | ui, toast |
 | 3 | P2 | Bấm "Auto" | Nút "Auto" tô đậm; vé chuyển hiệu ứng Auto (tự tô, viền đỏ số vừa gọi); "Check" bị khóa; `me-status` "… mode Auto" | ui |
 | 4 | P2 | Bấm "Auto" lần nữa | Về Tự dò, "Check" bật lại | ui |
 
