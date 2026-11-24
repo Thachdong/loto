@@ -1,3 +1,4 @@
+import { MIN_PLAYERS_TO_START } from "@/features/game/shared/constants";
 import "server-only";
 
 import { cryptoRandomInt } from "@/core/server/random";
@@ -41,7 +42,7 @@ export type StartGameDeps = { randomInt?: RandomInt };
 /**
  * api-contract › startGame (BR-14, BR-15). Thứ tự lỗi: thành viên → host → `GAME_STALE` → `waiting` → phòng còn
  * `active` và chưa quá hạn (`ROOM_CLOSING`; lazy expiry vừa đóng/chuyển `closing` thì commit phần hết hạn rồi báo
- * `ROOM_CLOSING`) → 0 người có vé (`NO_TICKETS_HELD`, không ghi). Xóa player vé rỗng/đã rời, chép tên-ảnh hiện
+ * `ROOM_CLOSING`) → < `MIN_PLAYERS_TO_START` người có vé (`NO_TICKETS_HELD`, không ghi — BR-14, Q-059). Xóa player vé rỗng/đã rời, chép tên-ảnh hiện
  * tại, server rao ngay số đầu và đặt `next_call_at = now + N`.
  */
 export async function startGame(uid: string, input: StartGameInput, deps: StartGameDeps = {}): Promise<GameState> {
@@ -59,7 +60,7 @@ export async function startGame(uid: string, input: StartGameInput, deps: StartG
       players.map((p) => p.uid),
     );
     const valid = players.filter((p) => p.ticketIds.length > 0 && status[p.uid]?.currentRoomId === input.roomId);
-    if (valid.length === 0) return fail("NO_TICKETS_HELD");
+    if (valid.length < MIN_PLAYERS_TO_START) return fail("NO_TICKETS_HELD");
 
     const invalid = players.filter((p) => !valid.includes(p));
     deletePlayersInTx(

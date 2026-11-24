@@ -123,10 +123,11 @@ describe("startGameAction", () => {
     await writePlayer(cast.B.uid, "Tên cũ", ["red_a"]);
     await writePlayer(cast.C.uid, "Cúc C", []);
     await writePlayer(cast.X.uid, "Xuân X", ["green_a"]); // X không còn ở phòng
+    await writePlayer(cast.H.uid, "Host H", ["pink_a"]);
     await db.doc(`users/${cast.B.uid}`).update({ display_name: "Bình mới", photo_url: "https://x/y.png" });
     signInAs(cookieStore, cast.H);
 
-    expect(await start()).toMatchObject({ ok: true, data: { playerCount: 1 } });
+    expect(await start()).toMatchObject({ ok: true, data: { playerCount: 2 } });
     expect((await players().doc(cast.C.uid).get()).exists).toBe(false);
     expect((await players().doc(cast.X.uid).get()).exists).toBe(false);
     expect((await players().doc(cast.B.uid).get()).data()).toMatchObject({
@@ -134,6 +135,22 @@ describe("startGameAction", () => {
       photo_url: "https://x/y.png",
       ticket_ids: ["red_a"],
     });
+  });
+
+  it("BR-14 (Q-059): only one ticket holder (host or player, even with 2 tickets) → NO_TICKETS_HELD, nothing written", async () => {
+    await writePlayer(cast.C.uid, "Cúc C", ["blue_a", "blue_b"]);
+    await writePlayer(cast.B.uid, "Bình B", []);
+    signInAs(cookieStore, cast.H);
+    expect(await start()).toMatchObject({ ok: false, error: { code: "NO_TICKETS_HELD", message: "Cần ít nhất 2 người lấy vé để bắt đầu" } });
+    expect((await players().doc(cast.B.uid).get()).exists).toBe(true);
+    expect(await gameDoc()).toMatchObject({ status: "waiting" });
+  });
+
+  it("BR-14: host with a ticket + one player is enough", async () => {
+    await writePlayer(cast.H.uid, "Host H", ["pink_a"]);
+    await writePlayer(cast.B.uid, "Bình B", ["red_a"]);
+    signInAs(cookieStore, cast.H);
+    expect(await start()).toMatchObject({ ok: true, data: { status: "running", playerCount: 2 } });
   });
 
   it("AC-02: only players who left → NO_TICKETS_HELD, nothing deleted", async () => {

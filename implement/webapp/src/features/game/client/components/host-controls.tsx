@@ -1,3 +1,4 @@
+import { MIN_PLAYERS_TO_START } from "@/features/game/shared/constants";
 import { Loader2Icon } from "lucide-react";
 import { Button } from "@/core/client/ui/button";
 import { t } from "@/core/shared/i18n/vi";
@@ -10,11 +11,13 @@ type HostProps = {
   game: GameView;
   /** Tổng vé đã có chủ trong ván hiện tại (x/16). */
   heldCount: number;
+  /** Số người khác nhau đang giữ vé (BR-14: cần ≥ 2). */
+  holderCount: number;
   actions: Pick<GameActions, "pending" | "start" | "pause" | "resume">;
 };
 
 /** SCR-04 #9: thanh điều khiển host theo trạng thái ván. `awaiting_confirm` → ẩn (host duyệt ở SCR-09, T-007). */
-export function HostControls({ room, game, heldCount, actions }: HostProps) {
+export function HostControls({ room, game, heldCount, holderCount, actions }: HostProps) {
   const busy = actions.pending !== null;
   const base = "h-10 min-w-28 px-4 text-sm";
 
@@ -23,7 +26,7 @@ export function HostControls({ room, game, heldCount, actions }: HostProps) {
 
   if (game.status === "waiting") {
     if (room.status !== "closing") {
-      const none = heldCount === 0;
+      const none = holderCount < MIN_PLAYERS_TO_START;
       button = (
         <Button type="button" data-testid="btn-start" className={base} disabled={none || busy} onClick={() => void actions.start()}>
           {actions.pending === "start" && <Loader2Icon className="animate-spin" aria-hidden="true" />}

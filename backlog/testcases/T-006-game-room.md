@@ -30,7 +30,7 @@ summary: null
   - Layout: `JSON.stringify([...document.querySelectorAll('[data-testid^="ticket-"] [data-cell]')].slice(0,1).map(e=>{const r=e.getBoundingClientRect();return [r.width,r.height]}))` và `getBoundingClientRect()` của `[data-testid=room-header|number-panel|kinh-bar|bottom-bar]`.
   - Giả lập mất mạng: thêm `?debug=offline` / `?debug=online` vào URL `/room` (chỉ dev).
   - Đổi mode dò: `localStorage.setItem('loto:mode','auto')` rồi tải lại; mặc định `manual`.
-- Chữ chính (vi.ts): phụ đề "Ván {n} · {Chờ bắt đầu | Đang quay | Tạm dừng | Chờ host duyệt KINH}" · "▶ Bắt đầu" / "⏸ Tạm dừng" / "▶ Tiếp tục" · "Cần ít nhất 1 người lấy vé" · "{held}/16 vé đã có chủ · {members} người trong phòng" · "Số thứ {n}/90" · "Số kế tiếp sau {n} giây" · "Chưa rao số nào" · "⏸ Host đã tạm dừng" · "⏳ Chờ host duyệt KINH" · "Bảng 90 ›" · nút "KINH" / "Kinh vé {Màu} {A|B}" / "Đã KINH vé này" · thẻ "{tên} KINH!" + "Đang chờ host duyệt…" + "Vé đủ hàng" / "Vé chưa đủ hàng" · "Bạn chưa có vé" · "Chọn vé" · "Bạn đang xem ván này. Lấy vé khi ván kết thúc." · "Chạm để bật tiếng" · "Không tải được tiếng rao" · "Mất kết nối – đang kết nối lại…" · chip "⏱ Còn mm:ss" / "Đóng sau ván này" · dialog rời: "Rời phòng?" / "Đóng phòng?" · "Ở lại" · "Rời phòng" / "Đóng phòng" · "Không rời được phòng, thử lại" · toast "Ván {n} bắt đầu", "Ván {n} kết thúc", "Ván đã tạm dừng", "Ván tiếp tục", "{tên} KINH!", "{tên} đã rời phòng", "Phòng sẽ hết hạn sau 15 phút", "Phòng sẽ đóng khi ván này kết thúc", "Host đã đóng phòng" · banner SCR-02: `Bạn đã rời phòng "{tên}".`, `Phòng "{tên}" đã hết hạn.`, `Host đã đóng phòng "{tên}".` · sheet Mời: "Mời bạn bè", "Link mời", "Mã phòng", "Copy link", "Copy mã", "Chia sẻ…", "Link hết hạn lúc {HH:mm} (cùng lúc phòng đóng) · {n}/16 người", toast "Đã copy link" / "Đã copy mã phòng" · sheet Bảng 90: "Bảng 90 số", "Số đã rao ({n}/90)", "Gần nhất: …" · thanh dưới: "Vé · Chat · Người · Lịch sử · Cài đặt", khung "Sắp có".
+- Chữ chính (vi.ts): phụ đề "Ván {n} · {Chờ bắt đầu | Đang quay | Tạm dừng | Chờ host duyệt KINH}" · "▶ Bắt đầu" / "⏸ Tạm dừng" / "▶ Tiếp tục" · "Cần ít nhất 2 người lấy vé" · "{held}/16 vé đã có chủ · {members} người trong phòng" · "Số thứ {n}/90" · "Số kế tiếp sau {n} giây" · "Chưa rao số nào" · "⏸ Host đã tạm dừng" · "⏳ Chờ host duyệt KINH" · "Bảng 90 ›" · nút "KINH" / "Kinh vé {Màu} {A|B}" / "Đã KINH vé này" · thẻ "{tên} KINH!" + "Đang chờ host duyệt…" + "Vé đủ hàng" / "Vé chưa đủ hàng" · "Bạn chưa có vé" · "Chọn vé" · "Bạn đang xem ván này. Lấy vé khi ván kết thúc." · "Chạm để bật tiếng" · "Không tải được tiếng rao" · "Mất kết nối – đang kết nối lại…" · chip "⏱ Còn mm:ss" / "Đóng sau ván này" · dialog rời: "Rời phòng?" / "Đóng phòng?" · "Ở lại" · "Rời phòng" / "Đóng phòng" · "Không rời được phòng, thử lại" · toast "Ván {n} bắt đầu", "Ván {n} kết thúc", "Ván đã tạm dừng", "Ván tiếp tục", "{tên} KINH!", "{tên} đã rời phòng", "Phòng sẽ hết hạn sau 15 phút", "Phòng sẽ đóng khi ván này kết thúc", "Host đã đóng phòng" · banner SCR-02: `Bạn đã rời phòng "{tên}".`, `Phòng "{tên}" đã hết hạn.`, `Host đã đóng phòng "{tên}".` · sheet Mời: "Mời bạn bè", "Link mời", "Mã phòng", "Copy link", "Copy mã", "Chia sẻ…", "Link hết hạn lúc {HH:mm} (cùng lúc phòng đóng) · {n}/16 người", toast "Đã copy link" / "Đã copy mã phòng" · sheet Bảng 90: "Bảng 90 số", "Số đã rao ({n}/90)", "Gần nhất: …" · thanh dưới: "Vé · Chat · Người · Lịch sử · Cài đặt", khung "Sắp có".
 - `data-testid`: `room-screen`, `room-header`, `room-name`, `game-subtitle`, `expiry-chip`, `btn-invite`, `btn-leave`, `number-panel` (`data-compact`), `last-number`, `called-count` ("n/90"), `next-countdown`, `recent-numbers`, `btn-board90`, `host-bar`, `btn-start`/`btn-pause`/`btn-resume`, `host-hint`, `me-status`, `my-tickets-area`, `my-tickets` (`data-count`), `ticket-{id}` (ô: `data-cell`, `data-marked`, `data-hit`, `data-waiting`), `ticket-open-{id}`, `no-ticket-card`, `btn-pick-ticket`, `spectator-note`, `kinh-bar`, `btn-kinh`, `kinh-sheet`, `kinh-sheet-{id}`, `claim-card`, `claim-item-{uid}-{ticketId}` (`data-result`), `bottom-dock`, `bottom-bar`, `tab-{tickets|chat|members|history|settings}`, `sheet-coming-soon`, `sound-gate`, `board90`, `board-cell-{n}`, `board-called`, `board-recent`, `board-close`, `invite-sheet`, `invite-link`, `invite-code`, `invite-expires`, `btn-copy-link`, `btn-copy-code`, `btn-share`, `leave-dialog` (`data-variant` = `simple`/`playing`/`host`), `leave-body`, `btn-leave-stay`, `btn-leave-confirm`, `conn-banner`, `room-skeleton`; toast là sonner (`[data-sonner-toast]`).
 
 ## 1. Ma trận phủ
@@ -228,7 +228,7 @@ TC-T006-01 (Bắt đầu ván), TC-T006-02 (rao số tự động, 3 máy đồn
 
 | # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
 |---|---|---|---|---|
-| 1 | P1 | Đăng nhập H, mở `/room` | Nút "▶ Bắt đầu" `disabled`; `host-hint` "Cần ít nhất 1 người lấy vé" | ui |
+| 1 | P1 | Đăng nhập H, mở `/room` | Nút "▶ Bắt đầu" `disabled`; `host-hint` "Cần ít nhất 2 người lấy vé" | ui |
 | 2 | P1 | Bấm vào nút khóa | Không có gì xảy ra; Emulator UI: ván vẫn `waiting` | ui, emulator-ui |
 | 3 | P2 | Đổi B, `/room` | Hiện `no-ticket-card` "Bạn chưa có vé" + nút "Chọn vé"; không có `kinh-bar` | ui |
 | 4 | — | API `NO_TICKETS_HELD`, dữ liệu không đổi | Xem TC-T006-36 | — |
@@ -837,3 +837,20 @@ Ghi chú: không nghe được âm thanh qua Chrome tự động → chỉ xác 
 - **Loại:** `happy` · `alt` (luồng A*) · `error` (luồng E*) · `boundary` (biên BR) · `permission` · `multi-user` · `resilience` · `responsive` · `security`.
 - **Chạy bằng:** `chrome` · `automated` (Vitest, đã có file test) · `manual`.
 - **Cách kiểm:** `url` · `ui` · `toast` · `emulator-ui` · `cookie` · `console` · `network` · `layout`.
+
+---
+
+### TC-T006-45 · Chỉ 1 người giữ vé → chưa Bắt đầu được (BR-14, Q-059)
+| Ưu tiên | Loại | Phủ | Chạy bằng |
+|---|---|---|---|
+| P0 | validation | BR-14 (Q-059), FLOW-06 E1 | manual |
+
+**Tiền điều kiện:** `npm run seed -- reset && npm run seed -- game-waiting` (B giữ `red_a`, C giữ `blue_a`+`blue_b`).
+
+| # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
+|---|---|---|---|---|
+| 1 | P2 | Đăng nhập B, mở sheet "Vé" › Đỏ A › "Bỏ vé" | Chỉ còn C giữ vé (2 vé) | ui |
+| 2 | P1 | Đăng nhập H, mở `/room` | Nút "▶ Bắt đầu" `disabled`; `host-hint` "Cần ít nhất 2 người lấy vé" (dù đã có 2 vé có chủ) | ui |
+| 3 | P1 | H lấy vé Hồng A (sheet "Vé") | Nút "▶ Bắt đầu" bật; hint "3/16 vé đã có chủ · 3 người trong phòng"; bấm → ván chạy | ui |
+
+**Kết quả:** ⬜

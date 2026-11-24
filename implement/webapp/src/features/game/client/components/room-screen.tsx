@@ -104,6 +104,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   const heights = compact ? LAYOUT_HEIGHTS.double : LAYOUT_HEIGHTS.single;
   const dockHeight = heights.bottomBar + (isKinhVisible(game.status, myTickets.length) ? heights.kinhBar : 0);
   const heldCount = players.reduce((sum, p) => sum + p.ticketIds.length, 0);
+  const holderCount = players.filter((p) => p.ticketIds.length > 0).length;
   const ctx: RoomScreenContext = {
     uid,
     room,
@@ -151,7 +152,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         onOpenBoard={() => setOverlay("board90")}
       />
       {isHost ? (
-        <HostControls room={room} game={game} heldCount={heldCount} actions={actions} />
+        <HostControls room={room} game={game} heldCount={heldCount} holderCount={holderCount} actions={actions} />
       ) : (
         <MeStatusLine game={game} heldCount={heldCount} myTicketCount={myTickets.length} mode={mode} />
       )}

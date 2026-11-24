@@ -101,7 +101,7 @@ export const vi = {
     pause: "⏸ Tạm dừng",
     resume: "▶ Tiếp tục",
     summary: "{held}/16 vé đã có chủ · {members} người trong phòng",
-    needTicket: "Cần ít nhất 1 người lấy vé",
+    needTicket: "Cần ít nhất 2 người lấy vé",
   },
   me: {
     waiting: "Chờ host bắt đầu · {held} vé đã có chủ",
@@ -212,7 +212,7 @@ export const vi = {
     chat: "Có tin nhắn mới",
   },
   err: {
-    noTickets: "Cần ít nhất 1 người lấy vé",
+    noTickets: "Cần ít nhất 2 người lấy vé",
     roomClosing: "Phòng sắp hết hạn, không bắt đầu ván mới",
     notTicketHolder: "Vé này không tham gia ván",
     ticketAlreadyClaimed: "Vé này đã báo KINH, chờ host duyệt",
@@ -354,7 +354,7 @@ export const vi = {
     TICKET_NOT_HELD: "Bạn không giữ vé này",
     TICKETS_STILL_HELD: "Còn người đang giữ vé",
     TARGET_ONLINE: "Người này đang online, không thể thu hồi vé",
-    NO_TICKETS_HELD: "Chưa có ai lấy vé, chưa thể bắt đầu",
+    NO_TICKETS_HELD: "Cần ít nhất 2 người lấy vé để bắt đầu",
     TICKET_LIMIT_REACHED: "Mỗi người giữ tối đa 2 vé",
     CANNOT_TARGET_SELF: "Bạn không thể thực hiện thao tác này với chính mình",
     ROOM_NAME_INVALID: "Tên phòng phải từ 1 đến 50 ký tự",

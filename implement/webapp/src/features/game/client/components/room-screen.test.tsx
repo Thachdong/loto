@@ -90,7 +90,7 @@ describe("RoomScreen", () => {
     expect(screen.getByTestId("no-ticket-card")).toHaveTextContent(dict.me.noTicket);
   });
 
-  it("waiting (host) with 0 tickets: Bắt đầu disabled + 'Cần ít nhất 1 người lấy vé'; closing hides the button", () => {
+  it("waiting (host) with 0 tickets: Bắt đầu disabled + 'Cần ít nhất 2 người lấy vé'; closing hides the button", () => {
     render(<RoomScreen uid={HOST} roomId="r1" />);
     expect(screen.getByTestId("btn-start")).toBeDisabled();
     expect(screen.getByTestId("host-hint")).toHaveTextContent(dict.host.needTicket);
@@ -101,16 +101,23 @@ describe("RoomScreen", () => {
     expect(screen.getByTestId("expiry-chip")).toHaveTextContent(dict.game.closingChip);
   });
 
-  it("host clicks Bắt đầu → startGameAction({roomId, gameId})", async () => {
-    setState({ players: players({ uid: "b", ticketIds: ["red_a"] }) });
+  it("BR-14 (Q-059): 1 ticket holder only → Bắt đầu disabled + 'Cần ít nhất 2 người lấy vé'", () => {
+    setState({ players: players({ uid: HOST, ticketIds: ["red_a", "red_b"] }) });
+    render(<RoomScreen uid={HOST} roomId="r1" />);
+    expect(screen.getByTestId("btn-start")).toBeDisabled();
+    expect(screen.getByTestId("host-hint")).toHaveTextContent("Cần ít nhất 2 người lấy vé");
+  });
+
+  it("host clicks Bắt đầu (2 holders) → startGameAction({roomId, gameId})", async () => {
+    setState({ players: players({ uid: "b", ticketIds: ["red_a"] }, { uid: HOST, ticketIds: ["blue_a"] }) });
     render(<RoomScreen uid={HOST} roomId="r1" />);
     await userEvent.click(screen.getByTestId("btn-start"));
     expect(h.start).toHaveBeenCalledWith({ roomId: "r1", gameId: "g1" });
   });
 
-  it("start error NO_TICKETS_HELD → toast 'Cần ít nhất 1 người lấy vé'", async () => {
+  it("start error NO_TICKETS_HELD → toast 'Cần ít nhất 2 người lấy vé'", async () => {
     h.start.mockResolvedValue({ ok: false, error: { code: "NO_TICKETS_HELD", message: "x" } });
-    setState({ players: players({ uid: "b", ticketIds: ["red_a"] }) });
+    setState({ players: players({ uid: "b", ticketIds: ["red_a"] }, { uid: "c", ticketIds: ["blue_a"] }) });
     render(<RoomScreen uid={HOST} roomId="r1" />);
     await userEvent.click(screen.getByTestId("btn-start"));
     expect(h.toast.error).toHaveBeenCalledWith(dict.err.noTickets);
