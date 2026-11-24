@@ -153,6 +153,18 @@ export const vi = {
     released: "Bạn offline lúc ván kết thúc nên vé đã được trả lại. Hãy lấy vé mới.",
     close: "Đóng",
   },
+  history: {
+    title: "Lịch sử ván",
+    game: "Ván {n}",
+    cancelledAt: "Hủy lúc {time}",
+    ticket: "Vé {color} {side}",
+    noWinner: "Không ai thắng",
+    cancelled: "Đã hủy",
+    empty: "Chưa có ván nào kết thúc",
+    emptyHint: "Kết quả mỗi ván sẽ hiện ở đây.",
+    error: "Không tải được lịch sử",
+    retry: "Thử lại",
+  },
   bottomBar: {
     tickets: "Vé",
     chat: "Chat",

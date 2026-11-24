@@ -6,6 +6,7 @@ import { cancelPresence, usePresence } from "@/core/client/hooks/use-presence";
 import { Skeleton } from "@/core/client/ui/skeleton";
 import { t } from "@/core/shared/i18n/vi";
 import { writeLeaveReason } from "@/features/room/client";
+import { HistorySheet } from "@/features/history/client";
 import { TicketSheet } from "@/features/ticket/client";
 import { useGameActions } from "@/features/game/client/hooks/use-game-actions";
 import { useGameRoom } from "@/features/game/client/hooks/use-game-room";
@@ -87,6 +88,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   useDebugConnection();
   const { room, game, user, players, me, myTickets } = state;
   const [ticketsOpen, setTicketsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [overlay, setOverlay] = useState<RoomOverlay | null>(null);
   const [soonTab, setSoonTab] = useState<Exclude<BottomTab, "tickets"> | null>(null);
   const mode = usePlayMode();
@@ -224,9 +226,10 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         />
         <BottomBar
           height={heights.bottomBar}
-          onSelect={(tab) => (tab === "tickets" ? openTickets() : setSoonTab(tab))}
+          onSelect={(tab) => (tab === "tickets" ? openTickets() : tab === "history" ? setHistoryOpen(true) : setSoonTab(tab))}
         />
       </div>
+      <HistorySheet roomId={room.id} open={historyOpen} onClose={() => setHistoryOpen(false)} bottom={dockHeight} />
       <ComingSoonSheet tab={soonTab} onClose={() => setSoonTab(null)} bottom={dockHeight} />
       <TicketSheet
         open={ticketsOpen}

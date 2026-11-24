@@ -24,6 +24,9 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/game/client/hooks/use-game-room", () => ({ useGameRoom: () => h.state }));
+vi.mock("@/features/history/client", () => ({
+  HistorySheet: (p: { open: boolean }) => (p.open ? <div data-testid="history-sheet" /> : null),
+}));
 vi.mock("@/features/game/client/hooks/use-host-online", () => ({ useHostOnline: () => h.hostOnline }));
 vi.mock("@/features/game/client/hooks/use-finished-game", () => ({
   useFinishedGame: () => ({ game: h.finished, ticketLine: "kept", nextSeqNo: 2, dismiss: vi.fn() }),
@@ -457,6 +460,13 @@ describe("RoomScreen", () => {
     setState({ room: makeRoom({ calledNumbers: [4] }), game: makeGame("running") });
     render(<RoomScreen uid={ME} roomId="r1" />);
     expect(screen.queryByTestId("kinh-bar")).not.toBeInTheDocument();
+  });
+
+  it("bottom bar: Lịch sử opens the history sheet (T-010)", async () => {
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    await userEvent.click(screen.getByTestId("tab-history"));
+    expect(screen.getByTestId("history-sheet")).toBeInTheDocument();
+    expect(screen.queryByTestId("sheet-coming-soon")).not.toBeInTheDocument();
   });
 
   it("bottom bar: 5 tabs; Vé opens the ticket sheet, the others open the 'Sắp có' frame", async () => {
