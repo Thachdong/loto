@@ -120,3 +120,22 @@ describe("T-009 AC-13: RTDB presence/{roomId} follows presence_access", () => {
     for (const path of paths) await assertFails(user.firestore().doc(path).get());
   });
 });
+
+describe("T-008 AC-9: rooms/{id}/messages", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc("rooms/X/messages/m1").set({ sender_uid: "A", text: "hi" });
+    });
+  });
+
+  it("member reads; outsider denied; nobody writes from the client", async () => {
+    await assertSucceeds(as("A").firestore().doc("rooms/X/messages/m1").get());
+    await assertSucceeds(as("A").firestore().collection("rooms/X/messages").get());
+    await assertFails(as("B").firestore().collection("rooms/X/messages").get());
+    await assertFails(as("C").firestore().doc("rooms/X/messages/m1").get());
+    const db = as("A").firestore();
+    await assertFails(db.collection("rooms/X/messages").add({ sender_uid: "A", text: "x" }));
+    await assertFails(db.doc("rooms/X/messages/m1").update({ text: "y" }));
+    await assertFails(db.doc("rooms/X/messages/m1").delete());
+  });
+});
