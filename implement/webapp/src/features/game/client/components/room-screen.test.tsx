@@ -24,6 +24,12 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("@/features/game/client/hooks/use-game-room", () => ({ useGameRoom: () => h.state }));
+const chatMock = vi.hoisted(() => ({ unread: 0 }));
+vi.mock("@/features/chat/client", () => ({
+  ChatSheet: (p: { open: boolean }) => (p.open ? <div data-testid="chat-sheet" /> : null),
+  useChatMessages: () => ({ status: "ready", messages: [], hasMore: false, loadingOlder: false, loadOlder: async () => {}, retry: () => {} }),
+  useChatUnread: () => chatMock.unread,
+}));
 vi.mock("@/features/members/client", () => ({
   MembersSheet: (p: { open: boolean }) => (p.open ? <div data-testid="members-sheet" /> : null),
 }));
@@ -472,6 +478,15 @@ describe("RoomScreen", () => {
     expect(screen.queryByTestId("sheet-coming-soon")).not.toBeInTheDocument();
   });
 
+  it("bottom bar: Chat opens the chat sheet; unread badge on the Chat tab (T-008)", async () => {
+    chatMock.unread = 3;
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    expect(screen.getByTestId("chat-badge")).toHaveTextContent("3");
+    await userEvent.click(screen.getByTestId("tab-chat"));
+    expect(screen.getByTestId("chat-sheet")).toBeInTheDocument();
+    chatMock.unread = 0;
+  });
+
   it("bottom bar: Người opens the members sheet (T-009)", async () => {
     render(<RoomScreen uid={ME} roomId="r1" />);
     await userEvent.click(screen.getByTestId("tab-members"));
@@ -487,7 +502,7 @@ describe("RoomScreen", () => {
     }
     await userEvent.click(screen.getByTestId("tab-tickets"));
     expect(screen.getByTestId("ticket-sheet")).toBeInTheDocument();
-    await userEvent.click(screen.getByTestId("tab-chat"));
+    await userEvent.click(screen.getByTestId("tab-settings"));
     expect(await screen.findByTestId("sheet-coming-soon")).toHaveTextContent(dict.bottomBar.comingSoon);
   });
 

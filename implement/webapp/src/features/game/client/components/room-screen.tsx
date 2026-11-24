@@ -8,6 +8,7 @@ import { t } from "@/core/shared/i18n/vi";
 import { writeLeaveReason } from "@/features/room/client";
 import { HistorySheet } from "@/features/history/client";
 import { MembersSheet } from "@/features/members/client";
+import { ChatSheet, useChatMessages, useChatUnread } from "@/features/chat/client";
 import { TicketSheet } from "@/features/ticket/client";
 import { useGameActions } from "@/features/game/client/hooks/use-game-actions";
 import { useGameRoom } from "@/features/game/client/hooks/use-game-room";
@@ -91,6 +92,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   const [ticketsOpen, setTicketsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [overlay, setOverlay] = useState<RoomOverlay | null>(null);
   const [soonTab, setSoonTab] = useState<Exclude<BottomTab, "tickets"> | null>(null);
   const mode = usePlayMode();
@@ -103,6 +105,8 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   const actions = useGameActions(roomId, game?.id ?? "");
   const finished = useFinishedGame({ roomId, uid, current: game, currentPlayers: players, playersReady: state.playersReady });
   const awaiting = game?.status === "awaiting_confirm";
+  const chat = useChatMessages(room ? roomId : null);
+  const chatUnread = useChatUnread(roomId, uid, chat.messages, chatOpen);
   const hostOnline = useHostOnline(roomId, room?.hostUid ?? null, awaiting && room?.hostUid !== uid);
 
   if (!room || !game) {
@@ -228,6 +232,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         />
         <BottomBar
           height={heights.bottomBar}
+          chatUnread={chatUnread}
           onSelect={(tab) =>
             tab === "tickets"
               ? openTickets()
@@ -235,11 +240,14 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
                 ? setHistoryOpen(true)
                 : tab === "members"
                   ? setMembersOpen(true)
-                  : setSoonTab(tab)
+                  : tab === "chat"
+                    ? setChatOpen(true)
+                    : setSoonTab(tab)
           }
         />
       </div>
       <HistorySheet roomId={room.id} open={historyOpen} onClose={() => setHistoryOpen(false)} bottom={dockHeight} />
+      <ChatSheet roomId={room.id} uid={uid} open={chatOpen} onClose={() => setChatOpen(false)} bottom={dockHeight} chat={chat} />
       <MembersSheet
         roomId={room.id}
         open={membersOpen}
