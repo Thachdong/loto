@@ -872,3 +872,21 @@ Ghi chú: không nghe được âm thanh qua Chrome tự động → chỉ xác 
 | 4 | P1 | Bắt đầu ván 2 | Không còn nút "Bỏ vé" dưới vé khi ván đang chạy | ui |
 
 **Kết quả:** ⬜
+
+---
+
+### TC-T006-47 · Thanh KINH: Check · Auto · KINH cùng 1 hàng (Q-062)
+| Ưu tiên | Loại | Phủ | Chạy bằng |
+|---|---|---|---|
+| P1 | happy | SCR-04 #14 (Q-062) | manual |
+
+**Tiền điều kiện:** `npm run seed -- reset && npm run seed -- game-running`; mode Tự dò (mặc định).
+
+| # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
+|---|---|---|---|---|
+| 1 | P2 | Đăng nhập B, mở `/room` | Hàng dưới vé có 3 nút bằng nhau: "Check", "Auto", "KINH" (đỏ) | ui |
+| 2 | P2 | Chạm 1 ô chưa được gọi trên vé Đỏ A (đánh sai), rồi bấm "Check" | Toast "Đã đồng bộ vé với số đã gọi"; ô sai bỏ đánh dấu; mọi số đã gọi có trên vé được đánh dấu | ui, toast |
+| 3 | P2 | Bấm "Auto" | Nút "Auto" tô đậm; vé chuyển hiệu ứng Auto (tự tô, viền đỏ số vừa gọi); "Check" bị khóa; `me-status` "… mode Auto" | ui |
+| 4 | P2 | Bấm "Auto" lần nữa | Về Tự dò, "Check" bật lại | ui |
+
+**Kết quả:** ⬜

@@ -20,7 +20,11 @@ const claim = (ticketId: ClaimView["ticketId"]): ClaimView => ({
   claimedAtMs: 1,
 });
 
-function setup(over: { status?: GameStatus; tickets?: ReturnType<typeof makeTicket>[]; claims?: ClaimView[]; pending?: string | null } = {}) {
+const extra = { onToggleAuto: vi.fn(), onCheck: vi.fn() };
+
+function setup(
+  over: { status?: GameStatus; tickets?: ReturnType<typeof makeTicket>[]; claims?: ClaimView[]; pending?: string | null; mode?: "manual" | "auto"; canCheck?: boolean } = {},
+) {
   const onClaim = vi.fn();
   render(
     <KinhBar
@@ -31,6 +35,10 @@ function setup(over: { status?: GameStatus; tickets?: ReturnType<typeof makeTick
       onClaim={onClaim}
       height={56}
       sheetBottom={120}
+      mode={over.mode ?? "manual"}
+      canCheck={over.canCheck ?? true}
+      onToggleAuto={extra.onToggleAuto}
+      onCheck={extra.onCheck}
     />,
   );
   return onClaim;
@@ -38,6 +46,25 @@ function setup(over: { status?: GameStatus; tickets?: ReturnType<typeof makeTick
 
 describe("KinhBar", () => {
   afterEach(cleanup);
+
+  it("Check, Auto and KINH sit in one row; Check syncs, Auto toggles; Check disabled in auto mode or before any call", async () => {
+    setup();
+    const bar = screen.getByTestId("kinh-bar");
+    expect(bar.className).toContain("grid-cols-3");
+    expect([...bar.querySelectorAll("button")].map((b) => b.dataset.testid)).toEqual(["btn-check", "btn-auto", "btn-kinh"]);
+    await userEvent.click(screen.getByTestId("btn-check"));
+    expect(extra.onCheck).toHaveBeenCalled();
+    await userEvent.click(screen.getByTestId("btn-auto"));
+    expect(extra.onToggleAuto).toHaveBeenCalled();
+    expect(screen.getByTestId("btn-auto")).toHaveAttribute("aria-pressed", "false");
+    cleanup();
+    setup({ mode: "auto" });
+    expect(screen.getByTestId("btn-check")).toBeDisabled();
+    expect(screen.getByTestId("btn-auto")).toHaveAttribute("aria-pressed", "true");
+    cleanup();
+    setup({ canCheck: false });
+    expect(screen.getByTestId("btn-check")).toBeDisabled();
+  });
 
   it.each<GameStatus>(["waiting", "finished", "cancelled"])("hidden when the game is %s", (status) => {
     setup({ status });

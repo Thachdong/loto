@@ -13,7 +13,9 @@ import { useFinishedGame } from "@/features/game/client/hooks/use-finished-game"
 import { useHostOnline } from "@/features/game/client/hooks/use-host-online";
 import { useDebugConnection, useConnection } from "@/features/game/client/hooks/use-connection";
 import { useNow } from "@/features/game/client/hooks/use-now";
-import { usePlayMode } from "@/features/game/client/hooks/use-play-mode";
+import { setPlayMode, usePlayMode } from "@/features/game/client/hooks/use-play-mode";
+import { syncTicketMarks } from "@/features/game/client/hooks/use-marks";
+import { toast } from "sonner";
 import { useServerTimeOffset } from "@/features/game/client/hooks/use-server-time-offset";
 import { LAYOUT_HEIGHTS } from "@/features/game/shared/domain/ticket-layout";
 import type { GameView, LeaveReasonRecord, RoomView } from "@/features/room/shared/types";
@@ -195,6 +197,13 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
           onClaim={actions.claim}
           height={heights.kinhBar}
           sheetBottom={dockHeight}
+          mode={mode}
+          onToggleAuto={() => setPlayMode(mode === "auto" ? "manual" : "auto")}
+          canCheck={game.status !== "waiting" && room.calledNumbers.length > 0}
+          onCheck={() => {
+            syncTicketMarks(game.id, myTickets, room.calledNumbers);
+            toast.success(t("kinh.checkDone"), { duration: 2000 });
+          }}
         />
         <BottomBar
           height={heights.bottomBar}

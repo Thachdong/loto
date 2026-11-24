@@ -15,9 +15,26 @@ function read(): PlayMode {
     return "manual";
   }
 }
+/** Sự kiện cùng tab (sự kiện `storage` chỉ bắn ở tab khác). */
+const MODE_EVENT = "loto:mode-change";
+
 function subscribe(onChange: () => void) {
   window.addEventListener("storage", onChange);
-  return () => window.removeEventListener("storage", onChange);
+  window.addEventListener(MODE_EVENT, onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(MODE_EVENT, onChange);
+  };
+}
+
+/** Đổi mode dò (nút "Auto" ở thanh KINH); lỗi localStorage → bỏ qua. */
+export function setPlayMode(mode: PlayMode): void {
+  try {
+    window.localStorage.setItem(PLAY_MODE_KEY, mode);
+  } catch {
+    /* bỏ qua */
+  }
+  window.dispatchEvent(new Event(MODE_EVENT));
 }
 
 /** Mode dò hiện tại từ localStorage (đổi từ tab khác cũng cập nhật). */

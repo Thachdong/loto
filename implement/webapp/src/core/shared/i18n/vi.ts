@@ -121,6 +121,9 @@ export const vi = {
     ticket: "Kinh vé {color} {side}",
     claimed: "Đã KINH vé này",
     closed: "KINH (đã đóng)",
+    check: "Check",
+    checkDone: "Đã đồng bộ vé với số đã gọi",
+    auto: "Auto",
   },
   claim: {
     item: "{name} · vé {color} {side}",

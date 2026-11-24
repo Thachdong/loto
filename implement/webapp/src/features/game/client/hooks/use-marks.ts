@@ -14,6 +14,26 @@ function sharedStore(): MarksStore {
   return (shared ??= createMarksStore(browserStorage()));
 }
 
+/**
+ * Nút "Check": đồng bộ ô đánh dấu (Tự dò) của vé với số đã gọi — bỏ ô đánh sai, đánh mọi số đã gọi có trên vé.
+ */
+export function syncTicketMarks(
+  gameId: string,
+  tickets: readonly { id: string; grid: readonly number[] }[],
+  called: readonly number[],
+  storage?: StorageLike | null,
+): void {
+  const store = storage === undefined ? sharedStore() : createMarksStore(storage);
+  const calledSet = new Set(called);
+  for (const tk of tickets) {
+    store.write(
+      gameId,
+      tk.id,
+      tk.grid.filter((n) => n !== 0 && calledSet.has(n)),
+    );
+  }
+}
+
 export type UseMarks = {
   marks: ReadonlySet<number>;
   toggle: (n: number) => void;

@@ -373,3 +373,9 @@
 - **Trả lời:** Có: dãy chip hiện mọi số đã rao (mới nhất bên trái), vuốt/scroll ngang để xem số cũ hơn. Bảng 90 giữ nguyên.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #7
+
+## Q-062 · implement · 2026-11-24
+- **Hỏi:** Nút KINH chiếm cả hàng; người chơi cần cách sửa ô đánh sai và bật tự dò ngay trong ván.
+- **Trả lời:** Thanh KINH thành 1 hàng 3 nút chia đều: "Check" (đồng bộ ô đã đánh với số đã gọi: bỏ ô sai, đánh số đã gọi; chỉ mode Tự dò), "Auto" (bật/tắt mode Auto), "KINH" (nhỏ lại). BR-20 (Tự dò không gợi ý) được nới: người chơi chủ động bấm Check.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #14, BR-20, SUP-10

@@ -28,10 +28,17 @@ type Props = {
   /** Chiều cao thanh (px) và khoảng đáy mà action sheet phải chừa cho thanh nút dưới. */
   height: number;
   sheetBottom: number;
+  /** Mode dò hiện tại; nút "Auto" bật/tắt (bật = đang auto). */
+  mode: "manual" | "auto";
+  onToggleAuto: () => void;
+  /** Nút "Check": đồng bộ ô đã đánh với số đã gọi (chỉ mode Tự dò). */
+  onCheck: () => void;
+  /** Đã có số được gọi (ván không `waiting`). */
+  canCheck: boolean;
 };
 
 /** SCR-04 #14 + #15: thanh KINH + action sheet chọn vé (2 vé). Hiện cả khi `awaiting_confirm` (Q-055). */
-export function KinhBar({ status, myTickets, claims, pending, onClaim, height, sheetBottom }: Props) {
+export function KinhBar({ status, myTickets, claims, pending, onClaim, height, sheetBottom, mode, onToggleAuto, onCheck, canCheck }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [locked, setLocked] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,12 +72,32 @@ export function KinhBar({ status, myTickets, claims, pending, onClaim, height, s
   }
 
   return (
-    <div data-testid="kinh-bar" style={{ height }} className="flex items-center px-0 py-1">
+    <div data-testid="kinh-bar" style={{ height }} className="grid grid-cols-3 items-center gap-2 px-0 py-1">
+      <Button
+        type="button"
+        variant="outline"
+        data-testid="btn-check"
+        className="h-full text-sm font-semibold"
+        disabled={mode === "auto" || !canCheck}
+        onClick={onCheck}
+      >
+        {t("kinh.check")}
+      </Button>
+      <Button
+        type="button"
+        variant={mode === "auto" ? "default" : "outline"}
+        data-testid="btn-auto"
+        aria-pressed={mode === "auto"}
+        className="h-full text-sm font-semibold"
+        onClick={onToggleAuto}
+      >
+        {t("kinh.auto")}
+      </Button>
       <Button
         type="button"
         variant="destructive"
         data-testid="btn-kinh"
-        className="h-full w-full text-xl font-extrabold tracking-wide"
+        className="h-full text-base font-extrabold tracking-wide"
         disabled={allClaimed || locked || busy}
         onClick={press}
       >

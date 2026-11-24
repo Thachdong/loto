@@ -37,3 +37,16 @@ describe("useMarks", () => {
     expect(storage.data.size).toBe(0);
   });
 });
+
+describe("syncTicketMarks (nút Check)", () => {
+  it("marks every called number on the ticket and drops wrong marks", async () => {
+    const { createMarksStore } = await import("@/features/game/shared/domain/marks-store");
+    const { syncTicketMarks } = await import("./use-marks");
+    const mem = new Map<string, string>();
+    const storage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v) };
+    const store = createMarksStore(storage);
+    store.write("g1", "red_a", [5, 99]); // 99 không phải số đã gọi
+    syncTicketMarks("g1", [{ id: "red_a", grid: [5, 0, 7, 12, 0] }], [7, 5, 40], storage);
+    expect([...createMarksStore(storage).read("g1", "red_a")].sort((a, b) => a - b)).toEqual([5, 7]);
+  });
+});
