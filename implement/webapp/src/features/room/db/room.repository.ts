@@ -1,6 +1,6 @@
 import "server-only";
 
-import { Timestamp, type DocumentReference, type Transaction } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, type DocumentReference, type Transaction } from "firebase-admin/firestore";
 import { firestore, rtdb } from "@/core/db/firestore";
 import type { CloseReason, RoomStatus } from "@/features/room/shared/types";
 import type { GameDoc, GameResult, WinnerDoc } from "./game.doc";
@@ -232,6 +232,17 @@ export function setRoomMemberLeftInTx(tx: Transaction, roomId: string, memberCou
 }
 
 /** Phòng → `closing` (đến hạn khi ván đang diễn ra), `last_event = room_closing`. */
+/** kickPlayer (BR-06): `blocked_uids` thêm `uid`, `member_count`, `last_event = member_kicked`. */
+export function kickMemberInTx(tx: Transaction, roomId: string, uid: string, memberCount: number, event: RoomEvent): void {
+  const at = Timestamp.fromDate(event.now);
+  tx.update(roomRef(roomId), {
+    blocked_uids: FieldValue.arrayUnion(uid),
+    member_count: memberCount,
+    last_event: eventDoc(event, at),
+    updated_at: at,
+  });
+}
+
 export function markRoomClosingInTx(tx: Transaction, roomId: string, now: Date): void {
   const at = Timestamp.fromDate(now);
   const patch: Partial<RoomDoc> = { status: "closing", last_event: roomEvent("room_closing", at), updated_at: at };

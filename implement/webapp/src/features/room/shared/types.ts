@@ -100,3 +100,6 @@ export type RoomExpireResult = { roomStatus: RoomStatus; gameStatus: GameStatus 
 /** Lý do vừa rời phòng — banner 4 SCR-02 (Q-050, Q-057). */
 export type LeaveReason = "kicked" | "expired" | "host_left" | "left" | "unknown";
 export type LeaveReasonRecord = { reason: LeaveReason; roomName: string | null };
+
+/** api-contract › KickResult: `ticketsFreedNow` = ván `waiting` (vé trống ngay), ngược lại vé trống ở ván sau (BR-22). */
+export type KickResult = { uid: string; ticketsFreedNow: boolean; gameStatus: GameStatus };
