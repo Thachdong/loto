@@ -146,7 +146,7 @@ function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, 
         variant="outline"
         size="sm"
         data-testid={`btn-release-${ticket.id}`}
-        className="h-9 w-full text-xs"
+        className="h-9 self-center px-4 text-xs"
         disabled={releaseDisabled}
         onClick={onRelease}
       >
