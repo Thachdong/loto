@@ -355,3 +355,9 @@
 - **Trả lời:** Khi ván kết thúc (có người thắng, hết 90 số hoặc bị hủy), vé của mọi player đang **offline** tự trả về bộ vé; player vẫn là thành viên phòng, quay lại thì lấy vé mới. [ASSUMED] Offline = không có kết nối tại thời điểm ván kết thúc (theo trạng thái online/offline của phòng). Bổ sung cho BR-11, BR-13.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** BR-11, BR-29, BIZ-08, FLOW-07, FLOW-08, ENT-07, api-contract (confirmGameEnd, drawNumber), SCR-05, SCR-07
+
+## Q-059 · implement · 2026-11-24
+- **Hỏi:** Host một mình (có vé) vẫn bắt đầu được ván — có cần số người chơi tối thiểu?
+- **Trả lời:** Cần **≥ 2 người giữ vé** (đếm người khác nhau có vé trong ván, host có vé cũng tính) mới bắt đầu được. Không thêm mã lỗi mới: dùng lại `NO_TICKETS_HELD` (422) với câu "Cần ít nhất 2 người lấy vé".
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-14, ENT (Ván › Các vé tham gia), FLOW-05→06, FLOW-06 E1, api-contract (startGame, NO_TICKETS_HELD), SCR-04 #9 / A4

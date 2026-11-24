@@ -58,7 +58,7 @@ flowchart LR
   F02 -->|host bấm Mời| F03
   F03 -->|vào phòng| F05
   F02 -->|host lấy vé| F05
-  F05 -->|có ≥ 1 vé được giữ| F06
+  F05 -->|có ≥ 2 người giữ vé| F06
   F04 -->|bộ vé mới| F05
   F06 -->|bắt đầu / tiếp tục| F07
   F07 -->|số mới| F08
@@ -104,7 +104,7 @@ flowchart LR
 | FLOW-02 | FLOW-03 | kích hoạt | Host bấm Mời |
 | FLOW-02 / FLOW-03 | FLOW-05 | kích hoạt | Vào phòng, ván Chờ bắt đầu, còn vé |
 | FLOW-04 | FLOW-05 | kích hoạt | Bộ vé mới, mọi vé trống |
-| FLOW-05 | FLOW-06 | tiên quyết | Có ≥ 1 vé được giữ (BR-14) |
+| FLOW-05 | FLOW-06 | tiên quyết | Có ≥ 2 người giữ vé (BR-14) |
 | FLOW-06 | FLOW-07 | kích hoạt | Host bấm Bắt đầu/Tiếp tục |
 | FLOW-07 | FLOW-08 | kích hoạt | Có số mới, player dò vé |
 | FLOW-08 | FLOW-07 | kích hoạt | Host bác bỏ (mọi vé hụt) → quay tiếp |
@@ -402,7 +402,7 @@ flowchart TD
     N1["Đổi nhịp quay 3–15 giây"]
   end
   subgraph H["Hệ thống"]
-    S2{"Ván Chờ bắt đầu,<br/>có ≥ 1 vé được giữ,<br/>phòng chưa đến hạn?<br/>BR-14"}
+    S2{"Ván Chờ bắt đầu,<br/>có ≥ 2 người giữ vé,<br/>phòng chưa đến hạn?<br/>BR-14"}
     S3["Chốt vé tham gia<br/>khóa lấy/bỏ vé<br/>ván → Đang quay"]
     S4["Báo cả phòng ván bắt đầu<br/>SUP-01"]
     S5(["Quay số (FLOW-07)"])
@@ -431,7 +431,7 @@ flowchart TD
   - A4. Host mất kết nối: ván vẫn chạy bình thường (Q-048).
   - A5. Bắt đầu ván thứ 2 trở đi: giống bước 1–5, sau khi ván trước Kết thúc (FLOW-08).
 - **Exceptions:**
-  - E1. Không có vé nào được giữ: nút Bắt đầu bị khóa, gợi ý "Cần ít nhất 1 người lấy vé".
+  - E1. Chưa đủ 2 người giữ vé: nút Bắt đầu bị khóa, gợi ý "Cần ít nhất 2 người lấy vé" (Q-059).
   - E2. Phòng Chờ đóng / sắp đến hạn đóng: không cho bắt đầu ván mới (BR-14).
   - E3. Người không phải host: không thấy nút điều khiển.
 - **Supporting kích hoạt:** SUP-01 tại bước 4, A1, A3, A4; SUP-04 tại A4; SUP-03 tại bước 5 (bắt đầu đếm nhịp); SUP-09 (đếm ván) tại bước 3.

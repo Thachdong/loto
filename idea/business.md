@@ -125,7 +125,7 @@ Quan hệ giữa actors:
   | Thuộc tính | Ý nghĩa | Bắt buộc? | Ràng buộc nghiệp vụ |
   |---|---|---|---|
   | Số thứ tự ván trong phòng | | Có | |
-  | Các vé tham gia | Vé đang có người giữ lúc bắt đầu | Có | ≥ 1 vé (Q-024) |
+  | Các vé tham gia | Vé đang có người giữ lúc bắt đầu | Có | ≥ 1 vé, của ≥ 2 người giữ vé (Q-024, Q-059) |
   | Dãy số đã rao | Theo thứ tự | — | Không trùng, trong 1–90; chỉ dùng trong lúc ván diễn ra, không lưu lại sau khi ván kết thúc (cập nhật từ Phase 2 – Q-031) |
   | Người thắng | Danh sách vé + người kinh đúng | Không | Có thể nhiều (Q-007, Q-013) |
   | Lý do tạm dừng | Host bấm / có lượt Kinh chờ host duyệt | Không | (cập nhật – Q-055) |
@@ -282,7 +282,7 @@ Quan hệ giữa actors:
 - **Mục tiêu:** Host điều khiển nhịp chơi.
 - **Actor:** ACT-02 (chính), ACT-05 (tạm dừng tự động)
 - **Trigger:** Host bấm Bắt đầu / Tạm dừng / Tiếp tục / đổi nhịp quay.
-- **Điều kiện trước:** Bắt đầu: ván Chờ bắt đầu, có ≥ 1 vé được giữ (BR-14), phòng chưa quá hạn. Tạm dừng/Tiếp tục: ván đang chạy.
+- **Điều kiện trước:** Bắt đầu: ván Chờ bắt đầu, có ≥ 2 người giữ vé (BR-14), phòng chưa quá hạn. Tạm dừng/Tiếp tục: ván đang chạy.
 - **Input (business):**
   | Thông tin | Nguồn | Bắt buộc? |
   |---|---|---|
@@ -447,7 +447,7 @@ Quan hệ giữa actors:
 | BR-11 | Vé thuộc người giữ qua các ván, tới khi người đó bỏ, rời phòng, bị kick, bị thu hồi hoặc đang offline lúc ván kết thúc (Q-012, BR-29). | BIZ-05, BIZ-08 |
 | BR-12 | Chỉ tạo lại bộ vé khi ván ở Chờ bắt đầu và không còn ai giữ vé. | BIZ-04 |
 | BR-13 | Host được thu hồi vé của thành viên đang offline khi ván ở Chờ bắt đầu (Q-027). | BIZ-04 |
-| BR-14 | Chỉ bắt đầu ván khi có ≥ 1 vé được giữ và phòng chưa đến hạn đóng (Q-024). | BIZ-06 |
+| BR-14 | Chỉ bắt đầu ván khi có ≥ 2 người giữ vé (người khác nhau, host có vé cũng tính) và phòng chưa đến hạn đóng (Q-024, Q-059). | BIZ-06 |
 | BR-15 | Khi ván Đang quay, mỗi N giây rao 1 số ngẫu nhiên chưa rao trong 1–90. N do host chỉnh trong 3–15, mặc định 5, áp dụng từ số kế tiếp (Q-004, Q-024). | BIZ-06, BIZ-07 |
 | BR-16 | Ván dừng quay khi: host bấm tạm dừng; có lượt Kinh đang chờ host duyệt. Host mất kết nối không làm tạm dừng ván (Q-010, Q-035, Q-048, Q-055). | BIZ-06, BIZ-08 |
 | BR-17 | Kinh đúng khi vé có ít nhất 1 hàng đủ 5 số đều đã rao, kể cả rao từ trước. Kinh sai = "kinh hụt": báo cả phòng, không phạt (Q-002, Q-006, Q-011). | BIZ-08 |
