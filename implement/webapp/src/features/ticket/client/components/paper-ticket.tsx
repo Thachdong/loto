@@ -1,6 +1,6 @@
 import { Fragment, type CSSProperties } from "react";
 import type { TicketId } from "@/features/room/shared/types";
-import { ticketLayout } from "@/features/game/shared/domain/ticket-layout";
+import { ticketLayout, ticketWidth } from "@/features/game/shared/domain/ticket-layout";
 import { ticketColorOf } from "@/features/ticket/shared/constants";
 import { TICKET_PALETTE } from "@/features/ticket/client/lib/ticket-colors";
 import { ticketLabel } from "@/features/ticket/client/lib/ticket-label";
@@ -11,7 +11,7 @@ type Props = {
   grid: readonly number[];
   className?: string;
   /**
-   * Bố cục SCR-04 §5: `single` (ô 38×32, chữ 17px, tiêu đề 24px) / `double` (ô 38×28, chữ 15px, tiêu đề 16px).
+   * Bố cục SCR-04 §5: `single` (ô dọc 32×40, chữ 20px, tiêu đề 24px) / `double` (ô 24×27, chữ 14px, tiêu đề 16px).
    * Bỏ trống = bố cục co theo bề rộng của SCR-05 (xem trước).
    */
   size?: "single" | "double";
@@ -64,8 +64,9 @@ export function PaperTicket({
     <div
       data-testid={testId ?? `paper-ticket-${id}`}
       data-size={size}
-      className={`mx-auto w-full overflow-hidden rounded-[3px] ${layout ? "max-w-[346px]" : "max-w-[368px]"} ${className ?? ""}`}
+      className={`mx-auto w-full overflow-hidden rounded-[3px] ${layout ? "" : "max-w-[300px]"} ${className ?? ""}`}
       style={{
+        ...(layout ? { maxWidth: ticketWidth(size === "double" ? 2 : 1) } : {}),
         border: `${layout ? 2 : 3}px solid ${palette.base}`,
         backgroundColor: PAPER,
         // Vân giấy nhẹ + viền kép bên trong như vé in.
@@ -106,7 +107,7 @@ export function PaperTicket({
                 const cellStyle: CSSProperties | undefined = layout
                   ? { height: layout.cell.h, fontSize: layout.font }
                   : undefined;
-                const aspect = layout ? "" : "aspect-[38/32] ";
+                const aspect = layout ? "" : "aspect-[32/40] ";
                 const lines0 = layout
                   ? "outline-1 -outline-offset-1 outline-[#3b2f24] "
                   : "";
@@ -174,12 +175,9 @@ const GRID_LINE = "#3b2f24";
 /** Chữ in giữa các cụm 3 hàng (như vé thật in tên nhà in). */
 const SEPARATOR_TEXT = "buddio.com";
 
-/**
- * Dải ngăn giữa 2 cụm 3 hàng: hoa văn ✦❖ + chữ in (cao ≥ 9px), hoặc chỉ hàng hoa văn chấm khi dải quá thấp
- * (bố cục 2 vé, 5px — giữ chiều cao SCR-04 §5).
- */
+/** Dải ngăn giữa 2 cụm 3 hàng: "-------buddio.com-------" (gạch đứt màu vé, chữ in nghiêng). */
 function BlockSeparator({ height, color }: { height: number; color: string }) {
-  const withText = height >= 9;
+  const dashes = { backgroundImage: `repeating-linear-gradient(90deg, ${color} 0 4px, transparent 4px 7px)`, height: 1.5 };
   return (
     <div
       data-testid="paper-separator"
@@ -187,28 +185,11 @@ function BlockSeparator({ height, color }: { height: number; color: string }) {
       className="flex items-center justify-center gap-1 overflow-hidden px-1"
       style={{ height, color }}
     >
-      <span
-        className="h-px flex-1"
-        style={{
-          backgroundImage: `repeating-linear-gradient(90deg, ${color} 0 3px, transparent 3px 6px)`,
-          height: withText ? 1 : 2,
-        }}
-      />
-      {withText && (
-        <span
-          className="shrink-0 leading-none font-semibold italic"
-          style={{ fontSize: Math.min(10, height - 2) }}
-        >
-          ✦ ❖ {SEPARATOR_TEXT} ❖ ✦
-        </span>
-      )}
-      <span
-        className="h-px flex-1"
-        style={{
-          backgroundImage: `repeating-linear-gradient(90deg, ${color} 0 3px, transparent 3px 6px)`,
-          height: withText ? 1 : 2,
-        }}
-      />
+      <span className="flex-1" style={dashes} />
+      <span className="shrink-0 leading-none font-semibold italic" style={{ fontSize: Math.min(10, height - 1) }}>
+        {SEPARATOR_TEXT}
+      </span>
+      <span className="flex-1" style={dashes} />
     </div>
   );
 }

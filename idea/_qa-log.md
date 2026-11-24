@@ -385,3 +385,9 @@
 - **Trả lời:** Vé kiểu giấy in: nền giấy ngà, khung + viền kép màu vé, tiêu đề có hoa văn ❖ ✦, lưới caro kẻ đậm, số in đậm kiểu chữ hẹp, ô trống đặc màu vé; 3 cụm × 3 hàng, giữa các cụm là dải hoa văn chấm + chữ "✦ ❖ buddio.com ❖ ✦" (bố cục 2 vé dải chỉ 5px → chỉ hoa văn chấm, không chữ). Chiều cao vé giữ nguyên SCR-04 §5.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #11, SCR-05 #4 (PaperTicket)
+
+## Q-064 · implement · 2026-11-24
+- **Hỏi:** Ô vé cần cao hơn rộng, ô hẹp lại; dải giữa các cụm ghi "-------buddio.com-------".
+- **Trả lời:** 1 vé: ô 32×40, chữ 20px, dải 12px → vé 292×412. 2 vé: ô 24×27, chữ 14px, dải 9px → vé 220×281 (vẫn vừa 375×812 không cuộn). Dải ngăn: gạch đứt màu vé hai bên + chữ "buddio.com" ở cả 2 bố cục.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 §5, SCR-05 #4, Q-063

@@ -76,10 +76,10 @@ Theo wireframe mục 5, từ trên xuống (khung 375×812, máy tính cột gi�
 | Quay lại sau mất kết nối | 22 biến mất; listener tải lại `called_numbers`, ván tiếp tục bình thường; số rao trong lúc mất kết nối **không** phát lại tiếng — player tự dò theo panel 5/7 và bảng 90 số (20). Nếu ván đã kết thúc trong lúc offline → vé đã được trả (BR-29), hiện 13 |
 
 ## 5. Ghi chú UX
-- **Giữ 1 vé:** ô ≈ 38×32px (ô dọc như vé giấy), chữ 17px đậm; tiêu đề 24px; 3 khối 3 hàng cách nhau dải hoa văn 10px; vé cao ≈ 336px; panel số rao đầy đủ.
+- **Giữ 1 vé:** ô dọc 32×40px (cao hơn rộng, như vé giấy – Q-064), chữ 20px đậm; tiêu đề 24px; 3 khối 3 hàng cách nhau dải "-------buddio.com-------" 12px; vé 292×412px; panel số rao đầy đủ.
 - **Giữ 2 vé — bố cục chuẩn (Q-049):** 2 vé xếp dọc, **thấy cùng lúc không cần cuộn** để dò song song:
   - Header gọn 52px; panel số rao rút thành **1 dòng 52px** (số vừa rao 44px + dãy số đã rao cuộn ngang + đếm ngược + "Bảng 90 ›").
-  - Mỗi vé: ô 38×28px, chữ 15px, tiêu đề 16px, dải ngăn khối 5px → cao ≈ 282px; 2 vé + khoảng cách 6px ≈ 570px, vừa giữa thanh số (dưới 144px) và thanh KINH (trên 732px) ở màn 375×812.
+  - Mỗi vé: ô dọc 24×27px, chữ 14px, tiêu đề 16px, dải ngăn khối 9px → 220×281px (Q-064); 2 vé + khoảng cách 6px ≈ 568px, vừa giữa thanh số (dưới 144px) và thanh KINH (trên 732px) ở màn 375×812.
   - KINH và thanh nút dưới cố định (NFR-12). Ô cao 28px < 44px nhưng rộng 38px; chấp nhận để thấy đủ 2 vé. Màu đậm của ô trống: Đỏ #e2574c, Cam #f08a3c, Vàng #e6b800, Lục #4caf50, Ngọc #1aa39a, Lam #3f7fd1, Tím #8e5cc7, Hồng #e0609e. Hai vé xếp dọc, cuộn trong vùng 4; KINH và thanh nút dưới không cuộn.
 - Màu vé (8 màu: Đỏ, Cam, Vàng, Lục, Ngọc, Lam, Tím, Hồng – `red, orange, yellow, green, teal, blue, purple, pink`) là tông nhạt để chữ số đen đủ tương phản.
 - Mode dò, bật/tắt tiếng, ô đánh dấu chỉ lưu localStorage (Q-047); đổi máy là mất — chấp nhận.

@@ -246,7 +246,7 @@ function RoomSkeleton({ offline }: { offline: boolean }) {
         <Skeleton className="h-6 w-48" />
       </div>
       <Skeleton className="h-24 w-full shrink-0 rounded-lg" />
-      <Skeleton className="mx-auto h-[336px] w-full max-w-[346px] shrink-0 rounded-md" />
+      <Skeleton className="mx-auto h-[412px] w-full max-w-[292px] shrink-0 rounded-md" />
       <div className="fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-[480px] bg-background px-4">
         <BottomBar height={LAYOUT_HEIGHTS.single.bottomBar} onSelect={() => undefined} />
       </div>

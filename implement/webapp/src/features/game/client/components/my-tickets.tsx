@@ -30,7 +30,7 @@ export function MyTickets({ roomId, gameId, game, tickets, ready, calledNumbers,
   const last = called.length > 0 ? called[called.length - 1] : null;
 
   if (!ready) {
-    return <Skeleton data-testid="tickets-skeleton" aria-busy="true" className="mx-auto h-[336px] w-full max-w-[346px] rounded-md" />;
+    return <Skeleton data-testid="tickets-skeleton" aria-busy="true" className="mx-auto h-[412px] w-full max-w-[292px] rounded-md" />;
   }
 
   if (tickets.length === 0) {

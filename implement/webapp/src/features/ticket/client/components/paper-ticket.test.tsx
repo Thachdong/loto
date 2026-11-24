@@ -40,15 +40,17 @@ describe("PaperTicket", () => {
     expect(root.querySelector("[data-cell]:not([data-cell='empty'])")).toHaveTextContent("1");
   });
 
-  it("single/double sizes use the SCR-04 cell height and font (38x32/17px, 38x28/15px)", () => {
+  it("single/double sizes use the SCR-04 cell height and font (tall 32x40/20px, 24x27/14px) and width", () => {
     const { rerender } = render(<PaperTicket id="red_a" grid={grid} size="single" />);
     let cell = screen.getByTestId("paper-ticket-red_a").querySelector("[data-cell='1']") as HTMLElement;
-    expect(cell.style.height).toBe("32px");
-    expect(cell.style.fontSize).toBe("17px");
+    expect(cell.style.height).toBe("40px");
+    expect(cell.style.fontSize).toBe("20px");
+    expect(screen.getByTestId("paper-ticket-red_a").style.maxWidth).toBe("292px");
     rerender(<PaperTicket id="red_a" grid={grid} size="double" />);
     cell = screen.getByTestId("paper-ticket-red_a").querySelector("[data-cell='1']") as HTMLElement;
-    expect(cell.style.height).toBe("28px");
-    expect(cell.style.fontSize).toBe("15px");
+    expect(cell.style.height).toBe("27px");
+    expect(cell.style.fontSize).toBe("14px");
+    expect(screen.getByTestId("paper-ticket-red_a").style.maxWidth).toBe("220px");
   });
 
   it("marks, auto hit and waiting rows are exposed as data attributes", () => {
