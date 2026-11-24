@@ -4,7 +4,7 @@ import "client-only";
 
 import { useEffect, useState } from "react";
 import { onValue, ref } from "firebase/database";
-import { getClientDatabase } from "@/core/client/firebase";
+import { getClientAuth, getClientDatabase } from "@/core/client/firebase";
 import type { PresenceEntry } from "@/features/members/shared/domain/member-rows";
 
 export type RoomPresenceState = { status: "loading" | "ready" | "error"; entries: PresenceEntry[]; retry: () => void };
@@ -34,11 +34,24 @@ export function useRoomPresence(roomId: string, enabled: boolean): RoomPresenceS
 
   useEffect(() => {
     if (!key) return;
-    return onValue(
-      ref(getClientDatabase(), `presence/${roomId}`),
-      (snap) => setState({ key, status: "ready", entries: mapPresence(snap.val()) }),
-      () => setState((prev) => ({ key, status: "error", entries: prev?.entries ?? [] })),
-    );
+    let cancelled = false;
+    let unsubscribe: (() => void) | null = null;
+    // Chờ Auth khôi phục phiên — đọc trước khi có `auth` sẽ bị rules từ chối.
+    getClientAuth()
+      .authStateReady()
+      .catch(() => undefined)
+      .then(() => {
+        if (cancelled) return;
+        unsubscribe = onValue(
+          ref(getClientDatabase(), `presence/${roomId}`),
+          (snap) => !cancelled && setState({ key, status: "ready", entries: mapPresence(snap.val()) }),
+          () => !cancelled && setState((prev) => ({ key, status: "error", entries: prev?.entries ?? [] })),
+        );
+      });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [key, roomId]);
 
   const current = key && state?.key === key ? state : null;
