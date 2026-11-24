@@ -211,7 +211,11 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
             setSoundOn(!soundOn);
           }}
           mode={mode}
-          onToggleAuto={() => setPlayMode(mode === "auto" ? "manual" : "auto")}
+          onToggleAuto={() => {
+            // Tắt Tự dò: giữ nguyên các ô Auto đã tô (= số đã gọi có trên vé) thành dấu tay (Q-068).
+            if (mode === "auto" && game.status !== "waiting") syncTicketMarks(game.id, myTickets, room.calledNumbers);
+            setPlayMode(mode === "auto" ? "manual" : "auto");
+          }}
           canCheck={game.status !== "waiting" && room.calledNumbers.length > 0}
           onCheck={() => {
             syncTicketMarks(game.id, myTickets, room.calledNumbers);

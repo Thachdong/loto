@@ -239,6 +239,23 @@ describe("RoomScreen", () => {
     expect(root.querySelector("button")).toBeNull();
   });
 
+  it("turning Tự dò off keeps the auto-marked cells as manual marks (Q-068)", async () => {
+    localStorage.setItem("loto:mode", "auto");
+    setState({
+      room: makeRoom({ calledNumbers: [1, 2, 99] }),
+      game: makeGame("running"),
+      me: { uid: ME, displayName: "me", photoUrl: null, ticketIds: ["red_a"] },
+      myTickets: [makeTicket("red_a", 0)],
+    });
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    await userEvent.click(screen.getByTestId("btn-auto"));
+    expect(localStorage.getItem("loto:mode")).toBe("manual");
+    const root = screen.getByTestId("ticket-red_a");
+    expect(root.querySelector("[data-cell='1']")).toHaveAttribute("data-marked", "true");
+    expect(root.querySelector("[data-cell='2']")).toHaveAttribute("data-marked", "true");
+    expect(root.querySelector("[data-cell='3']")).toHaveAttribute("data-marked", "false");
+  });
+
   it("waiting with a ticket: tapping the ticket opens the ticket sheet and does not mark", async () => {
     setState({
       me: { uid: ME, displayName: "me", photoUrl: null, ticketIds: ["red_a"] },

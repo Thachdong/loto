@@ -409,3 +409,9 @@
 - **Trả lời:** Thêm nút "Tắt tiếng"/"Bật tiếng" ngay cạnh "Check" ở thanh KINH (4 nút: Check · Tắt tiếng · Tự dò · KINH). Lưu `loto:sound`; bật lại thì mở khóa audio luôn.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #14, SUP-02
+
+## Q-068 · implement · 2026-11-24
+- **Hỏi:** Đang Tự dò (Auto) rồi tắt → các ô đã tô bị mất.
+- **Trả lời:** Khi tắt Tự dò, chép các ô Auto đang tô (mọi số đã gọi có trên vé) vào dấu tay (localStorage `{gameId}:{ticketId}`), người chơi dò tiếp từ đó.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #14, A2
