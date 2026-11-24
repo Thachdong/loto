@@ -1,10 +1,10 @@
 ---
 task: T-009
 title: Người trong phòng — online/vé, kick, thu hồi vé (SCR-07)
-status: approved
+status: done
 approved_at: 2026-11-24       # dev yêu cầu làm trực tiếp ("implement tính năng quản lý player tab Người")
 branch: feature/dongt/T-009-room-members
-plan_commit:
+plan_commit: 5185639
 ---
 
 # Plan T-009 · Người trong phòng (SCR-07)
@@ -37,4 +37,7 @@ Inline tuần tự: server kick (+ test emulator) → domain + hook + sheet + mo
 - Thứ tự lỗi kick: thành viên → host → tự kick → có doc player + `current_room_id = roomId`.
 
 ## 8. Kết quả
-(điền khi xong)
+- `kickPlayerAction` mới (room feature); feature `members` (domain, hook presence, sheet + dialog kick/thu hồi) gắn vào tab "Người".
+- Tái dùng không đổi: `reclaimPlayerTickets`, banner kick, toast `member_kicked`/`tickets_reclaimed`, `BLOCKED_FROM_ROOM`.
+- Seed `room-members` / `t009`. Unit + emulator 717/717 pass, build OK. Bỏ chrome-tester theo yêu cầu dev; QC test tay theo `backlog/testcases/T-009-room-members.md`.
+- Lệch nhỏ: toast kick dùng câu sẵn có "{tên} đã bị mời ra khỏi phòng" (T-006) thay "{tên} bị mời ra khỏi phòng".

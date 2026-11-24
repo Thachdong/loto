@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-07 | M2 | 5 | T-008 | TODO |
+| EPIC-07 | M2 | 5 | T-008 | REVIEW |
 
 ## 1. Mục tiêu demo
 Sau task này: **thành viên mở SCR-04 → bấm "Người" → thấy danh sách người trong phòng (host có nhãn "Host", mình có "(Bạn)", chấm online/offline, chip màu vé đang giữ). Host bấm "Kick" một player → xác nhận → người đó bị đưa về trang chủ với banner "Bạn đã bị mời ra khỏi phòng …", mở lại link mời bị chặn "Bạn không thể vào phòng này"; host bấm "Thu hồi vé" của người offline khi ván chờ → vé đó thành "Trống".**
@@ -32,30 +32,30 @@ Sau task này: **thành viên mở SCR-04 → bấm "Người" → thấy danh s
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Sheet SCR-07 mở từ nút "Người": tiêu đề "Người trong phòng · {rooms.member_count}/16" + ✕.
-- [ ] Hàng 72px: ảnh + chấm xanh/xám theo `presence.online`, tên (`presence.display_name`), nhãn "Host" (`uid = rooms.host_uid`) / "(Bạn)"; trạng thái "Online" hoặc "Offline · {n} phút" (từ `presence.at`); chip màu vé từ `players/{uid}.ticket_ids` hoặc "Chưa lấy vé".
-- [ ] Sắp xếp: host → mình → online → offline, cùng nhóm theo tên (Q-050). Host offline vẫn hiện "Host · Offline".
-- [ ] Nguồn danh sách = node trong RTDB `presence/{roomId}`; hàng có player doc nhưng không có node presence (vd người bị kick lúc ván chạy) không hiện `[ASSUMED]`.
-- [ ] Nút "Kick" (chỉ host thấy): chỉ ở hàng có doc player có vé ở ván hiện tại và không phải host (Q-048, FLOW-10 E1); hiện cả khi ván đang chạy.
-- [ ] Nút "Thu hồi vé" (chỉ host thấy): hàng offline + có vé + ván `waiting`.
-- [ ] Dialog kick "Kick {tên}?" + hệ quả (bị đưa ra, không vào lại được; ván đang chạy → vé khóa tới hết ván). Hủy / Kick. Dialog thu hồi "Thu hồi vé của {tên}?" + "{tên} đang offline. Vé {màu} sẽ trả về bộ vé." Hủy / Thu hồi.
-- [ ] Lỗi → toast: `PLAYER_NOT_FOUND` "Chỉ kick được người đã lấy vé"; `TARGET_ONLINE` "{tên} đang online, không thu hồi được"; `GAME_NOT_WAITING` "Chỉ thu hồi khi ván chờ bắt đầu"; `NOT_ROOM_HOST` → ẩn nút.
-- [ ] Trạng thái: loading 4 hàng skeleton; chỉ có mình + là host → gợi ý "Bấm Mời để gọi bạn vào phòng" (Q-050); lỗi đọc "Không tải được danh sách" + "Thử lại".
-- [ ] Client người bị kick: listener `users/{uid}` thấy `current_room_id = null` khi mình không bấm Rời → về SCR-02; banner theo logic SCR-02 (Q-050): `last_event` cuối đã nhận là `member_kicked` với `target_uid` = mình → "Bạn đã bị mời ra khỏi phòng "{tên}"."; không có → "Bạn không còn ở trong phòng." (dùng lại xử lý từ T-006, bổ sung nhánh kick nếu chưa có).
-- [ ] Toast cả phòng (SCR-04 component 17) cho `member_kicked`, `tickets_reclaimed` — kiểm có trong bảng toast của T-006, thiếu thì bổ sung.
+- [x] Sheet SCR-07 mở từ nút "Người": tiêu đề "Người trong phòng · {rooms.member_count}/16" + ✕.
+- [x] Hàng 72px: ảnh + chấm xanh/xám theo `presence.online`, tên (`presence.display_name`), nhãn "Host" (`uid = rooms.host_uid`) / "(Bạn)"; trạng thái "Online" hoặc "Offline · {n} phút" (từ `presence.at`); chip màu vé từ `players/{uid}.ticket_ids` hoặc "Chưa lấy vé".
+- [x] Sắp xếp: host → mình → online → offline, cùng nhóm theo tên (Q-050). Host offline vẫn hiện "Host · Offline".
+- [x] Nguồn danh sách = node trong RTDB `presence/{roomId}`; hàng có player doc nhưng không có node presence (vd người bị kick lúc ván chạy) không hiện `[ASSUMED]`.
+- [x] Nút "Kick" (chỉ host thấy): chỉ ở hàng có doc player có vé ở ván hiện tại và không phải host (Q-048, FLOW-10 E1); hiện cả khi ván đang chạy.
+- [x] Nút "Thu hồi vé" (chỉ host thấy): hàng offline + có vé + ván `waiting`.
+- [x] Dialog kick "Kick {tên}?" + hệ quả (bị đưa ra, không vào lại được; ván đang chạy → vé khóa tới hết ván). Hủy / Kick. Dialog thu hồi "Thu hồi vé của {tên}?" + "{tên} đang offline. Vé {màu} sẽ trả về bộ vé." Hủy / Thu hồi.
+- [x] Lỗi → toast: `PLAYER_NOT_FOUND` "Chỉ kick được người đã lấy vé"; `TARGET_ONLINE` "{tên} đang online, không thu hồi được"; `GAME_NOT_WAITING` "Chỉ thu hồi khi ván chờ bắt đầu"; `NOT_ROOM_HOST` → ẩn nút.
+- [x] Trạng thái: loading 4 hàng skeleton; chỉ có mình + là host → gợi ý "Bấm Mời để gọi bạn vào phòng" (Q-050); lỗi đọc "Không tải được danh sách" + "Thử lại".
+- [x] Client người bị kick: listener `users/{uid}` thấy `current_room_id = null` khi mình không bấm Rời → về SCR-02; banner theo logic SCR-02 (Q-050): `last_event` cuối đã nhận là `member_kicked` với `target_uid` = mình → "Bạn đã bị mời ra khỏi phòng "{tên}"."; không có → "Bạn không còn ở trong phòng." (dùng lại xử lý từ T-006, bổ sung nhánh kick nếu chưa có).
+- [x] Toast cả phòng (SCR-04 component 17) cho `member_kicked`, `tickets_reclaimed` — kiểm có trong bảng toast của T-006, thiếu thì bổ sung.
 
 ### API / Backend
-- [ ] `kickPlayerAction({roomId, uid})` theo `kickPlayer`: phiên → Zod → transaction: lazy expiry; người gọi không phải thành viên → `NOT_ROOM_MEMBER`; không phải host → `NOT_ROOM_HOST`; `uid` = host → `CANNOT_TARGET_SELF`; đích không có doc player ở ván hiện tại hoặc `users/{uid}.current_room_id ≠ roomId` → `PLAYER_NOT_FOUND`.
-- [ ] Ghi: `rooms.blocked_uids` arrayUnion `uid`, `member_count − 1`, `last_event = {type: member_kicked, actor_uid, target_uid, text, at}`; `users/{uid}.current_room_id = null`; ván `waiting` → xóa doc player; ván `running`/`paused`/`claim_window`/`awaiting_confirm` → giữ doc player (BR-22).
-- [ ] Sau commit: xóa RTDB `presence/{roomId}/{uid}` và `presence_access/{roomId}/{uid}` bằng Admin SDK (lỗi RTDB → log, không rollback `[ASSUMED]`).
-- [ ] Trả `KickResult {uid, ticketsFreedNow, gameStatus}`.
-- [ ] Kiểm lại nhánh BR-22 sẵn có: người bị kick khi ván chạy bấm KINH → `createClaim` trả `NOT_TICKET_HOLDER` (T-006); vé đó không được chép sang ván mới (T-007 chỉ chép player còn trong phòng).
-- [ ] `reclaimPlayerTicketsAction`: không đổi logic (T-005); thêm test cho đường gọi từ SCR-07 nếu T-005 chưa phủ `TARGET_ONLINE`, `CANNOT_TARGET_SELF`.
+- [x] `kickPlayerAction({roomId, uid})` theo `kickPlayer`: phiên → Zod → transaction: lazy expiry; người gọi không phải thành viên → `NOT_ROOM_MEMBER`; không phải host → `NOT_ROOM_HOST`; `uid` = host → `CANNOT_TARGET_SELF`; đích không có doc player ở ván hiện tại hoặc `users/{uid}.current_room_id ≠ roomId` → `PLAYER_NOT_FOUND`.
+- [x] Ghi: `rooms.blocked_uids` arrayUnion `uid`, `member_count − 1`, `last_event = {type: member_kicked, actor_uid, target_uid, text, at}`; `users/{uid}.current_room_id = null`; ván `waiting` → xóa doc player; ván `running`/`paused`/`claim_window`/`awaiting_confirm` → giữ doc player (BR-22).
+- [x] Sau commit: xóa RTDB `presence/{roomId}/{uid}` và `presence_access/{roomId}/{uid}` bằng Admin SDK (lỗi RTDB → log, không rollback `[ASSUMED]`).
+- [x] Trả `KickResult {uid, ticketsFreedNow, gameStatus}`.
+- [x] Kiểm lại nhánh BR-22 sẵn có: người bị kick khi ván chạy bấm KINH → `createClaim` trả `NOT_TICKET_HOLDER` (T-006); vé đó không được chép sang ván mới (T-007 chỉ chép player còn trong phòng).
+- [x] `reclaimPlayerTicketsAction`: không đổi logic (T-005); thêm test cho đường gọi từ SCR-07 nếu T-005 chưa phủ `TARGET_ONLINE`, `CANNOT_TARGET_SELF`.
 
 ### Data
-- [ ] `firestore.rules`: không đổi (client vẫn cấm ghi `rooms`, `players`); thêm test người bị kick mất quyền đọc phòng.
-- [ ] `database.rules.json`: người bị kick (không còn `presence_access`) không ghi được `presence/{roomId}/{uid}`; thành viên đọc được `presence/{roomId}` `[ASSUMED]` (đọc cho mọi người có `presence_access/{roomId}/{auth.uid}`).
-- [ ] Seed `room-members`: host An + Bình (online, giữ Đỏ A) + Chi (offline, giữ Xanh B) + Dũng (online, chưa lấy vé), ván `waiting`.
+- [x] `firestore.rules`: không đổi (client vẫn cấm ghi `rooms`, `players`); thêm test người bị kick mất quyền đọc phòng.
+- [x] `database.rules.json`: người bị kick (không còn `presence_access`) không ghi được `presence/{roomId}/{uid}`; thành viên đọc được `presence/{roomId}` `[ASSUMED]` (đọc cho mọi người có `presence_access/{roomId}/{auth.uid}`).
+- [x] Seed `room-members`: host An + Bình (online, giữ Đỏ A) + Chi (offline, giữ Xanh B) + Dũng (online, chưa lấy vé), ván `waiting`.
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -113,9 +113,9 @@ AC-8, AC-13 phủ bằng test integration/rules.
 - Seed `room-members` (mục Data); seed `room-basic` (T-008).
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Test deny: người không phải host kick/thu hồi; người bị kick đọc phòng / ghi presence
-- [ ] Hồi quy `joinRoom` (BR-06), `createClaim` (BR-22) và `reclaimPlayerTickets` (T-005) pass
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Test deny: người không phải host kick/thu hồi; người bị kick đọc phòng / ghi presence
+- [x] Hồi quy `joinRoom` (BR-06), `createClaim` (BR-22) và `reclaimPlayerTickets` (T-005) pass
 
 ## 7. Ghi chú
 - `[ASSUMED]` Danh sách lấy từ node RTDB presence; người còn doc player nhưng không còn node (bị kick khi ván chạy) không hiện.
@@ -123,3 +123,5 @@ AC-8, AC-13 phủ bằng test integration/rules.
 - `[ASSUMED]` RTDB rules: thành viên có `presence_access/{roomId}/{auth.uid}` đọc được cả `presence/{roomId}`.
 - Banner "Bạn đã bị mời ra khỏi phòng" chỉ hiện khi client kịp nhận `last_event` trước khi mất quyền đọc; nếu không, hiện câu chung (Q-050 1a) — AC-3 chấp nhận cả hai nếu race xảy ra `[ASSUMED]`.
 - Point 5 khớp checklist.
+
+> QC: chạy test case tay theo [T-009-room-members.md](../testcases/T-009-room-members.md).
