@@ -56,7 +56,7 @@
 | X6 Field API ↔ cột DB | Đạt. Field không có cột là ID, input hoặc giá trị tính (vd `viewer`, `isNewUser`, `alreadyMember`, `nextGameId`, `inviteUrl`) |
 | X7 Enum trạng thái | Đạt: trạng thái ván (6 giá trị sau Q-055, bỏ `claim_window`) và phòng (`active/closing/closed`) khớp DB ↔ API ↔ vòng đời |
 | X8 `x-roles` ↔ ma trận | Đạt: thao tác host chỉ ACT-02; `leaveRoom` ACT-03 + ACT-02 (host rời = đóng phòng – BR-21, Q-057) |
-| X9 Validation | Đạt: tên 2–30, tên phòng 1–50, chat 1–500, nhịp 3–15, ảnh ≤ 5 MB, 5 tin/10 giây khớp UI ↔ API ↔ DB ↔ BR |
+| X9 Validation | Đạt: tên 2–30, tên phòng 1–50, chat 1–500, nhịp 5/10/15, ảnh ≤ 5 MB, 5 tin/10 giây khớp UI ↔ API ↔ DB ↔ BR |
 | X10 NFR | Đạt, NFR-12 chấp nhận ngoại lệ (Q-049) |
 | X11 Link file | Đạt: không có link hỏng |
 | X12 YAML / XML | Đạt: YAML parse, mọi `$ref` tồn tại; 11 file drawio XML hợp lệ. Chưa chạy được Redocly lint (bị chặn quyền) |

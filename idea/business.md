@@ -448,7 +448,7 @@ Quan hệ giữa actors:
 | BR-12 | Chỉ tạo lại bộ vé khi ván ở Chờ bắt đầu và không còn ai giữ vé. | BIZ-04 |
 | BR-13 | Host được thu hồi vé của thành viên đang offline khi ván ở Chờ bắt đầu (Q-027). | BIZ-04 |
 | BR-14 | Chỉ bắt đầu ván khi có ≥ 2 người giữ vé (người khác nhau, host có vé cũng tính) và phòng chưa đến hạn đóng (Q-024, Q-059). | BIZ-06 |
-| BR-15 | Khi ván Đang quay, mỗi N giây rao 1 số ngẫu nhiên chưa rao trong 1–90. N do host chỉnh trong 3–15, mặc định 5, áp dụng từ số kế tiếp (Q-004, Q-024). | BIZ-06, BIZ-07 |
+| BR-15 | Khi ván Đang quay, mỗi N giây rao 1 số ngẫu nhiên chưa rao trong 1–90. N do host chọn 5, 10 hoặc 15, mặc định 5, áp dụng từ số kế tiếp (Q-004, Q-024, Q-070). | BIZ-06, BIZ-07 |
 | BR-16 | Ván dừng quay khi: host bấm tạm dừng; có lượt Kinh đang chờ host duyệt. Host mất kết nối không làm tạm dừng ván (Q-010, Q-035, Q-048, Q-055). | BIZ-06, BIZ-08 |
 | BR-17 | Kinh đúng khi vé có ít nhất 1 hàng đủ 5 số đều đã rao, kể cả rao từ trước. Kinh sai = "kinh hụt": báo cả phòng, không phạt (Q-002, Q-006, Q-011). | BIZ-08 |
 | ~~BR-18~~ | (đã loại – Q-055) Cửa sổ đồng kinh 5 giây. Thay bằng: mọi lượt Kinh đúng trước khi host xác nhận đều đồng thắng (BR-28). | BIZ-08 |

@@ -65,7 +65,7 @@ erDiagram
     array blocked_uids
     array called_numbers "1-90"
     string current_game_id FK
-    int draw_interval_sec "3-15"
+    int draw_interval_sec "5|10|15"
     int ticket_set_no
     string invite_code "unique"
     string join_code "6 ký tự, unique khi mở"

@@ -16,7 +16,7 @@
 ### Đặc điểm kỹ thuật rút ra từ nghiệp vụ
 | Đặc điểm | Nguồn | Hệ quả kỹ thuật |
 |---|---|---|
-| Vòng quay số theo nhịp 3–15 giây, tạm dừng/tiếp tục, dừng chờ host duyệt Kinh | BR-15, BR-16, BR-28, SUP-03 | Client điều nhịp: `startGame` rao số đầu; host + player dự phòng (cách nhau 5 giây) gọi `drawNumber` khi tới `next_call_at`; server chọn số và kiểm thời điểm (ADR-05, Q-051) |
+| Vòng quay số theo nhịp 5 / 10 / 15 giây, tạm dừng/tiếp tục, dừng chờ host duyệt Kinh | BR-15, BR-16, BR-28, SUP-03 | Client điều nhịp: `startGame` rao số đầu; host + player dự phòng (cách nhau 5 giây) gọi `drawNumber` khi tới `next_call_at`; server chọn số và kiểm thời điểm (ADR-05, Q-051) |
 | Công bằng: không ai biết trước số, kết quả Kinh do hệ thống | NFR-08 | Số chọn ngẫu nhiên bằng `crypto` ngay lúc tick; kiểm Kinh ở server (ADR-03, ADR-05) |
 | Realtime: số mới, sự kiện phòng, chat ≤ 1 giây | NFR-01, NFR-02, SUP-01 | Firestore realtime listener (ADR-04) |
 | Online/offline để hiển thị và thu hồi vé | SUP-04, BR-13 | Realtime Database `onDisconnect` (ADR-06) |
@@ -128,7 +128,7 @@ flowchart LR
 
 ### ADR-05 Vòng quay số & hẹn giờ: client điều nhịp, server quyết định
 > Cập nhật Q-051: thay phương án Cloud Tasks (Q-044) bằng client điều nhịp.
-- **Bối cảnh:** Rao một số mỗi N giây (3–15) khi ván Đang quay; tạm dừng/tiếp tục; dừng khi có Kinh chờ host duyệt (Q-055); cảnh báo còn 15 phút, đóng phòng sau 8 giờ. User muốn bỏ hẹn giờ phía server (Q-051).
+- **Bối cảnh:** Rao một số mỗi N giây (5 / 10 / 15) khi ván Đang quay; tạm dừng/tiếp tục; dừng khi có Kinh chờ host duyệt (Q-055); cảnh báo còn 15 phút, đóng phòng sau 8 giờ. User muốn bỏ hẹn giờ phía server (Q-051).
 - **Các phương án:** A. Cloud Tasks hẹn từng tick (Q-044, đã bỏ) · B. Game server Node + Socket.IO · **C. Client điều nhịp, server quyết định**.
 - **Quyết định:** C.
   - **Rao số – `drawNumber({seq})`:** client của **host** gọi đúng lúc `games.next_call_at`. **Dự phòng (Q-052):** player của ván (trừ host) xếp theo vé nhỏ nhất họ giữ theo thứ tự cố định Đỏ A → Hồng B; người thứ k gọi ở `next_call_at + 5k giây` nếu chưa thấy số mới, lần lượt tới player cuối. Người không có vé không gọi. **Số đầu tiên** do `startGame` rao ngay.

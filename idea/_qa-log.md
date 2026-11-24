@@ -415,3 +415,15 @@
 - **Trả lời:** Khi tắt Tự dò, chép các ô Auto đang tô (mọi số đã gọi có trên vé) vào dấu tay (localStorage `{gameId}:{ticketId}`), người chơi dò tiếp từ đó.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #14, A2
+
+## Q-069 · implement · 2026-11-24
+- **Hỏi:** Có giữ tính năng hồ sơ cá nhân (SCR-10, hàng "Hồ sơ cá nhân ›" trong SCR-11)?
+- **Trả lời:** Bỏ. SCR-11 không còn hàng "Hồ sơ cá nhân ›".
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-11 #5, SCR-10, T-011
+
+## Q-070 · implement · 2026-11-24
+- **Hỏi:** Nhịp quay chỉnh bước 1 giây trong 3–15?
+- **Trả lời:** Chỉ 3 mức 5 → 10 → 15 giây, thấp nhất 5 (mặc định 5). Giá trị khác → `DRAW_INTERVAL_INVALID`.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-15, SCR-11 #4, api-contract `updateRoom`/`RoomUpdate`/`RoomSettings`/`Room`, TBL-02 `draw_interval_sec`

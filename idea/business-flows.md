@@ -427,7 +427,7 @@ flowchart TD
 - **Alternative paths:**
   - A1. Tạm dừng: host bấm "Tạm dừng" → ván Tạm dừng, cả phòng thấy (SUP-01); ngừng quay số.
   - A2. Tiếp tục: host bấm "Tiếp tục" → ván Đang quay, quay số tiếp (FLOW-07).
-  - A3. Đổi nhịp: host chọn 3–15 giây; áp dụng từ số kế tiếp; cả phòng thấy nhịp mới (BR-15).
+  - A3. Đổi nhịp: host chọn 5, 10 hoặc 15 giây (Q-070); áp dụng từ số kế tiếp; cả phòng thấy nhịp mới (BR-15).
   - A4. Host mất kết nối: ván vẫn chạy bình thường (Q-048).
   - A5. Bắt đầu ván thứ 2 trở đi: giống bước 1–5, sau khi ván trước Kết thúc (FLOW-08).
 - **Exceptions:**
