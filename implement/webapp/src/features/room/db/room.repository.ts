@@ -243,6 +243,13 @@ export function kickMemberInTx(tx: Transaction, roomId: string, uid: string, mem
   });
 }
 
+/** updateRoom (BR-15): `draw_interval_sec` + `last_event = interval_changed`. */
+export function setDrawIntervalInTx(tx: Transaction, roomId: string, drawIntervalSec: number, event: RoomEvent): void {
+  const at = Timestamp.fromDate(event.now);
+  const patch: Partial<RoomDoc> = { draw_interval_sec: drawIntervalSec, last_event: eventDoc(event, at), updated_at: at };
+  tx.update(roomRef(roomId), patch);
+}
+
 export function markRoomClosingInTx(tx: Transaction, roomId: string, now: Date): void {
   const at = Timestamp.fromDate(now);
   const patch: Partial<RoomDoc> = { status: "closing", last_event: roomEvent("room_closing", at), updated_at: at };

@@ -103,3 +103,6 @@ export type LeaveReasonRecord = { reason: LeaveReason; roomName: string | null }
 
 /** api-contract › KickResult: `ticketsFreedNow` = ván `waiting` (vé trống ngay), ngược lại vé trống ở ván sau (BR-22). */
 export type KickResult = { uid: string; ticketsFreedNow: boolean; gameStatus: GameStatus };
+
+/** api-contract › RoomSettings. */
+export type RoomSettings = { roomId: string; drawIntervalSec: number };
