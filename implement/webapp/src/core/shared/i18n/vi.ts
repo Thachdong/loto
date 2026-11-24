@@ -124,7 +124,7 @@ export const vi = {
     check: "Check",
     checkWait: "Check ({n}s)",
     checkDone: "Đã đồng bộ vé với số đã gọi",
-    auto: "Auto",
+    auto: "Tự dò",
   },
   claim: {
     item: "{name} · vé {color} {side}",
