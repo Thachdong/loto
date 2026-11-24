@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
   confirm: vi.fn(),
   reject: vi.fn(),
   leave: vi.fn(),
+  release: vi.fn(),
   hostOnline: null as boolean | null,
   finished: null as unknown,
 }));
@@ -45,6 +46,7 @@ vi.mock("@/features/ticket/client", async () => {
   const actual = await vi.importActual<typeof import("@/features/ticket/client")>("@/features/ticket/client");
   return {
     PaperTicket: actual.PaperTicket,
+    useTicketActions: () => ({ pending: null, release: (id: string) => h.release(id) }),
     TicketSheet: (p: { open: boolean }) => (p.open ? <div data-testid="ticket-sheet" /> : null),
   };
 });
@@ -244,6 +246,25 @@ describe("RoomScreen", () => {
     await userEvent.click(screen.getByTestId("ticket-open-red_a"));
     expect(screen.getByTestId("ticket-sheet")).toBeInTheDocument();
     expect(localStorage.getItem("g1:red_a")).toBeNull();
+  });
+
+  it("waiting with a kept ticket: 'Bỏ vé' on the ticket calls releaseTicket without opening the sheet; hidden once running", async () => {
+    setState({
+      me: { uid: ME, displayName: "me", photoUrl: null, ticketIds: ["red_a"] },
+      myTickets: [makeTicket("red_a", 0)],
+    });
+    const { unmount } = render(<RoomScreen uid={ME} roomId="r1" />);
+    await userEvent.click(screen.getByTestId("btn-release-red_a"));
+    expect(h.release).toHaveBeenCalledWith("red_a");
+    expect(screen.queryByTestId("ticket-sheet")).not.toBeInTheDocument();
+    unmount();
+    setState({
+      game: makeGame("running"),
+      me: { uid: ME, displayName: "me", photoUrl: null, ticketIds: ["red_a"] },
+      myTickets: [makeTicket("red_a", 0)],
+    });
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    expect(screen.queryByTestId("btn-release-red_a")).not.toBeInTheDocument();
   });
 
   it("'Chọn vé' button on the empty card opens the ticket sheet", async () => {

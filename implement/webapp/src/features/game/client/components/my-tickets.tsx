@@ -6,10 +6,11 @@ import { useMarks } from "@/features/game/client/hooks/use-marks";
 import type { PlayMode } from "@/features/game/client/hooks/use-play-mode";
 import { autoEffects } from "@/features/game/shared/domain/auto-effects";
 import type { GameView } from "@/features/room/shared/types";
-import { PaperTicket } from "@/features/ticket/client";
+import { PaperTicket, useTicketActions } from "@/features/ticket/client";
 import type { TicketView } from "@/features/ticket/shared/types";
 
 type Props = {
+  roomId: string;
   gameId: string;
   game: GameView;
   tickets: TicketView[];
@@ -23,7 +24,7 @@ type Props = {
 const PLAYING = new Set(["running", "paused", "awaiting_confirm"]);
 
 /** SCR-04 #11–#13: vé của tôi (0–2 vé), trạng thái "chưa có vé" / "đang xem ván". */
-export function MyTickets({ gameId, game, tickets, ready, calledNumbers, mode, onOpenTickets }: Props) {
+export function MyTickets({ roomId, gameId, game, tickets, ready, calledNumbers, mode, onOpenTickets }: Props) {
   const waiting = game.status === "waiting";
   const called = waiting ? [] : calledNumbers;
   const last = called.length > 0 ? called[called.length - 1] : null;
@@ -50,6 +51,22 @@ export function MyTickets({ gameId, game, tickets, ready, calledNumbers, mode, o
     );
   }
 
+  return <TicketList roomId={roomId} gameId={gameId} game={game} tickets={tickets} called={called} last={last} mode={mode} onOpenTickets={onOpenTickets} />;
+}
+
+function TicketList({
+  roomId,
+  gameId,
+  game,
+  tickets,
+  called,
+  last,
+  mode,
+  onOpenTickets,
+}: Omit<Props, "ready" | "calledNumbers"> & { called: number[]; last: number | null }) {
+  const waiting = game.status === "waiting";
+  // Ván chờ bắt đầu: bỏ vé ngay trên vé (BR-11 — vé tự giữ sang ván sau, bỏ khi không muốn chơi tiếp).
+  const ticketActions = useTicketActions(roomId);
   const size = tickets.length >= 2 ? "double" : "single";
   const canMark = mode === "manual" && PLAYING.has(game.status);
   return (
@@ -66,6 +83,9 @@ export function MyTickets({ gameId, game, tickets, ready, calledNumbers, mode, o
           mode={mode}
           canMark={canMark}
           onOpenTickets={onOpenTickets}
+          releasing={ticketActions.pending === `release:${ticket.id}`}
+          releaseDisabled={ticketActions.pending !== null}
+          onRelease={() => void ticketActions.release(ticket.id)}
         />
       ))}
     </div>
@@ -82,9 +102,12 @@ type TicketProps = {
   mode: PlayMode;
   canMark: boolean;
   onOpenTickets: () => void;
+  releasing: boolean;
+  releaseDisabled: boolean;
+  onRelease: () => void;
 };
 
-function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, onOpenTickets }: TicketProps) {
+function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, onOpenTickets, releasing, releaseDisabled, onRelease }: TicketProps) {
   const manual = useMarks(gameId, ticket.id);
   const auto = mode === "auto" && !waiting ? autoEffects(ticket.grid, called, last) : null;
   const marks = waiting ? new Set<number>() : auto ? auto.marked : manual.marks;
@@ -114,8 +137,21 @@ function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, 
   if (!waiting) return ticketNode;
   // Ván chờ bắt đầu: chạm vé mở SCR-05 (AC-14), không đánh dấu.
   return (
-    <div role="button" tabIndex={0} data-testid={`ticket-open-${ticket.id}`} onClick={onOpenTickets} onKeyDown={(e) => e.key === "Enter" && onOpenTickets()}>
-      {ticketNode}
+    <div className="relative">
+      <div role="button" tabIndex={0} data-testid={`ticket-open-${ticket.id}`} onClick={onOpenTickets} onKeyDown={(e) => e.key === "Enter" && onOpenTickets()}>
+        {ticketNode}
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid={`btn-release-${ticket.id}`}
+        className="absolute top-1 right-1 h-8 bg-background/90 px-2 text-xs"
+        disabled={releaseDisabled}
+        onClick={onRelease}
+      >
+        {releasing ? t("ticket.releasing") : t("ticket.release")}
+      </Button>
     </div>
   );
 }

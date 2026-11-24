@@ -854,3 +854,21 @@ Ghi chú: không nghe được âm thanh qua Chrome tự động → chỉ xác 
 | 3 | P1 | H lấy vé Hồng A (sheet "Vé") | Nút "▶ Bắt đầu" bật; hint "3/16 vé đã có chủ · 3 người trong phòng"; bấm → ván chạy | ui |
 
 **Kết quả:** ⬜
+
+---
+
+### TC-T006-46 · Vé được giữ sang ván mới, bỏ vé ngay trên vé (Q-060)
+| Ưu tiên | Loại | Phủ | Chạy bằng |
+|---|---|---|---|
+| P1 | happy | BR-11, SCR-04 #11 (Q-060) | manual |
+
+**Tiền điều kiện:** `npm run seed -- reset && npm run seed -- result-awaiting-win`; H và C cùng mở `/room` (C online).
+
+| # | Profile | Thao tác | Kết quả mong đợi | Cách kiểm |
+|---|---|---|---|---|
+| 1 | P1 | H bấm "Xác nhận kết thúc ván" | Tab C: overlay "Vé của bạn vẫn được giữ cho ván 2"; bấm "Đóng" | ui |
+| 2 | P3 | Nhìn vé ở "Ván 2 · Chờ bắt đầu" | Vé Lam A, Lam B vẫn hiện (không phải chọn lại); mỗi vé có nút "Bỏ vé" góc trên phải (`btn-release-blue_a`) | ui |
+| 3 | P3 | Bấm "Bỏ vé" trên Lam B | Vé Lam B biến mất, còn Lam A; sheet Vé không mở; Emulator: `players/u_tk_c.ticket_ids = ["blue_a"]` | ui, emulator-ui |
+| 4 | P1 | Bắt đầu ván 2 | Nút "Bỏ vé" không còn trên vé khi ván đang chạy | ui |
+
+**Kết quả:** ⬜

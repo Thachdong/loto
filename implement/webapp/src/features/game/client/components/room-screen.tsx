@@ -175,6 +175,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         style={{ paddingBottom: dockHeight }}
       >
         <MyTickets
+          roomId={room.id}
           gameId={game.id}
           game={game}
           tickets={myTickets}
