@@ -63,3 +63,9 @@
     @apply bg-backdrop text-foreground;
   }
 }
+
+/* SCR-09 pháo giấy (ẩn khi prefers-reduced-motion qua `motion-reduce:hidden`). */
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100dvh) rotate(540deg); opacity: 0.6; }
+}

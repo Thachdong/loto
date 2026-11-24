@@ -9,6 +9,8 @@ import { writeLeaveReason } from "@/features/room/client";
 import { TicketSheet } from "@/features/ticket/client";
 import { useGameActions } from "@/features/game/client/hooks/use-game-actions";
 import { useGameRoom } from "@/features/game/client/hooks/use-game-room";
+import { useFinishedGame } from "@/features/game/client/hooks/use-finished-game";
+import { useHostOnline } from "@/features/game/client/hooks/use-host-online";
 import { useDebugConnection, useConnection } from "@/features/game/client/hooks/use-connection";
 import { useNow } from "@/features/game/client/hooks/use-now";
 import { usePlayMode } from "@/features/game/client/hooks/use-play-mode";
@@ -17,11 +19,12 @@ import { LAYOUT_HEIGHTS } from "@/features/game/shared/domain/ticket-layout";
 import type { GameView, LeaveReasonRecord, RoomView } from "@/features/room/shared/types";
 import type { PlayerView, TicketView } from "@/features/ticket/shared/types";
 import { BottomBar, ComingSoonSheet, type BottomTab } from "./bottom-bar";
-import { ClaimCard } from "./claim-card";
 import { ConnectionBanner } from "./connection-banner";
 import { HostControls, MeStatusLine } from "./host-controls";
 import { isKinhVisible, KinhBar } from "./kinh-bar";
 import { MyTickets } from "./my-tickets";
+import { ResultOverlay } from "./result-overlay";
+import { ReviewCard } from "./review-card";
 import { NumberPanel } from "./number-panel";
 import { RoomExtras } from "./room-extras";
 import { RoomHeader } from "./room-header";
@@ -88,6 +91,9 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   usePresence(user && !leaving ? roomId : null, user && !leaving ? { uid, displayName: user.displayName, photoUrl: user.photoUrl } : null);
 
   const actions = useGameActions(roomId, game?.id ?? "");
+  const finished = useFinishedGame({ roomId, uid, current: game, currentPlayers: players, playersReady: state.playersReady });
+  const awaiting = game?.status === "awaiting_confirm";
+  const hostOnline = useHostOnline(roomId, room?.hostUid ?? null, awaiting && room?.hostUid !== uid);
 
   if (!room || !game) {
     return <RoomSkeleton offline={connectionLost} />;
@@ -149,7 +155,19 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
       ) : (
         <MeStatusLine game={game} heldCount={heldCount} myTicketCount={myTickets.length} mode={mode} />
       )}
-      {game.status === "awaiting_confirm" && <ClaimCard claims={game.claims} />}
+      {awaiting && (
+        <ReviewCard
+          claims={game.claims}
+          tickets={state.tickets}
+          calledNumbers={room.calledNumbers}
+          isHost={isHost}
+          hostOnline={hostOnline}
+          myTicketIds={me?.ticketIds ?? []}
+          pending={actions.pending}
+          onConfirm={() => void actions.confirm()}
+          onReject={() => void actions.reject()}
+        />
+      )}
       <section
         data-testid="my-tickets-area"
         className="min-h-0 flex-1 overflow-y-auto"
@@ -193,6 +211,16 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         bottom={dockHeight}
       />
       <RoomExtras ctx={ctx} dockHeight={dockHeight} onLeaveStart={startLeave} onLeaveAbort={abortLeave} onLeft={() => router.replace("/")} />
+      {finished.game && (
+        <ResultOverlay
+          game={finished.game}
+          tickets={state.tickets}
+          calledNumbers={room.calledNumbers}
+          ticketLine={finished.ticketLine}
+          nextSeqNo={finished.nextSeqNo}
+          onClose={finished.dismiss}
+        />
+      )}
       {renderExtras?.(ctx)}
     </main>
   );

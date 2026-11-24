@@ -15,10 +15,20 @@ const h = vi.hoisted(() => ({
   pause: vi.fn(),
   resume: vi.fn(),
   claim: vi.fn(),
+  confirm: vi.fn(),
+  reject: vi.fn(),
   leave: vi.fn(),
+  hostOnline: null as boolean | null,
+  finished: null as unknown,
 }));
 
 vi.mock("@/features/game/client/hooks/use-game-room", () => ({ useGameRoom: () => h.state }));
+vi.mock("@/features/game/client/hooks/use-host-online", () => ({ useHostOnline: () => h.hostOnline }));
+vi.mock("@/features/game/client/hooks/use-finished-game", () => ({
+  useFinishedGame: () => ({ game: h.finished, ticketLine: "kept", nextSeqNo: 2, dismiss: vi.fn() }),
+}));
+vi.mock("@/features/game/server/actions/confirm-game.action", () => ({ confirmGameAction: (...a: unknown[]) => h.confirm(...a) }));
+vi.mock("@/features/game/server/actions/reject-claims.action", () => ({ rejectClaimsAction: (...a: unknown[]) => h.reject(...a) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: h.replace, push: vi.fn() }) }));
 vi.mock("sonner", () => ({ toast: h.toast }));
 vi.mock("@/core/client/hooks/use-presence", () => ({ usePresence: vi.fn(), cancelPresence: vi.fn().mockResolvedValue(undefined) }));
@@ -293,7 +303,7 @@ describe("RoomScreen", () => {
   });
 
 
-  it("awaiting_confirm: temp claim card above the tickets, KINH bar still there and enabled for another ticket", () => {
+  it("awaiting_confirm: review card above the tickets, KINH bar still there and enabled for another ticket", () => {
     setState({
       room: makeRoom({ calledNumbers: [4] }),
       game: makeGame("awaiting_confirm", {
@@ -303,10 +313,68 @@ describe("RoomScreen", () => {
       myTickets: [makeTicket("red_a", 0)],
     });
     render(<RoomScreen uid={ME} roomId="r1" />);
-    expect(screen.getByTestId("claim-card")).toHaveTextContent("Cúc KINH!");
-    expect(screen.getByTestId("claim-item-u_c-blue_a")).toBeInTheDocument();
+    expect(screen.getByTestId("review-card")).toHaveTextContent("KINH! · Chờ host duyệt (1 lượt)");
+    expect(screen.getByTestId("review-item-u_c-blue_a")).toBeInTheDocument();
+    expect(screen.getByTestId("review-nudge")).toBeInTheDocument();
+    expect(screen.queryByTestId("btn-confirm-game")).not.toBeInTheDocument();
     expect(screen.getByTestId("ticket-red_a")).toBeInTheDocument();
     expect(screen.getByTestId("btn-kinh")).toBeEnabled();
+  });
+
+  it("host: win claim → 'Xác nhận kết thúc ván' calls confirmGameAction; network error → toast", async () => {
+    h.confirm.mockRejectedValue(new Error("network"));
+    setState({
+      room: makeRoom({ hostUid: ME }),
+      game: makeGame("awaiting_confirm", {
+        claims: [{ uid: "u_c", displayName: "Cúc", ticketId: "blue_a", color: "blue", result: "win", row: 0, claimedAtMs: 1 }],
+      }),
+    });
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    expect(screen.queryByTestId("btn-reject-claims")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("btn-confirm-game"));
+    expect(h.confirm).toHaveBeenCalledWith({ roomId: "r1", gameId: "g1" });
+    expect(h.toast.error).toHaveBeenCalledWith(dict.err.confirmNetwork);
+  });
+
+  it("host: only misses → 'Bác bỏ – quay tiếp' calls rejectClaimsAction; CLAIM_HAS_WIN → toast", async () => {
+    h.reject.mockResolvedValue({ ok: false, error: { code: "CLAIM_HAS_WIN", message: "x" } });
+    setState({
+      room: makeRoom({ hostUid: ME }),
+      game: makeGame("awaiting_confirm", {
+        claims: [{ uid: "u_b", displayName: "Bình", ticketId: "red_a", color: "red", result: "miss", row: null, claimedAtMs: 1 }],
+      }),
+    });
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    expect(screen.queryByTestId("btn-confirm-game")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("btn-reject-claims"));
+    expect(h.reject).toHaveBeenCalledWith({ roomId: "r1", gameId: "g1" });
+    expect(h.toast.error).toHaveBeenCalledWith(dict.err.claimHasWin);
+  });
+
+  it("player: host offline line while awaiting", () => {
+    h.hostOnline = false;
+    setState({
+      game: makeGame("awaiting_confirm", {
+        claims: [{ uid: "u_b", displayName: "Bình", ticketId: "red_a", color: "red", result: "miss", row: null, claimedAtMs: 1 }],
+      }),
+    });
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    expect(screen.getByTestId("review-waiting")).toBeInTheDocument();
+    expect(screen.getByTestId("review-host-offline")).toHaveTextContent(dict.review.hostOffline);
+    h.hostOnline = null;
+  });
+
+  it("finished game from useFinishedGame → result overlay", () => {
+    h.finished = makeGame("finished", {
+      seqNo: 1,
+      result: "won",
+      winners: [{ uid: "u_c", displayName: "Cúc", ticketId: "blue_a", color: "blue", row: 0, claimedAtMs: 1 }],
+    });
+    setState({});
+    render(<RoomScreen uid={ME} roomId="r1" />);
+    expect(screen.getByTestId("result-overlay")).toHaveTextContent("🎊 Chúc mừng! 🎊");
+    expect(screen.getByTestId("result-keep-line")).toHaveTextContent("Vé của bạn vẫn được giữ cho ván 2");
+    h.finished = null;
   });
 
   it("KINH with 1 ticket calls createClaimAction({roomId, gameId, ticketId}); error code → toast", async () => {
