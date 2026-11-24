@@ -27,3 +27,16 @@ export function markSoundUnlocked(): void {
     // storage bị chặn → lớp chạm hiện lại lần sau, không sao.
   }
 }
+
+/** Sự kiện cùng tab khi đổi bật/tắt tiếng. */
+export const SOUND_EVENT = "loto:sound-change";
+
+/** Nút "Tắt tiếng"/"Bật tiếng" ở thanh KINH: lưu `loto:sound` (on/off). */
+export function setSoundOn(on: boolean): void {
+  try {
+    window.localStorage.setItem(SOUND_KEY, on ? "on" : "off");
+  } catch {
+    /* bỏ qua */
+  }
+  window.dispatchEvent(new Event(SOUND_EVENT));
+}

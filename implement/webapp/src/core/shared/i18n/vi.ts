@@ -125,6 +125,8 @@ export const vi = {
     checkWait: "Check ({n}s)",
     checkDone: "Đã đồng bộ vé với số đã gọi",
     auto: "Tự dò",
+    mute: "Tắt tiếng",
+    unmute: "Bật tiếng",
   },
   claim: {
     item: "{name} · vé {color} {side}",

@@ -20,10 +20,10 @@ const claim = (ticketId: ClaimView["ticketId"]): ClaimView => ({
   claimedAtMs: 1,
 });
 
-const extra = { onToggleAuto: vi.fn(), onCheck: vi.fn() };
+const extra = { onToggleAuto: vi.fn(), onCheck: vi.fn(), onToggleSound: vi.fn() };
 
 function setup(
-  over: { status?: GameStatus; tickets?: ReturnType<typeof makeTicket>[]; claims?: ClaimView[]; pending?: string | null; mode?: "manual" | "auto"; canCheck?: boolean } = {},
+  over: { status?: GameStatus; tickets?: ReturnType<typeof makeTicket>[]; claims?: ClaimView[]; pending?: string | null; mode?: "manual" | "auto"; canCheck?: boolean; soundOn?: boolean } = {},
 ) {
   const onClaim = vi.fn();
   render(
@@ -39,6 +39,8 @@ function setup(
       canCheck={over.canCheck ?? true}
       onToggleAuto={extra.onToggleAuto}
       onCheck={extra.onCheck}
+      soundOn={over.soundOn ?? true}
+      onToggleSound={extra.onToggleSound}
     />,
   );
   return onClaim;
@@ -66,8 +68,11 @@ describe("KinhBar", () => {
   it("Check, Auto and KINH sit in one row; Check syncs, Auto toggles; Check disabled in auto mode or before any call", async () => {
     setup();
     const bar = screen.getByTestId("kinh-bar");
-    expect(bar.className).toContain("grid-cols-3");
-    expect([...bar.querySelectorAll("button")].map((b) => b.dataset.testid)).toEqual(["btn-check", "btn-auto", "btn-kinh"]);
+    expect(bar.className).toContain("grid-cols-4");
+    expect([...bar.querySelectorAll("button")].map((b) => b.dataset.testid)).toEqual(["btn-check", "btn-sound", "btn-auto", "btn-kinh"]);
+    expect(screen.getByTestId("btn-sound")).toHaveTextContent("Tắt tiếng");
+    await userEvent.click(screen.getByTestId("btn-sound"));
+    expect(extra.onToggleSound).toHaveBeenCalled();
     await userEvent.click(screen.getByTestId("btn-check"));
     expect(extra.onCheck).toHaveBeenCalled();
     expect(screen.getByTestId("btn-check")).toBeDisabled();
@@ -79,6 +84,9 @@ describe("KinhBar", () => {
     setup({ mode: "auto" });
     expect(screen.getByTestId("btn-check")).toBeDisabled();
     expect(screen.getByTestId("btn-auto")).toHaveAttribute("aria-pressed", "true");
+    cleanup();
+    setup({ soundOn: false });
+    expect(screen.getByTestId("btn-sound")).toHaveTextContent("Bật tiếng");
     cleanup();
     setup({ canCheck: false });
     expect(screen.getByTestId("btn-check")).toBeDisabled();

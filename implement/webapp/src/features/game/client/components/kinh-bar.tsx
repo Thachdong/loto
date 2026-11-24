@@ -38,10 +38,13 @@ type Props = {
   onCheck: () => void;
   /** Đã có số được gọi (ván không `waiting`). */
   canCheck: boolean;
+  /** Tiếng đang bật; nút cạnh "Check" đổi "Tắt tiếng"/"Bật tiếng". */
+  soundOn: boolean;
+  onToggleSound: () => void;
 };
 
 /** SCR-04 #14 + #15: thanh KINH + action sheet chọn vé (2 vé). Hiện cả khi `awaiting_confirm` (Q-055). */
-export function KinhBar({ status, myTickets, claims, pending, onClaim, height, sheetBottom, mode, onToggleAuto, onCheck, canCheck }: Props) {
+export function KinhBar({ status, myTickets, claims, pending, onClaim, height, sheetBottom, mode, onToggleAuto, onCheck, canCheck, soundOn, onToggleSound }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [locked, setLocked] = useState(false);
   /** Giây còn lại trước khi bấm "Check" lại được (0 = bấm được). */
@@ -94,12 +97,12 @@ export function KinhBar({ status, myTickets, claims, pending, onClaim, height, s
   }
 
   return (
-    <div data-testid="kinh-bar" style={{ height }} className="grid grid-cols-3 items-center gap-2 px-0 py-1">
+    <div data-testid="kinh-bar" style={{ height }} className="grid grid-cols-4 items-center gap-1.5 px-0 py-1">
       <Button
         type="button"
         variant="outline"
         data-testid="btn-check"
-        className="h-full text-sm font-semibold"
+        className="h-full px-1 text-xs font-semibold"
         disabled={mode === "auto" || !canCheck || checkWait > 0}
         onClick={check}
       >
@@ -107,10 +110,20 @@ export function KinhBar({ status, myTickets, claims, pending, onClaim, height, s
       </Button>
       <Button
         type="button"
+        variant="outline"
+        data-testid="btn-sound"
+        aria-pressed={!soundOn}
+        className="h-full px-1 text-xs font-semibold"
+        onClick={onToggleSound}
+      >
+        {soundOn ? t("kinh.mute") : t("kinh.unmute")}
+      </Button>
+      <Button
+        type="button"
         variant={mode === "auto" ? "default" : "outline"}
         data-testid="btn-auto"
         aria-pressed={mode === "auto"}
-        className="h-full text-sm font-semibold"
+        className="h-full px-1 text-xs font-semibold"
         onClick={onToggleAuto}
       >
         {t("kinh.auto")}

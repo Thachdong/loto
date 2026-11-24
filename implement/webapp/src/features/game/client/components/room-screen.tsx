@@ -14,6 +14,9 @@ import { useHostOnline } from "@/features/game/client/hooks/use-host-online";
 import { useDebugConnection, useConnection } from "@/features/game/client/hooks/use-connection";
 import { useNow } from "@/features/game/client/hooks/use-now";
 import { setPlayMode, usePlayMode } from "@/features/game/client/hooks/use-play-mode";
+import { useSoundOn } from "@/features/game/client/hooks/use-sound-on";
+import { getAudioEngine } from "@/features/game/client/lib/audio-singleton";
+import { markSoundUnlocked, setSoundOn } from "@/features/game/client/lib/sound-pref";
 import { syncTicketMarks } from "@/features/game/client/hooks/use-marks";
 import { toast } from "sonner";
 import { useServerTimeOffset } from "@/features/game/client/hooks/use-server-time-offset";
@@ -87,6 +90,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
   const [overlay, setOverlay] = useState<RoomOverlay | null>(null);
   const [soonTab, setSoonTab] = useState<Exclude<BottomTab, "tickets"> | null>(null);
   const mode = usePlayMode();
+  const soundOn = useSoundOn();
   const nowMs = useNow(room !== null);
 
   // ADR-06: ghi presence khi đã biết user; ngừng ghi khi đang rời phòng.
@@ -197,6 +201,15 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
           onClaim={actions.claim}
           height={heights.kinhBar}
           sheetBottom={dockHeight}
+          soundOn={soundOn}
+          onToggleSound={() => {
+            if (!soundOn) {
+              // Chạm "Bật tiếng" cũng là thao tác người dùng → mở khóa audio luôn.
+              markSoundUnlocked();
+              void getAudioEngine().unlock().catch(() => undefined);
+            }
+            setSoundOn(!soundOn);
+          }}
           mode={mode}
           onToggleAuto={() => setPlayMode(mode === "auto" ? "manual" : "auto")}
           canCheck={game.status !== "waiting" && room.calledNumbers.length > 0}

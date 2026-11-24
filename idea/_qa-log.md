@@ -403,3 +403,9 @@
 - **Trả lời:** Vé đơn min-width 240px (tối đa 9 cột = 256px); 2 vé mỗi vé chiếm nửa hàng (flex-1), min-width 150px, không giới hạn tối đa → gần full width trong khung 480px.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 §5, Q-065
+
+## Q-067 · implement · 2026-11-24
+- **Hỏi:** Cần nút tắt tiếng nhanh trong ván.
+- **Trả lời:** Thêm nút "Tắt tiếng"/"Bật tiếng" ngay cạnh "Check" ở thanh KINH (4 nút: Check · Tắt tiếng · Tự dò · KINH). Lưu `loto:sound`; bật lại thì mở khóa audio luôn.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #14, SUP-02
