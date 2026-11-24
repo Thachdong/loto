@@ -8,6 +8,7 @@ const rtdb = vi.hoisted(() => ({
   listeners: new Map<string, { cb: ValueCb; unsubscribe: ReturnType<typeof vi.fn> }[]>(),
   set: vi.fn(() => Promise.resolve()),
   update: vi.fn(() => Promise.resolve()),
+  disconnectSet: vi.fn(() => Promise.resolve()),
   onDisconnectPaths: [] as string[],
 }));
 
@@ -21,7 +22,7 @@ vi.mock("firebase/database", () => ({
   set: (...args: unknown[]) => (rtdb.set as (...a: unknown[]) => Promise<void>)(...args),
   onDisconnect: (node: { path: string }) => {
     rtdb.onDisconnectPaths.push(node.path);
-    return { update: rtdb.update };
+    return { update: rtdb.update, set: rtdb.disconnectSet };
   },
   onValue: (node: { path: string }, cb: ValueCb) => {
     const unsubscribe = vi.fn();
@@ -45,6 +46,7 @@ describe("usePresence", () => {
     rtdb.onDisconnectPaths.length = 0;
     rtdb.set.mockClear();
     rtdb.update.mockClear();
+    rtdb.disconnectSet.mockClear();
   });
 
   it("no room or no user → nothing registered", () => {
@@ -63,7 +65,7 @@ describe("usePresence", () => {
     act(() => latest(".info/connected").cb({ val: () => true }));
     await waitFor(() => expect(rtdb.set).toHaveBeenCalledTimes(1));
     expect(rtdb.onDisconnectPaths).toEqual(["presence/r1/u1"]);
-    expect(rtdb.update).toHaveBeenCalledWith({ online: false, at: { ".sv": "timestamp" } });
+    expect(rtdb.disconnectSet).toHaveBeenCalledWith({ online: false, display_name: "An", photo_url: null, at: { ".sv": "timestamp" } });
     expect(rtdb.set).toHaveBeenCalledWith(
       { path: "presence/r1/u1" },
       { online: true, display_name: "An", photo_url: null, at: { ".sv": "timestamp" } },

@@ -98,3 +98,44 @@ describe("RTDB presence_access (TBL-08): client cannot read or write", () => {
     await assertFails(env.unauthenticatedContext().database().ref("presence_access").get());
   });
 });
+
+describe("T-009 AC-13: RTDB presence/{roomId} follows presence_access", () => {
+  const node = { online: true, display_name: "a", at: 1 };
+
+  it("member with presence_access reads the room presence and writes only own node", async () => {
+    const db = as("A").database();
+    await assertSucceeds(db.ref("presence/X").get());
+    await assertSucceeds(db.ref("presence/X/A").set(node));
+    await assertFails(db.ref("presence/X/B").set(node));
+  });
+
+  it("kicked user (presence_access removed) cannot read room X or write presence", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.database().ref("presence_access/X/A").remove();
+      await ctx.firestore().doc("users/A").update({ current_room_id: null });
+    });
+    const user = as("A");
+    await assertFails(user.database().ref("presence/X").get());
+    await assertFails(user.database().ref("presence/X/A").set(node));
+    for (const path of paths) await assertFails(user.firestore().doc(path).get());
+  });
+});
+
+describe("T-008 AC-9: rooms/{id}/messages", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc("rooms/X/messages/m1").set({ sender_uid: "A", text: "hi" });
+    });
+  });
+
+  it("member reads; outsider denied; nobody writes from the client", async () => {
+    await assertSucceeds(as("A").firestore().doc("rooms/X/messages/m1").get());
+    await assertSucceeds(as("A").firestore().collection("rooms/X/messages").get());
+    await assertFails(as("B").firestore().collection("rooms/X/messages").get());
+    await assertFails(as("C").firestore().doc("rooms/X/messages/m1").get());
+    const db = as("A").firestore();
+    await assertFails(db.collection("rooms/X/messages").add({ sender_uid: "A", text: "x" }));
+    await assertFails(db.doc("rooms/X/messages/m1").update({ text: "y" }));
+    await assertFails(db.doc("rooms/X/messages/m1").delete());
+  });
+});

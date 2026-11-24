@@ -45,6 +45,10 @@ export type RoomView = {
   expiresAt: Date;
   currentGameId: string;
   gameCount: number;
+  /** Nhịp quay (giây/số), BR-15. */
+  drawIntervalSec: number;
+  /** Số đã rao của ván hiện tại theo thứ tự (TBL-02). */
+  calledNumbers: number[];
   closeReason: CloseReason | null;
   /** `rooms.last_event` (SUP-01): `text` do server soạn (có thể null), `atMs` để client dedupe toast. */
   lastEvent: { type: string; targetUid: string | null; text: string | null; atMs: number | null } | null;
@@ -55,8 +59,50 @@ export type GameView = {
   id: string;
   seqNo: number;
   status: GameStatus;
+  pauseReason: "host" | null;
+  nextCallAt: Date | null;
+  /** Trạng thái trước khi có KINH (quay về khi host bác bỏ). */
+  resumeStatus: "running" | "paused" | null;
+  /** Lượt KINH đang chờ host duyệt (TBL-05 `claims`). */
+  claims: ClaimView[];
+  playerCount: number;
+  /** TBL-05 `result`: null khi ván chưa kết thúc. */
+  result: "won" | "no_winner" | null;
+  /** TBL-05 `winners` (chỉ có khi `finished`). */
+  winners: WinnerView[];
+  confirmedBy: string | null;
 };
+
+/** Một người thắng (TBL-05 `winners`). */
+export type WinnerView = {
+  uid: string;
+  displayName: string;
+  ticketId: TicketId;
+  color: TicketColor;
+  row: number;
+  claimedAtMs: number;
+};
+
+/** Một lượt KINH (TBL-05 `claims`), `result` là gợi ý của hệ thống. */
+export type ClaimView = {
+  uid: string;
+  displayName: string;
+  ticketId: TicketId;
+  color: TicketColor;
+  result: "win" | "miss";
+  row: number | null;
+  claimedAtMs: number;
+};
+
+/** api-contract › RoomExpireResult. */
+export type RoomExpireResult = { roomStatus: RoomStatus; gameStatus: GameStatus };
 
 /** Lý do vừa rời phòng — banner 4 SCR-02 (Q-050, Q-057). */
 export type LeaveReason = "kicked" | "expired" | "host_left" | "left" | "unknown";
 export type LeaveReasonRecord = { reason: LeaveReason; roomName: string | null };
+
+/** api-contract › KickResult: `ticketsFreedNow` = ván `waiting` (vé trống ngay), ngược lại vé trống ở ván sau (BR-22). */
+export type KickResult = { uid: string; ticketsFreedNow: boolean; gameStatus: GameStatus };
+
+/** api-contract › RoomSettings. */
+export type RoomSettings = { roomId: string; drawIntervalSec: number };

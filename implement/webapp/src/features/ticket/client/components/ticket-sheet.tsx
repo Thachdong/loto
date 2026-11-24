@@ -22,10 +22,12 @@ type Props = {
   gameStatus: GameStatus | null;
   meUid: string;
   isHost: boolean;
+  /** Chừa đáy cho thanh KINH + thanh nút dưới (px) để sheet không bị dock che. */
+  bottom?: number;
 };
 
 /** SCR-05: sheet "Chọn vé" (#1–#9). Listener chỉ gắn khi sheet mở. */
-export function TicketSheet({ open, onOpenChange, roomId, gameId, gameStatus, meUid, isHost }: Props) {
+export function TicketSheet({ open, onOpenChange, roomId, gameId, gameStatus, meUid, isHost, bottom = 0 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -34,6 +36,7 @@ export function TicketSheet({ open, onOpenChange, roomId, gameId, gameStatus, me
         aria-describedby={undefined}
         data-testid="ticket-sheet"
         className="mx-auto h-[85dvh] max-w-[480px] rounded-t-xl"
+        style={{ bottom, maxHeight: `calc(100dvh - ${bottom}px - 56px)` }}
       >
         <TicketSheetBody roomId={roomId} gameId={gameId} gameStatus={gameStatus} meUid={meUid} isHost={isHost} />
       </SheetContent>
@@ -41,7 +44,7 @@ export function TicketSheet({ open, onOpenChange, roomId, gameId, gameStatus, me
   );
 }
 
-type BodyProps = Omit<Props, "open" | "onOpenChange">;
+type BodyProps = Omit<Props, "open" | "onOpenChange" | "bottom">;
 
 function TicketSheetBody({ roomId, gameId, gameStatus, meUid, isHost }: BodyProps) {
   const { status, board, players, presence, retry } = useTicketBoard(roomId, gameId, gameStatus, meUid);

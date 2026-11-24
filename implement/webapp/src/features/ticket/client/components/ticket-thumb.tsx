@@ -18,7 +18,7 @@ export function TicketThumb({ color, grid }: Props) {
         return (
           <span
             key={i}
-            className="aspect-[38/32]"
+            className="aspect-[28/48]"
             style={{ backgroundColor: grid && value !== 0 ? "#ffffff" : base, filter: grid ? undefined : "brightness(1.4)" }}
           />
         );

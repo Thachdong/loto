@@ -112,3 +112,14 @@ export function clearCurrentRoomInTx(tx: Transaction, uids: readonly string[], n
   const patch: Partial<UserDoc> = { current_room_id: null, updated_at: at };
   for (const uid of uids) tx.update(userRef(uid), patch);
 }
+
+/** SUP-07: mốc gửi chat gần đây (`chat_recent_at`) đọc trong transaction. */
+export async function getChatRecentAtInTx(tx: Transaction, uid: string): Promise<Date[]> {
+  const data = (await tx.get(userRef(uid))).data();
+  return (data?.chat_recent_at ?? []).map((t) => t.toDate());
+}
+
+/** SUP-07: ghi lại ≤ 5 mốc gửi chat mới nhất. */
+export function setChatRecentAtInTx(tx: Transaction, uid: string, stamps: readonly Date[]): void {
+  tx.update(userRef(uid), { chat_recent_at: stamps.map((d) => Timestamp.fromDate(d)) });
+}

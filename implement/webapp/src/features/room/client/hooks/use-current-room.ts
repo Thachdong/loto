@@ -7,7 +7,16 @@ import type { DocumentData } from "firebase/firestore";
 import { useDocListener, type DocListenerStatus } from "@/core/client/hooks/use-doc-listener";
 import { writeLeaveReason } from "@/features/room/client/lib/leave-reason-store";
 import { leaveReasonRecord } from "@/features/room/client/lib/infer-leave-reason";
-import type { CloseReason, GameStatus, GameView, LeaveReasonRecord, RoomStatus, RoomView } from "@/features/room/shared/types";
+import type {
+  CloseReason,
+  GameStatus,
+  GameView,
+  LeaveReasonRecord,
+  RoomStatus,
+  RoomView,
+  TicketColor,
+  TicketId,
+} from "@/features/room/shared/types";
 
 /** Phần `users/{uid}` màn phòng/trang chủ cần (TBL-01). */
 export type CurrentUserView = {
@@ -48,6 +57,8 @@ export function mapRoomDoc(data: DocumentData, id: string): RoomView {
     expiresAt: toDate(data.expires_at as Timestampish),
     currentGameId: str(data.current_game_id),
     gameCount: num(data.game_count),
+    drawIntervalSec: num(data.draw_interval_sec) || 5,
+    calledNumbers: Array.isArray(data.called_numbers) ? (data.called_numbers as unknown[]).filter((n): n is number => typeof n === "number") : [],
     closeReason: (typeof data.close_reason === "string" ? data.close_reason : null) as CloseReason | null,
     lastEvent:
       lastEvent && typeof lastEvent === "object"
@@ -63,7 +74,35 @@ export function mapRoomDoc(data: DocumentData, id: string): RoomView {
 
 /** rooms/{id}/games/{gid} (TBL-05) → GameView. */
 export function mapGameDoc(data: DocumentData, id: string): GameView {
-  return { id, seqNo: num(data.seq_no), status: (str(data.status) || "waiting") as GameStatus };
+  const claims = Array.isArray(data.claims) ? (data.claims as Record<string, unknown>[]) : [];
+  return {
+    id,
+    seqNo: num(data.seq_no),
+    status: (str(data.status) || "waiting") as GameStatus,
+    pauseReason: data.pause_reason === "host" ? "host" : null,
+    nextCallAt: data.next_call_at ? toDate(data.next_call_at as Timestampish) : null,
+    resumeStatus: data.resume_status === "running" || data.resume_status === "paused" ? data.resume_status : null,
+    claims: claims.map((c) => ({
+      uid: str(c.uid),
+      displayName: str(c.display_name),
+      ticketId: str(c.ticket_id) as TicketId,
+      color: str(c.color) as TicketColor,
+      result: c.result === "win" ? "win" : "miss",
+      row: typeof c.row === "number" ? c.row : null,
+      claimedAtMs: toDate(c.claimed_at as Timestampish).getTime(),
+    })),
+    playerCount: num(data.player_count),
+    result: data.result === "won" || data.result === "no_winner" ? data.result : null,
+    winners: (Array.isArray(data.winners) ? (data.winners as Record<string, unknown>[]) : []).map((w) => ({
+      uid: str(w.uid),
+      displayName: str(w.display_name),
+      ticketId: str(w.ticket_id) as TicketId,
+      color: str(w.color) as TicketColor,
+      row: num(w.row),
+      claimedAtMs: w.claimed_at ? toDate(w.claimed_at as Timestampish).getTime() : 0,
+    })),
+    confirmedBy: str(data.confirmed_by) || null,
+  };
 }
 
 function subscribeOnline(onChange: () => void) {

@@ -90,11 +90,11 @@ info:
     | TICKET_NOT_HELD | 409 | Bỏ vé mình không giữ | BR-09 |
     | TICKETS_STILL_HELD | 409 | Còn người giữ vé — không tạo được bộ vé mới; `details[]` liệt kê người giữ + online | BR-12 |
     | TARGET_ONLINE | 409 | Thu hồi vé người đang online | BR-13 |
-    | NO_TICKETS_HELD | 422 | Chưa có vé nào được giữ — không bắt đầu được | BR-14 |
+    | NO_TICKETS_HELD | 422 | Chưa đủ 2 người giữ vé — không bắt đầu được | BR-14, Q-059 |
     | TICKET_LIMIT_REACHED | 422 | Đã giữ 2 vé | BR-09 |
     | CANNOT_TARGET_SELF | 422 | Host tự kick / tự thu hồi vé của mình | BIZ-10 E1 |
     | ROOM_NAME_INVALID | 422 | Tên phòng rỗng sau trim hoặc > 50 ký tự | ENT-02 |
-    | DRAW_INTERVAL_INVALID | 422 | Nhịp quay ngoài 3–15 giây | BR-15 |
+    | DRAW_INTERVAL_INVALID | 422 | Nhịp quay không phải 5, 10 hoặc 15 giây | BR-15 |
     | DISPLAY_NAME_INVALID | 422 | Tên hiển thị ngoài 2–30 ký tự | BR-27 |
     | AVATAR_INVALID | 422 | Ảnh không thuộc `avatars/{uid}/`, không tồn tại, sai định dạng / > 5 MB, hoặc avatar có sẵn không tồn tại | BR-27, ADR-12 |
     | MESSAGE_EMPTY | 422 | Tin rỗng sau trim | BR-23 |
@@ -422,7 +422,7 @@ paths:
       operationId: updateRoom
       summary: Đổi nhịp quay (host)
       description: |
-        Ghi `rooms.draw_interval_sec` (3–15, BR-15). Đổi được ở mọi trạng thái ván; có hiệu lực từ số kế tiếp vì
+        Ghi `rooms.draw_interval_sec` (5 / 10 / 15, BR-15, Q-070). Đổi được ở mọi trạng thái ván; có hiệu lực từ số kế tiếp vì
         Nhịp mới áp dụng từ lần `drawNumber` kế tiếp (`next_call_at` tính lúc rao số – ADR-05). Tên phòng chỉ đặt khi tạo (ENT-02) nên không sửa ở đây.
       x-business: [BIZ-06]
       x-screens: [SCR-11.A3]
@@ -861,7 +861,7 @@ paths:
         Chỉ host. Ván phải là ván hiện tại (`GAME_STALE`), `waiting`; phòng `active` và chưa quá `expires_at`
         (`ROOM_CLOSING`, BR-14). Transaction:
         1. Xóa các player có `ticket_ids` rỗng hoặc không còn trong phòng (`users.current_room_id ≠ roomId`) (Q-047).
-        2. Còn 0 player → `422 NO_TICKETS_HELD` (BR-14), không đổi gì (rollback).
+        2. Còn < 2 player → `422 NO_TICKETS_HELD` (BR-14, Q-059), không đổi gì (rollback).
         3. Chép `display_name`, `photo_url` hiện tại vào từng player; `games.player_count`, `started_at`.
         4. `games.status = running`, `last_event = game_started`; **server rao ngay số đầu tiên**: `rooms.called_numbers =
            [crypto.randomInt(1..90)]` (Q-046, Q-052), `next_call_at = now + N`.
@@ -1489,7 +1489,7 @@ components:
               summary: BR-14
               value:
                 code: NO_TICKETS_HELD
-                message: Chưa có ai lấy vé, chưa thể bắt đầu
+                message: Cần ít nhất 2 người lấy vé để bắt đầu
             displayName:
               summary: BR-27
               value:
@@ -1714,8 +1714,7 @@ components:
           $ref: '#/components/schemas/GameId'
         drawIntervalSec:
           type: integer
-          minimum: 3
-          maximum: 15
+          enum: [5, 10, 15]
         expiresAt:
           type: string
           format: date-time
@@ -1727,8 +1726,7 @@ components:
       properties:
         drawIntervalSec:
           type: integer
-          minimum: 3
-          maximum: 15
+          enum: [5, 10, 15]
           description: Nhịp quay (giây/số) (BR-15)
     RoomSettings:
       type: object
@@ -1738,8 +1736,7 @@ components:
           $ref: '#/components/schemas/RoomId'
         drawIntervalSec:
           type: integer
-          minimum: 3
-          maximum: 15
+          enum: [5, 10, 15]
     InvitePreview:
       type: object
       required: [status, room, viewer]

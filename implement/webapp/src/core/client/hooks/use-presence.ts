@@ -33,8 +33,10 @@ export function usePresence(roomId: string | null, me: PresenceMe | null): void 
         unsubscribe = onValue(ref(db, ".info/connected"), (snap) => {
           if (snap.val() !== true) return;
           // Đăng ký onDisconnect trước, rồi mới ghi online (tránh kẹt online nếu rớt giữa chừng).
+          // `set` đủ field (không `update`): node chưa tồn tại thì `update` thiếu `display_name` → rule `.validate`
+          // từ chối việc đăng ký onDisconnect và cả chuỗi ghi online bị bỏ.
           onDisconnect(node)
-            .update({ online: false, at: serverTimestamp() })
+            .set({ online: false, display_name: displayName, photo_url: photoUrl, at: serverTimestamp() })
             .then(() => {
               if (cancelled) return undefined;
               return set(node, { online: true, display_name: displayName, photo_url: photoUrl, at: serverTimestamp() });
@@ -48,6 +50,19 @@ export function usePresence(roomId: string | null, me: PresenceMe | null): void 
       unsubscribe?.();
     };
   }, [roomId, uid, displayName, photoUrl]);
+}
+
+/**
+ * Trước khi rời phòng: hủy `onDisconnect` đã đăng ký cho `presence/{roomId}/{uid}` (server xóa node sau khi rời,
+ * không để lệnh offline ghi lại sau đó). Lỗi chỉ bỏ qua — việc rời vẫn tiếp tục.
+ */
+export async function cancelPresence(roomId: string, uid: string): Promise<void> {
+  try {
+    await getClientAuth().authStateReady();
+    await onDisconnect(ref(getClientDatabase(), `presence/${roomId}/${uid}`)).cancel();
+  } catch {
+    // bỏ qua
+  }
 }
 
 export type RoomPresenceState = {

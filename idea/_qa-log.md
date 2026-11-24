@@ -355,3 +355,75 @@
 - **Trả lời:** Khi ván kết thúc (có người thắng, hết 90 số hoặc bị hủy), vé của mọi player đang **offline** tự trả về bộ vé; player vẫn là thành viên phòng, quay lại thì lấy vé mới. [ASSUMED] Offline = không có kết nối tại thời điểm ván kết thúc (theo trạng thái online/offline của phòng). Bổ sung cho BR-11, BR-13.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** BR-11, BR-29, BIZ-08, FLOW-07, FLOW-08, ENT-07, api-contract (confirmGameEnd, drawNumber), SCR-05, SCR-07
+
+## Q-059 · implement · 2026-11-24
+- **Hỏi:** Host một mình (có vé) vẫn bắt đầu được ván — có cần số người chơi tối thiểu?
+- **Trả lời:** Cần **≥ 2 người giữ vé** (đếm người khác nhau có vé trong ván, host có vé cũng tính) mới bắt đầu được. Không thêm mã lỗi mới: dùng lại `NO_TICKETS_HELD` (422) với câu "Cần ít nhất 2 người lấy vé".
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-14, ENT (Ván › Các vé tham gia), FLOW-05→06, FLOW-06 E1, api-contract (startGame, NO_TICKETS_HELD), SCR-04 #9 / A4
+
+## Q-060 · implement · 2026-11-24
+- **Hỏi:** Sau khi ván kết thúc, player giữ vé cũ sang ván mới; muốn bỏ vé phải mở sheet Vé — có cần nút bỏ vé nhanh?
+- **Trả lời:** Giữ BR-11/BR-29 như cũ (vé người online tự giữ sang ván mới, người offline bị trả vé). Bên dưới vé của tôi ở SCR-04 khi ván `waiting` có nút "Bỏ vé" (gọi `releaseTicket`); không có nút "Giữ vé" (vé tự giữ).
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #11
+
+## Q-061 · implement · 2026-11-24
+- **Hỏi:** Panel số chỉ hiện 5 số gần nhất — có xem được các số đã rao trước đó ngay trên panel?
+- **Trả lời:** Có: dãy chip hiện mọi số đã rao (mới nhất bên trái), vuốt/scroll ngang để xem số cũ hơn. Bảng 90 giữ nguyên.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #7
+
+## Q-062 · implement · 2026-11-24
+- **Hỏi:** Nút KINH chiếm cả hàng; người chơi cần cách sửa ô đánh sai và bật tự dò ngay trong ván.
+- **Trả lời:** Thanh KINH thành 1 hàng 3 nút chia đều: "Check" (đồng bộ ô đã đánh với số đã gọi: bỏ ô sai, đánh số đã gọi; chỉ mode Tự dò; bấm lại sau 10 giây), "Auto" (bật/tắt mode Auto), "KINH" (nhỏ lại). BR-20 (Tự dò không gợi ý) được nới: người chơi chủ động bấm Check.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #14, BR-20, SUP-10
+
+## Q-063 · implement · 2026-11-24
+- **Hỏi:** Vé trên màn hình chưa giống tờ vé dò giấy.
+- **Trả lời:** Vé kiểu giấy in: nền giấy ngà, khung + viền kép màu vé, tiêu đề có hoa văn ❖ ✦, lưới caro kẻ đậm, số in đậm kiểu chữ hẹp, ô trống đặc màu vé; 3 cụm × 3 hàng, giữa các cụm là dải hoa văn chấm + chữ "✦ ❖ buddio.com ❖ ✦" (bố cục 2 vé dải chỉ 5px → chỉ hoa văn chấm, không chữ). Chiều cao vé giữ nguyên SCR-04 §5.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #11, SCR-05 #4 (PaperTicket)
+
+## Q-064 · implement · 2026-11-24
+- **Hỏi:** Ô vé cần cao hơn rộng, ô hẹp lại; dải giữa các cụm ghi "-------buddio.com-------".
+- **Trả lời:** 1 vé: ô 32×40, chữ 20px, dải 12px → vé 292×412. 2 vé: ô 24×27, chữ 14px, dải 9px → vé 220×281 (vẫn vừa 375×812 không cuộn). Dải ngăn: gạch đứt màu vé hai bên + chữ "buddio.com" ở cả 2 bố cục.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 §5, SCR-05 #4, Q-063
+
+## Q-065 · implement · 2026-11-24
+- **Hỏi:** Ô vé cao hơn, hẹp hơn nữa; 2 vé đứng song song thay vì xếp dọc.
+- **Trả lời:** 1 vé: ô 28×48, chữ 22px → vé 256×484. 2 vé song song: ô 18×48, chữ 15px, tiêu đề 14px → mỗi vé 166×470, khe 8px.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 §5, Q-064
+
+## Q-066 · implement · 2026-11-24
+- **Hỏi:** Vé cần bề rộng tối thiểu; 2 vé song song nên gần full width.
+- **Trả lời:** Vé đơn min-width 240px (tối đa 9 cột = 256px); 2 vé mỗi vé chiếm nửa hàng (flex-1), min-width 150px, không giới hạn tối đa → gần full width trong khung 480px.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 §5, Q-065
+
+## Q-067 · implement · 2026-11-24
+- **Hỏi:** Cần nút tắt tiếng nhanh trong ván.
+- **Trả lời:** Thêm nút "Tắt tiếng"/"Bật tiếng" ngay cạnh "Check" ở thanh KINH (4 nút: Check · Tắt tiếng · Tự dò · KINH). Lưu `loto:sound`; bật lại thì mở khóa audio luôn.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #14, SUP-02
+
+## Q-068 · implement · 2026-11-24
+- **Hỏi:** Đang Tự dò (Auto) rồi tắt → các ô đã tô bị mất.
+- **Trả lời:** Khi tắt Tự dò, chép các ô Auto đang tô (mọi số đã gọi có trên vé) vào dấu tay (localStorage `{gameId}:{ticketId}`), người chơi dò tiếp từ đó.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #14, A2
+
+## Q-069 · implement · 2026-11-24
+- **Hỏi:** Có giữ tính năng hồ sơ cá nhân (SCR-10, hàng "Hồ sơ cá nhân ›" trong SCR-11)?
+- **Trả lời:** Bỏ. SCR-11 không còn hàng "Hồ sơ cá nhân ›".
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-11 #5, SCR-10, T-011
+
+## Q-070 · implement · 2026-11-24
+- **Hỏi:** Nhịp quay chỉnh bước 1 giây trong 3–15?
+- **Trả lời:** Chỉ 3 mức 5 → 10 → 15 giây, thấp nhất 5 (mặc định 5). Giá trị khác → `DRAW_INTERVAL_INVALID`.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** BR-15, SCR-11 #4, api-contract `updateRoom`/`RoomUpdate`/`RoomSettings`/`Room`, TBL-02 `draw_interval_sec`

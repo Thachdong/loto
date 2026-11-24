@@ -7,8 +7,9 @@ import {
   type DocumentReference,
   type Transaction,
 } from "firebase-admin/firestore";
+import { expireAtFrom } from "@/core/db/ttl";
 import { firestore, rtdb } from "@/core/db/firestore";
-import type { Ticket, TicketId } from "@/features/room/shared/types";
+import type { Ticket, TicketColor, TicketId } from "@/features/room/shared/types";
 import type { PlayerDoc, PresenceNode } from "./player.doc";
 import { newPlayerDoc, playerFromDoc, type NewPlayer, type PlayerRecord } from "./player.mapper";
 
@@ -39,6 +40,16 @@ function ticketRef(roomId: string, ticketId: string): DocumentReference {
 /** Doc vé `rooms/{roomId}/tickets/{ticketId}` có tồn tại không (đọc trong transaction). */
 export async function getTicketExistsInTx(tx: Transaction, roomId: string, ticketId: TicketId): Promise<boolean> {
   return (await tx.get(ticketRef(roomId, ticketId))).exists;
+}
+
+/** Lưới + màu của vé (đọc trong transaction), null khi không có doc. */
+export async function getTicketGridInTx(
+  tx: Transaction,
+  roomId: string,
+  ticketId: TicketId,
+): Promise<{ color: TicketColor; grid: number[] } | null> {
+  const data = (await tx.get(ticketRef(roomId, ticketId))).data();
+  return data ? { color: data.color as TicketColor, grid: [...(data.grid as number[])] } : null;
 }
 
 /**
@@ -90,6 +101,71 @@ export function removeTicketFromPlayerInTx(
 
 export function deletePlayerInTx(tx: Transaction, roomId: string, gameId: string, uid: string): void {
   tx.delete(playerRef(roomId, gameId, uid));
+}
+
+/** Xóa nhiều player của ván (startGame: người rỗng/đã rời; leaveRoom ván `waiting`). */
+export function deletePlayersInTx(tx: Transaction, roomId: string, gameId: string, uids: readonly string[]): void {
+  for (const uid of uids) tx.delete(playerRef(roomId, gameId, uid));
+}
+
+/** Hồ sơ hiện tại của một user theo `users/{uid}` (chỉ field startGame cần). */
+export type PlayerStatus = { currentRoomId: string | null; displayName: string; photoUrl: string | null };
+
+/**
+ * `users/{uid}` của các player đọc một lượt (`getAll`, trong transaction): `current_room_id`, tên, ảnh hiện tại.
+ * uid không có doc → không có key.
+ */
+export async function getPlayerStatusInTx(
+  tx: Transaction,
+  uids: readonly string[],
+): Promise<Record<string, PlayerStatus>> {
+  if (uids.length === 0) return {};
+  const snaps = await tx.getAll(...uids.map((uid) => firestore().collection("users").doc(uid)));
+  const out: Record<string, PlayerStatus> = {};
+  for (const snap of snaps) {
+    const data = snap.data();
+    if (!data) continue;
+    out[snap.id] = {
+      currentRoomId: (data.current_room_id as string | null | undefined) ?? null,
+      displayName: data.display_name as string,
+      photoUrl: (data.photo_url as string | null | undefined) ?? null,
+    };
+  }
+  return out;
+}
+
+/** Cập nhật tên/ảnh hiển thị đã chép vào player (startGame, Q-047). */
+export function updatePlayerProfilesInTx(
+  tx: Transaction,
+  roomId: string,
+  gameId: string,
+  profiles: readonly { uid: string; displayName: string; photoUrl: string | null }[],
+): void {
+  for (const p of profiles) {
+    tx.update(playerRef(roomId, gameId, p.uid), { display_name: p.displayName, photo_url: p.photoUrl });
+  }
+}
+
+/** Chép player (vé, tên, ảnh) sang ván mới (BR-11): `joined_at = now`, `expire_at` theo phòng. */
+export function copyPlayersInTx(
+  tx: Transaction,
+  roomId: string,
+  gameId: string,
+  players: readonly PlayerRecord[],
+  roomCreatedAt: Date,
+  now: Date,
+): void {
+  const expireAt = Timestamp.fromDate(expireAtFrom(roomCreatedAt));
+  for (const p of players) {
+    const doc: PlayerDoc = {
+      display_name: p.displayName,
+      photo_url: p.photoUrl,
+      ticket_ids: [...p.ticketIds],
+      joined_at: Timestamp.fromDate(now),
+      expire_at: expireAt,
+    };
+    tx.create(playerRef(roomId, gameId, p.uid), doc);
+  }
 }
 
 /** Ghi đè `grid`, `set_no`, `updated_at` của các vé (tạo bộ vé mới, FLOW-04). */

@@ -3,20 +3,23 @@ import "server-only";
 import type { Transaction } from "firebase-admin/firestore";
 import { logError } from "@/core/server/log";
 import { clearCurrentRoomInTx, findUidsInRoomInTx } from "@/features/auth/db/user.repository";
+import { resultOfClaims } from "@/features/room/db/game.mapper";
 import {
   cancelGameInTx,
   closeRoomExpiredInTx,
+  finishAndCloseInTx,
   getGameInTx,
   getRoomInTx,
   markRoomClosingInTx,
   removeRoomPresence,
 } from "@/features/room/db/room.repository";
 import type { GameRecord, RoomRecord } from "@/features/room/db/room.mapper";
+import { decideExpiry } from "@/features/room/shared/domain/decide-expiry";
 import type { GameStatus, RoomStatus } from "@/features/room/shared/types";
 
 export type LazyExpiryContext = { roomId: string; now: Date };
 
-/** `none`: không đổi gì · `closed`: đã đóng phòng (ván chờ) · `closing`: chờ ván đang diễn ra kết thúc. */
+/** `none`: không đổi gì · `closed`: đã đóng phòng · `closing`: chờ ván đang diễn ra kết thúc. */
 export type LazyExpiryOutcome = "none" | "closed" | "closing";
 
 export type LazyExpiryApplyOptions = {
@@ -28,10 +31,13 @@ export type LazyExpiryApplyOptions = {
 export type LazyExpiryPlan = {
   /** Phòng như đã đọc (trước khi áp dụng), null khi không tồn tại. */
   room: RoomRecord | null;
+  /** Ván hiện tại như đã đọc (trước khi áp dụng); null khi chưa đọc (phòng chưa tới hạn) hoặc không tồn tại. */
   game: GameRecord | null;
   outcome: LazyExpiryOutcome;
   /** Trạng thái phòng sau khi áp dụng, null khi phòng không tồn tại. */
   status: RoomStatus | null;
+  /** Trạng thái ván sau khi áp dụng, null khi chưa đọc ván. */
+  gameStatus: GameStatus | null;
   /** uid có `current_room_id == roomId` (chỉ đọc khi `outcome = closed`). */
   memberUids: string[];
   /** Pha ghi — gọi trong cùng transaction, sau mọi lệnh đọc. */
@@ -40,17 +46,17 @@ export type LazyExpiryPlan = {
   afterCommit(): Promise<void>;
 };
 
-/** Ván đang diễn ra → phòng chỉ chuyển `closing` (BR-04). T-006/T-007 làm phần tự kết thúc ván. */
-const IN_PROGRESS: readonly GameStatus[] = ["running", "paused", "awaiting_confirm"];
-
 const noop = async () => undefined;
 
 /**
- * Pha ĐỌC của lazy expiry (BR-04, ADR-05). Chỉ khi phòng `active` và `now ≥ expires_at`:
- * - ván hiện tại `running`/`paused`/`awaiting_confirm` → kế hoạch: phòng `closing`, `last_event = room_closing`;
- * - còn lại (ván `waiting`, hoặc không còn ván chưa kết thúc) → kế hoạch: ván `cancelled`, phòng `closed`
- *   (`close_reason = expired`, `member_count = 0`, `last_event = room_closed`), mọi thành viên
- *   `current_room_id = null`; sau commit xóa `presence/{roomId}`, `presence_access/{roomId}`.
+ * Pha ĐỌC của lazy expiry (BR-04, ADR-05) theo `decideExpiry`:
+ * - `mark_closing` (ván `running`/`paused`): phòng `closing`, `last_event = room_closing`;
+ * - `cancel_and_close` (ván `waiting`/không còn ván chưa kết thúc): ván `waiting` → `cancelled`, phòng `closed`;
+ * - `finish_and_close` (ván `awaiting_confirm`): ván `finished` (`winners` = claims `win`, `result = won`;
+ *   không có → `no_winner`), phòng `closed`;
+ * - `close` (phòng `closing` mà ván đã `finished`/`cancelled`): phòng `closed`.
+ * Đóng phòng: `close_reason = expired`, `member_count = 0`, `last_event = room_closed`, mọi thành viên
+ * `current_room_id = null`; sau commit xóa `presence/{roomId}`, `presence_access/{roomId}`.
  */
 export async function planLazyExpiry(tx: Transaction, ctx: LazyExpiryContext): Promise<LazyExpiryPlan> {
   const { roomId, now } = ctx;
@@ -60,21 +66,32 @@ export async function planLazyExpiry(tx: Transaction, ctx: LazyExpiryContext): P
     game,
     outcome: "none",
     status: room?.status ?? null,
+    gameStatus: game?.status ?? null,
     memberUids: [],
     apply: () => undefined,
     afterCommit: noop,
   });
 
-  if (!room || room.status !== "active" || now.getTime() < room.expiresAt.getTime()) return unchanged();
+  if (!room || room.status === "closed") return unchanged();
+  if (room.status === "active" && now.getTime() < room.expiresAt.getTime()) return unchanged();
 
   const game = await getGameInTx(tx, roomId, room.currentGameId);
+  const decision = decideExpiry({
+    roomStatus: room.status,
+    gameStatus: game?.status ?? null,
+    now,
+    expiresAt: room.expiresAt,
+  });
 
-  if (game && IN_PROGRESS.includes(game.status)) {
+  if (decision === "none") return unchanged(game);
+
+  if (decision === "mark_closing") {
     return {
       room,
       game,
       outcome: "closing",
       status: "closing",
+      gameStatus: game?.status ?? null,
       memberUids: [],
       apply: (t) => markRoomClosingInTx(t, roomId, now),
       afterCommit: noop,
@@ -82,15 +99,26 @@ export async function planLazyExpiry(tx: Transaction, ctx: LazyExpiryContext): P
   }
 
   const memberUids = await findUidsInRoomInTx(tx, roomId);
+  const gameStatusAfter: GameStatus | null =
+    decision === "finish_and_close"
+      ? "finished"
+      : decision === "cancel_and_close" && game?.status === "waiting"
+        ? "cancelled"
+        : (game?.status ?? null);
   return {
     room,
     game,
     outcome: "closed",
     status: "closed",
+    gameStatus: gameStatusAfter,
     memberUids,
     apply: (t, options = {}) => {
-      if (game?.status === "waiting") cancelGameInTx(t, roomId, game.id, now);
-      closeRoomExpiredInTx(t, roomId, now);
+      if (decision === "finish_and_close" && game) {
+        finishAndCloseInTx(t, roomId, game.id, resultOfClaims(game.claims), { reason: "expired", now });
+      } else {
+        if (decision === "cancel_and_close" && game?.status === "waiting") cancelGameInTx(t, roomId, game.id, now);
+        closeRoomExpiredInTx(t, roomId, now);
+      }
       const keep = new Set(options.exceptUids ?? []);
       clearCurrentRoomInTx(
         t,
