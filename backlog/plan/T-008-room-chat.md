@@ -1,10 +1,10 @@
 ---
 task: T-008
 title: Chat trong phòng (SCR-06)
-status: approved
+status: done
 approved_at: 2026-11-24       # dev yêu cầu làm trực tiếp ("làm tính năng chat")
 branch: feature/dongt/T-008-room-chat
-plan_commit:
+plan_commit: 50a1137
 ---
 
 # Plan T-008 · Chat (SCR-06)
@@ -31,4 +31,7 @@ Task `backlog/tasks/T-008-room-chat.md`; api-contract `sendMessage`, `Message`; 
 Theo `[ASSUMED]` của task (code point, 422 cho rỗng/dài, tự cuộn khi ở cuối, badge ở task này).
 
 ## 8. Kết quả
-(điền khi xong)
+- `sendMessageAction` + feature `chat` (domain, listener 50 tin + trang cũ, badge, sheet optimistic/gửi lại/rate limit/không còn quyền).
+- Rules không đổi (cây con phòng đã cấm ghi); thêm test `messages`.
+- Seed `chat-history` / `t008`. Unit + emulator 740/740 pass, build OK. Bỏ chrome-tester; QC test tay theo `backlog/testcases/T-008-room-chat.md`.
+- Chưa có seed `room-basic` (task gọi tên) — test case dùng `room-members` (T-009).

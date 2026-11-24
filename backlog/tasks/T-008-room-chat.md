@@ -2,7 +2,7 @@
 
 | Epic | Milestone | Point | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|
-| EPIC-06 | M2 | 3 | T-007 | TODO |
+| EPIC-06 | M2 | 3 | T-007 | REVIEW |
 
 ## 1. Mục tiêu demo
 Sau task này: **thành viên phòng mở SCR-04 → bấm "Chat" → gõ tin và bấm Gửi → mọi người trong phòng thấy tin ngay (≤ 1 giây) kèm tên, ảnh, giờ; người vào sau thấy tin cũ; gửi tin thứ 6 trong 10 giây thấy "Bạn gửi quá nhanh, thử lại sau vài giây." và nội dung vẫn còn trong ô nhập; tin > 500 ký tự không gửi được.**
@@ -26,33 +26,33 @@ Sau task này: **thành viên phòng mở SCR-04 → bấm "Chat" → gõ tin v�
 
 ## 3. Việc cần làm
 ### UI
-- [ ] Sheet SCR-06 mở từ nút "Chat" trên thanh nút dưới SCR-04 (component 16 đã có từ T-006): tiêu đề "Chat" + ✕; vùng sheet nằm giữa header và thanh KINH/thanh nút (KINH vẫn bấm được – FLOW-12 A2).
-- [ ] Danh sách tin: bubble trái cho người khác (ảnh `sender_photo_url` — rỗng → chữ cái đầu, `sender_name`, giờ `created_at` HH:mm GMT+7, `text`), bubble phải cho mình; mới nhất ở dưới; mở sheet → cuộn xuống cuối; có tin mới khi đang ở cuối → tự cuộn, đang cuộn lên đọc tin cũ → không tự cuộn `[ASSUMED]`.
-- [ ] Phân trang lên: cuộn tới đầu danh sách và còn tin cũ hơn → hiện "Đang tải tin cũ hơn…", query `created_at < mốc` limit 50, giữ vị trí cuộn sau khi chèn.
-- [ ] Ô nhập textarea tự giãn tối đa 4 dòng, placeholder "Nhập tin nhắn…"; bộ đếm "{n}/500" hiện khi n ≥ 450, đỏ khi n > 500. Độ dài tính theo code point sau trim (`Array.from(text.trim()).length`) — dùng chung hàm với server `[ASSUMED]` (emoji tính 1 ký tự).
-- [ ] Nút "Gửi" khóa khi rỗng sau trim, > 500 ký tự hoặc đang gửi.
-- [ ] Bàn phím: thiết bị cảm ứng Enter = xuống dòng; máy tính Enter = gửi, Shift+Enter = xuống dòng (Q-050). Phát hiện bằng `matchMedia('(pointer: coarse)')` `[ASSUMED]`.
-- [ ] Optimistic: bấm Gửi → bubble phải mờ + "Đang gửi…", xóa ô nhập; listener trả về tin thật → thay bubble tạm (khớp theo id trả về từ action).
-- [ ] Lỗi gửi: `RATE_LIMITED` → bỏ bubble tạm, trả nội dung về ô nhập, hiện dòng lỗi 7 "Bạn gửi quá nhanh, thử lại sau vài giây." (ẩn khi gửi thành công lần sau); `NOT_ROOM_MEMBER` → thay ô nhập + nút bằng thanh 8 "Không thể gửi tin trong phòng này"; lỗi mạng/`INTERNAL_ERROR` → bubble "Gửi thất bại · Gửi lại" (bấm để gửi lại cùng nội dung).
-- [ ] Trạng thái: loading 4–5 bubble skeleton; empty "Chưa có tin nhắn. Chào cả phòng một câu nhé!"; lỗi tải "Không tải được tin nhắn" + "Thử lại".
-- [ ] Badge số tin chưa đọc trên nút "Chat" (SCR-04 component 16): đếm tin có `created_at` > mốc localStorage `loto.chatSeenAt.{roomId}` và `sender_uid ≠ mình`; mở sheet / nhận tin khi sheet đang mở → cập nhật mốc, badge về 0. localStorage lỗi → giữ mốc trong bộ nhớ trang `[ASSUMED]` (badge thuộc SCR-04 nhưng phụ thuộc chat nên làm ở đây).
-- [ ] Bàn phím ảo mở: sheet co theo `visualViewport`, ô nhập nằm ngay trên bàn phím (Q-050).
+- [x] Sheet SCR-06 mở từ nút "Chat" trên thanh nút dưới SCR-04 (component 16 đã có từ T-006): tiêu đề "Chat" + ✕; vùng sheet nằm giữa header và thanh KINH/thanh nút (KINH vẫn bấm được – FLOW-12 A2).
+- [x] Danh sách tin: bubble trái cho người khác (ảnh `sender_photo_url` — rỗng → chữ cái đầu, `sender_name`, giờ `created_at` HH:mm GMT+7, `text`), bubble phải cho mình; mới nhất ở dưới; mở sheet → cuộn xuống cuối; có tin mới khi đang ở cuối → tự cuộn, đang cuộn lên đọc tin cũ → không tự cuộn `[ASSUMED]`.
+- [x] Phân trang lên: cuộn tới đầu danh sách và còn tin cũ hơn → hiện "Đang tải tin cũ hơn…", query `created_at < mốc` limit 50, giữ vị trí cuộn sau khi chèn.
+- [x] Ô nhập textarea tự giãn tối đa 4 dòng, placeholder "Nhập tin nhắn…"; bộ đếm "{n}/500" hiện khi n ≥ 450, đỏ khi n > 500. Độ dài tính theo code point sau trim (`Array.from(text.trim()).length`) — dùng chung hàm với server `[ASSUMED]` (emoji tính 1 ký tự).
+- [x] Nút "Gửi" khóa khi rỗng sau trim, > 500 ký tự hoặc đang gửi.
+- [x] Bàn phím: thiết bị cảm ứng Enter = xuống dòng; máy tính Enter = gửi, Shift+Enter = xuống dòng (Q-050). Phát hiện bằng `matchMedia('(pointer: coarse)')` `[ASSUMED]`.
+- [x] Optimistic: bấm Gửi → bubble phải mờ + "Đang gửi…", xóa ô nhập; listener trả về tin thật → thay bubble tạm (khớp theo id trả về từ action).
+- [x] Lỗi gửi: `RATE_LIMITED` → bỏ bubble tạm, trả nội dung về ô nhập, hiện dòng lỗi 7 "Bạn gửi quá nhanh, thử lại sau vài giây." (ẩn khi gửi thành công lần sau); `NOT_ROOM_MEMBER` → thay ô nhập + nút bằng thanh 8 "Không thể gửi tin trong phòng này"; lỗi mạng/`INTERNAL_ERROR` → bubble "Gửi thất bại · Gửi lại" (bấm để gửi lại cùng nội dung).
+- [x] Trạng thái: loading 4–5 bubble skeleton; empty "Chưa có tin nhắn. Chào cả phòng một câu nhé!"; lỗi tải "Không tải được tin nhắn" + "Thử lại".
+- [x] Badge số tin chưa đọc trên nút "Chat" (SCR-04 component 16): đếm tin có `created_at` > mốc localStorage `loto.chatSeenAt.{roomId}` và `sender_uid ≠ mình`; mở sheet / nhận tin khi sheet đang mở → cập nhật mốc, badge về 0. localStorage lỗi → giữ mốc trong bộ nhớ trang `[ASSUMED]` (badge thuộc SCR-04 nhưng phụ thuộc chat nên làm ở đây).
+- [x] Bàn phím ảo mở: sheet co theo `visualViewport`, ô nhập nằm ngay trên bàn phím (Q-050).
 
 ### API / Backend
-- [ ] `sendMessageAction({roomId, text})` theo api-contract `sendMessage`: xác thực phiên (`UNAUTHENTICATED`) → Zod (`roomId` string, `text` string; sai kiểu → `VALIDATION_FAILED`) → trim → rỗng → `422 MESSAGE_EMPTY`, > 500 code point → `422 MESSAGE_TOO_LONG` `[ASSUMED]` (độ dài kiểm sau trim ở lớp nghiệp vụ để trả đúng mã 422 trong bảng lỗi, Zod chỉ kiểm kiểu).
-- [ ] Transaction Firestore: lazy expiry (BR-04, hàm chung từ T-006) → `users.current_room_id ≠ roomId` hoặc phòng `closed` → `403 NOT_ROOM_MEMBER`.
-- [ ] Rate limit (SUP-07) trong cùng transaction: đọc `users.chat_recent_at`, lọc mốc trong 10 giây gần nhất (giờ server); đã đủ 5 → `429 RATE_LIMITED`, không ghi gì; ngược lại thêm `now`, giữ tối đa 5 mốc mới nhất.
-- [ ] Tạo `messages/{autoId}`: `sender_uid`, `sender_name` = `users.display_name`, `sender_photo_url` = `users.photo_url` (chép lúc gửi), `text` (đã trim), `created_at` = server timestamp, `expire_at` = `rooms.created_at + 31 ngày` (NFR-11). Không ghi `rooms.last_event`.
-- [ ] Trả `201 Message` (`id`, `senderUid`, `senderName`, `senderPhotoUrl`, `text`, `createdAt`) qua `ActionResult`.
-- [ ] Hàm thuần `checkChatRate(recent: Date[], now: Date) → {allowed, nextRecent}` và `normalizeMessage(text) → {ok, text | code}` ở lớp domain, dùng chung client/server.
+- [x] `sendMessageAction({roomId, text})` theo api-contract `sendMessage`: xác thực phiên (`UNAUTHENTICATED`) → Zod (`roomId` string, `text` string; sai kiểu → `VALIDATION_FAILED`) → trim → rỗng → `422 MESSAGE_EMPTY`, > 500 code point → `422 MESSAGE_TOO_LONG` `[ASSUMED]` (độ dài kiểm sau trim ở lớp nghiệp vụ để trả đúng mã 422 trong bảng lỗi, Zod chỉ kiểm kiểu).
+- [x] Transaction Firestore: lazy expiry (BR-04, hàm chung từ T-006) → `users.current_room_id ≠ roomId` hoặc phòng `closed` → `403 NOT_ROOM_MEMBER`.
+- [x] Rate limit (SUP-07) trong cùng transaction: đọc `users.chat_recent_at`, lọc mốc trong 10 giây gần nhất (giờ server); đã đủ 5 → `429 RATE_LIMITED`, không ghi gì; ngược lại thêm `now`, giữ tối đa 5 mốc mới nhất.
+- [x] Tạo `messages/{autoId}`: `sender_uid`, `sender_name` = `users.display_name`, `sender_photo_url` = `users.photo_url` (chép lúc gửi), `text` (đã trim), `created_at` = server timestamp, `expire_at` = `rooms.created_at + 31 ngày` (NFR-11). Không ghi `rooms.last_event`.
+- [x] Trả `201 Message` (`id`, `senderUid`, `senderName`, `senderPhotoUrl`, `text`, `createdAt`) qua `ActionResult`.
+- [x] Hàm thuần `checkChatRate(recent: Date[], now: Date) → {allowed, nextRecent}` và `normalizeMessage(text) → {ok, text | code}` ở lớp domain, dùng chung client/server.
 
 ### Data
-- [ ] `firestore.rules`: `rooms/{roomId}/messages/{id}` — đọc theo rule cây con phòng (`users/{auth.uid}.current_room_id == roomId`, có từ T-003); **cấm mọi ghi từ client** (create/update/delete).
-- [ ] Index: `created_at` single-field (mặc định) đủ cho orderBy + range; không cần composite.
-- [ ] Seed: kịch bản `chat-history` — phòng có host + 2 player và 120 tin cũ (để thử phân trang) `[ASSUMED]` tên kịch bản theo script seed của T-001.
+- [x] `firestore.rules`: `rooms/{roomId}/messages/{id}` — đọc theo rule cây con phòng (`users/{auth.uid}.current_room_id == roomId`, có từ T-003); **cấm mọi ghi từ client** (create/update/delete).
+- [x] Index: `created_at` single-field (mặc định) đủ cho orderBy + range; không cần composite.
+- [x] Seed: kịch bản `chat-history` — phòng có host + 2 player và 120 tin cũ (để thử phân trang) `[ASSUMED]` tên kịch bản theo script seed của T-001.
 
 ### Khác
-- [ ] Từ điển tiếng Việt: thêm các chuỗi của SCR-06 vào từ điển chung (NFR-16).
+- [x] Từ điển tiếng Việt: thêm các chuỗi của SCR-06 vào từ điển chung (NFR-16).
 
 ## 4. Acceptance criteria
 | # | Given | When | Then | Nguồn |
@@ -113,10 +113,10 @@ AC-9 phủ bằng rules test; AC-13 kiểm lại trong kịch bản Chrome của
 - Seed `chat-history`: như `room-basic` + 120 tin cách nhau 1 phút `[ASSUMED]`.
 
 ## 6. Definition of Done
-- [ ] DoD chung (xem `backlog.md` mục 1)
-- [ ] Rules test: client không ghi được `messages`, người ngoài phòng không đọc được
-- [ ] Hàm `normalizeMessage`, `checkChatRate` dùng chung client/server, có unit test biên 500/501 và 5/6 tin
-- [ ] Smoke lại kịch bản chính T-006/T-007 (KINH vẫn bấm được khi sheet Chat mở)
+- [x] DoD chung (xem `backlog.md` mục 1)
+- [x] Rules test: client không ghi được `messages`, người ngoài phòng không đọc được
+- [x] Hàm `normalizeMessage`, `checkChatRate` dùng chung client/server, có unit test biên 500/501 và 5/6 tin
+- [x] Smoke lại kịch bản chính T-006/T-007 (KINH vẫn bấm được khi sheet Chat mở)
 
 ## 7. Ghi chú
 - `[ASSUMED]` Độ dài tin đếm theo code point (emoji = 1 ký tự), cùng hàm ở client và server.
@@ -124,3 +124,5 @@ AC-9 phủ bằng rules test; AC-13 kiểm lại trong kịch bản Chrome của
 - `[ASSUMED]` Badge chưa đọc trên nút "Chat" của SCR-04 làm trong task này (phụ thuộc dữ liệu chat).
 - `[ASSUMED]` Tự cuộn xuống khi có tin mới chỉ khi đang ở cuối danh sách.
 - Đề xuất point: checklist gồm listener + phân trang ngược + optimistic/gửi lại + rate limit transaction + badge + rules test → sát **5** hơn 3. Giữ 3 theo slices.md, đề xuất nâng lên 5.
+
+> QC: chạy test case tay theo [T-008-room-chat.md](../testcases/T-008-room-chat.md).
