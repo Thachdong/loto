@@ -26,11 +26,15 @@ describe("PaperTicket", () => {
     }
   });
 
-  it("shows grid numbers, colors the title and empty cells with the ticket color", () => {
+  it("paper style: ticket-color frame/title/empty cells, separators with ornament text between the 3 blocks", () => {
     render(<PaperTicket id="red_a" grid={grid} />);
     const root = screen.getByTestId("paper-ticket-red_a");
     expect(root).toHaveTextContent("Đỏ A");
-    expect(root.style.backgroundColor).toBe("rgb(220, 38, 38)");
+    expect(root.style.borderColor).toBe("rgb(220, 38, 38)");
+    expect(within(root).getByTestId("paper-title").style.color).toBe("rgb(220, 38, 38)");
+    // 2 dải ngăn giữa 3 cụm, có chữ in giữa (bố cục xem trước)
+    expect(within(root).getAllByTestId("paper-separator")).toHaveLength(2);
+    expect(within(root).getAllByTestId("paper-separator")[0]).toHaveTextContent("buddio.com");
     const empty = root.querySelector("[data-cell='empty']") as HTMLElement;
     expect(empty.style.backgroundColor).toBe("rgb(220, 38, 38)");
     expect(root.querySelector("[data-cell]:not([data-cell='empty'])")).toHaveTextContent("1");

@@ -379,3 +379,9 @@
 - **Trả lời:** Thanh KINH thành 1 hàng 3 nút chia đều: "Check" (đồng bộ ô đã đánh với số đã gọi: bỏ ô sai, đánh số đã gọi; chỉ mode Tự dò; bấm lại sau 10 giây), "Auto" (bật/tắt mode Auto), "KINH" (nhỏ lại). BR-20 (Tự dò không gợi ý) được nới: người chơi chủ động bấm Check.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 #14, BR-20, SUP-10
+
+## Q-063 · implement · 2026-11-24
+- **Hỏi:** Vé trên màn hình chưa giống tờ vé dò giấy.
+- **Trả lời:** Vé kiểu giấy in: nền giấy ngà, khung + viền kép màu vé, tiêu đề có hoa văn ❖ ✦, lưới caro kẻ đậm, số in đậm kiểu chữ hẹp, ô trống đặc màu vé; 3 cụm × 3 hàng, giữa các cụm là dải hoa văn chấm + chữ "✦ ❖ buddio.com ❖ ✦" (bố cục 2 vé dải chỉ 5px → chỉ hoa văn chấm, không chữ). Chiều cao vé giữ nguyên SCR-04 §5.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 #11, SCR-05 #4 (PaperTicket)
