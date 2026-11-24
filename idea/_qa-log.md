@@ -391,3 +391,9 @@
 - **Trả lời:** 1 vé: ô 32×40, chữ 20px, dải 12px → vé 292×412. 2 vé: ô 24×27, chữ 14px, dải 9px → vé 220×281 (vẫn vừa 375×812 không cuộn). Dải ngăn: gạch đứt màu vé hai bên + chữ "buddio.com" ở cả 2 bố cục.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 §5, SCR-05 #4, Q-063
+
+## Q-065 · implement · 2026-11-24
+- **Hỏi:** Ô vé cao hơn, hẹp hơn nữa; 2 vé đứng song song thay vì xếp dọc.
+- **Trả lời:** 1 vé: ô 28×48, chữ 22px → vé 256×484. 2 vé song song: ô 18×48, chữ 15px, tiêu đề 14px → mỗi vé 166×470, khe 8px.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 §5, Q-064

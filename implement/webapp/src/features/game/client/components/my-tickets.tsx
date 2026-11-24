@@ -5,6 +5,7 @@ import { t } from "@/core/shared/i18n/vi";
 import { useMarks } from "@/features/game/client/hooks/use-marks";
 import type { PlayMode } from "@/features/game/client/hooks/use-play-mode";
 import { autoEffects } from "@/features/game/shared/domain/auto-effects";
+import { ticketWidth } from "@/features/game/shared/domain/ticket-layout";
 import type { GameView } from "@/features/room/shared/types";
 import { PaperTicket, useTicketActions } from "@/features/ticket/client";
 import type { TicketView } from "@/features/ticket/shared/types";
@@ -30,7 +31,7 @@ export function MyTickets({ roomId, gameId, game, tickets, ready, calledNumbers,
   const last = called.length > 0 ? called[called.length - 1] : null;
 
   if (!ready) {
-    return <Skeleton data-testid="tickets-skeleton" aria-busy="true" className="mx-auto h-[412px] w-full max-w-[292px] rounded-md" />;
+    return <Skeleton data-testid="tickets-skeleton" aria-busy="true" className="mx-auto h-[484px] w-full max-w-[256px] rounded-md" />;
   }
 
   if (tickets.length === 0) {
@@ -51,7 +52,18 @@ export function MyTickets({ roomId, gameId, game, tickets, ready, calledNumbers,
     );
   }
 
-  return <TicketList roomId={roomId} gameId={gameId} game={game} tickets={tickets} called={called} last={last} mode={mode} onOpenTickets={onOpenTickets} />;
+  return (
+    <TicketList
+      roomId={roomId}
+      gameId={gameId}
+      game={game}
+      tickets={tickets}
+      called={called}
+      last={last}
+      mode={mode}
+      onOpenTickets={onOpenTickets}
+    />
+  );
 }
 
 function TicketList({
@@ -63,30 +75,43 @@ function TicketList({
   last,
   mode,
   onOpenTickets,
-}: Omit<Props, "ready" | "calledNumbers"> & { called: number[]; last: number | null }) {
+}: Omit<Props, "ready" | "calledNumbers"> & {
+  called: number[];
+  last: number | null;
+}) {
   const waiting = game.status === "waiting";
   // Ván chờ bắt đầu: bỏ vé ngay trên vé (BR-11 — vé tự giữ sang ván sau, bỏ khi không muốn chơi tiếp).
   const ticketActions = useTicketActions(roomId);
   const size = tickets.length >= 2 ? "double" : "single";
   const canMark = mode === "manual" && PLAYING.has(game.status);
   return (
-    <div data-testid="my-tickets" data-count={tickets.length} className="flex flex-col" style={{ gap: tickets.length >= 2 ? 6 : 0 }}>
+    <div
+      data-testid="my-tickets"
+      data-count={tickets.length}
+      className={tickets.length >= 2 ? "flex flex-row items-start justify-center gap-2" : "flex flex-col"}
+    >
       {tickets.slice(0, 2).map((ticket) => (
-        <MyTicket
+        // 2 vé song song: mỗi cột chiếm nửa hàng, tối đa bề rộng vé (Q-065).
+        <div
           key={ticket.id}
-          gameId={gameId}
-          ticket={ticket}
-          size={size}
-          waiting={waiting}
-          called={called}
-          last={last}
-          mode={mode}
-          canMark={canMark}
-          onOpenTickets={onOpenTickets}
-          releasing={ticketActions.pending === `release:${ticket.id}`}
-          releaseDisabled={ticketActions.pending !== null}
-          onRelease={() => void ticketActions.release(ticket.id)}
-        />
+          className={size === "double" ? "min-w-0 flex-1" : "w-full"}
+          style={size === "double" ? { maxWidth: ticketWidth(2) } : undefined}
+        >
+          <MyTicket
+            gameId={gameId}
+            ticket={ticket}
+            size={size}
+            waiting={waiting}
+            called={called}
+            last={last}
+            mode={mode}
+            canMark={canMark}
+            onOpenTickets={onOpenTickets}
+            releasing={ticketActions.pending === `release:${ticket.id}`}
+            releaseDisabled={ticketActions.pending !== null}
+            onRelease={() => void ticketActions.release(ticket.id)}
+          />
+        </div>
       ))}
     </div>
   );
@@ -107,7 +132,20 @@ type TicketProps = {
   onRelease: () => void;
 };
 
-function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, onOpenTickets, releasing, releaseDisabled, onRelease }: TicketProps) {
+function MyTicket({
+  gameId,
+  ticket,
+  size,
+  waiting,
+  called,
+  last,
+  mode,
+  canMark,
+  onOpenTickets,
+  releasing,
+  releaseDisabled,
+  onRelease,
+}: TicketProps) {
   const manual = useMarks(gameId, ticket.id);
   const auto = mode === "auto" && !waiting ? autoEffects(ticket.grid, called, last) : null;
   const marks = waiting ? new Set<number>() : auto ? auto.marked : manual.marks;
@@ -138,7 +176,13 @@ function MyTicket({ gameId, ticket, size, waiting, called, last, mode, canMark, 
   // Ván chờ bắt đầu: chạm vé mở SCR-05 (AC-14), không đánh dấu.
   return (
     <div className="flex flex-col gap-1">
-      <div role="button" tabIndex={0} data-testid={`ticket-open-${ticket.id}`} onClick={onOpenTickets} onKeyDown={(e) => e.key === "Enter" && onOpenTickets()}>
+      <div
+        role="button"
+        tabIndex={0}
+        data-testid={`ticket-open-${ticket.id}`}
+        onClick={onOpenTickets}
+        onKeyDown={(e) => e.key === "Enter" && onOpenTickets()}
+      >
         {ticketNode}
       </div>
       <Button

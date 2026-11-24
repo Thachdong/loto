@@ -11,7 +11,7 @@ type Props = {
   grid: readonly number[];
   className?: string;
   /**
-   * Bố cục SCR-04 §5: `single` (ô dọc 32×40, chữ 20px, tiêu đề 24px) / `double` (ô 24×27, chữ 14px, tiêu đề 16px).
+   * Bố cục SCR-04 §5: `single` (ô dọc 28×48, chữ 22px, tiêu đề 24px) / `double` (ô 18×48, chữ 15px, tiêu đề 14px, 2 vé song song).
    * Bỏ trống = bố cục co theo bề rộng của SCR-05 (xem trước).
    */
   size?: "single" | "double";
@@ -64,14 +64,13 @@ export function PaperTicket({
     <div
       data-testid={testId ?? `paper-ticket-${id}`}
       data-size={size}
-      className={`mx-auto w-full overflow-hidden rounded-[3px] ${layout ? "" : "max-w-[300px]"} ${className ?? ""}`}
+      className={`mx-auto w-full overflow-hidden rounded-[3px] ${layout ? "" : "max-w-[270px]"} ${className ?? ""}`}
       style={{
         ...(layout ? { maxWidth: ticketWidth(size === "double" ? 2 : 1) } : {}),
         border: `${layout ? 2 : 3}px solid ${palette.base}`,
         backgroundColor: PAPER,
         // Vân giấy nhẹ + viền kép bên trong như vé in.
-        backgroundImage:
-          "radial-gradient(rgba(120,90,40,0.06) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(rgba(120,90,40,0.06) 1px, transparent 1px)",
         backgroundSize: "4px 4px",
         boxShadow: `inset 0 0 0 1px ${PAPER}, inset 0 0 0 2px ${palette.base}55, 0 1px 3px rgba(0,0,0,0.25)`,
       }}
@@ -92,9 +91,7 @@ export function PaperTicket({
       <div className="flex flex-col">
         {blocks.map((block) => (
           <Fragment key={block}>
-            {block > 0 && (
-              <BlockSeparator height={sepHeight} color={palette.base} />
-            )}
+            {block > 0 && <BlockSeparator height={sepHeight} color={palette.base} />}
             <div
               data-testid={`paper-block-${block}`}
               className={`grid grid-cols-9 ${layout ? "" : "gap-px p-px"}`}
@@ -104,13 +101,9 @@ export function PaperTicket({
                 const row = block * 3 + Math.floor(i / SIZE);
                 const col = i % SIZE;
                 const value = grid[row * SIZE + col] ?? 0;
-                const cellStyle: CSSProperties | undefined = layout
-                  ? { height: layout.cell.h, fontSize: layout.font }
-                  : undefined;
-                const aspect = layout ? "" : "aspect-[32/40] ";
-                const lines0 = layout
-                  ? "outline-1 -outline-offset-1 outline-[#3b2f24] "
-                  : "";
+                const cellStyle: CSSProperties | undefined = layout ? { height: layout.cell.h, fontSize: layout.font } : undefined;
+                const aspect = layout ? "" : "aspect-[28/48] ";
+                const lines0 = layout ? "outline-1 -outline-offset-1 outline-[#3b2f24] " : "";
                 if (value === 0) {
                   return (
                     <span
@@ -129,14 +122,8 @@ export function PaperTicket({
                     ? "bg-neutral-400 text-black"
                     : "bg-neutral-800 text-white"
                   : "bg-white text-black";
-                const ring = hit
-                  ? "ring-2 ring-inset ring-red-600"
-                  : isWaiting
-                    ? "ring-2 ring-inset ring-amber-400"
-                    : "";
-                const lines = layout
-                  ? "outline-1 -outline-offset-1 outline-[#3b2f24] "
-                  : "";
+                const ring = hit ? "ring-2 ring-inset ring-red-600" : isWaiting ? "ring-2 ring-inset ring-amber-400" : "";
+                const lines = layout ? "outline-1 -outline-offset-1 outline-[#3b2f24] " : "";
                 const common = `${lines}${aspect}flex w-full items-center justify-center leading-none font-black tracking-[-0.04em] tabular-nums [font-family:'Arial_Narrow','Roboto_Condensed','Helvetica_Neue',Arial,sans-serif] ${layout ? "" : "text-[17px]"} ${state} ${ring}`;
                 const attrs = {
                   "data-cell": String(value),
@@ -146,13 +133,7 @@ export function PaperTicket({
                   style: cellStyle,
                 };
                 return onCellTap ? (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`${common} cursor-pointer`}
-                    onClick={() => onCellTap(value)}
-                    {...attrs}
-                  >
+                  <button key={i} type="button" className={`${common} cursor-pointer`} onClick={() => onCellTap(value)} {...attrs}>
                     {value}
                   </button>
                 ) : (
