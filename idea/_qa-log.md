@@ -397,3 +397,9 @@
 - **Trả lời:** 1 vé: ô 28×48, chữ 22px → vé 256×484. 2 vé song song: ô 18×48, chữ 15px, tiêu đề 14px → mỗi vé 166×470, khe 8px.
 - **Trạng thái:** ANSWERED
 - **Ảnh hưởng:** SCR-04 §5, Q-064
+
+## Q-066 · implement · 2026-11-24
+- **Hỏi:** Vé cần bề rộng tối thiểu; 2 vé song song nên gần full width.
+- **Trả lời:** Vé đơn min-width 240px (tối đa 9 cột = 256px); 2 vé mỗi vé chiếm nửa hàng (flex-1), min-width 150px, không giới hạn tối đa → gần full width trong khung 480px.
+- **Trạng thái:** ANSWERED
+- **Ảnh hưởng:** SCR-04 §5, Q-065

@@ -66,7 +66,12 @@ export function PaperTicket({
       data-size={size}
       className={`mx-auto w-full overflow-hidden rounded-[3px] ${layout ? "" : "max-w-[270px]"} ${className ?? ""}`}
       style={{
-        ...(layout ? { maxWidth: ticketWidth(size === "double" ? 2 : 1) } : {}),
+        // 1 vé: rộng đúng 9 cột; 2 vé: giãn đầy cột (song song gần full width). Luôn có bề rộng tối thiểu (Q-066).
+        ...(layout
+          ? size === "double"
+            ? { minWidth: TICKET_MIN_WIDTH.double }
+            : { maxWidth: ticketWidth(1), minWidth: TICKET_MIN_WIDTH.single }
+          : { minWidth: TICKET_MIN_WIDTH.single }),
         border: `${layout ? 2 : 3}px solid ${palette.base}`,
         backgroundColor: PAPER,
         // Vân giấy nhẹ + viền kép bên trong như vé in.
@@ -149,6 +154,9 @@ export function PaperTicket({
     </div>
   );
 }
+
+/** Bề rộng tối thiểu của vé (px) — Q-066. */
+export const TICKET_MIN_WIDTH = { single: 240, double: 150 } as const;
 
 /** Màu giấy vé và màu kẻ ô caro. */
 const PAPER = "#fdf8ec";

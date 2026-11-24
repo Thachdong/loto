@@ -46,11 +46,13 @@ describe("PaperTicket", () => {
     expect(cell.style.height).toBe("48px");
     expect(cell.style.fontSize).toBe("22px");
     expect(screen.getByTestId("paper-ticket-red_a").style.maxWidth).toBe("256px");
+    expect(screen.getByTestId("paper-ticket-red_a").style.minWidth).toBe("240px");
     rerender(<PaperTicket id="red_a" grid={grid} size="double" />);
     cell = screen.getByTestId("paper-ticket-red_a").querySelector("[data-cell='1']") as HTMLElement;
     expect(cell.style.height).toBe("48px");
     expect(cell.style.fontSize).toBe("15px");
-    expect(screen.getByTestId("paper-ticket-red_a").style.maxWidth).toBe("166px");
+    expect(screen.getByTestId("paper-ticket-red_a").style.maxWidth).toBe("");
+    expect(screen.getByTestId("paper-ticket-red_a").style.minWidth).toBe("150px");
   });
 
   it("marks, auto hit and waiting rows are exposed as data attributes", () => {

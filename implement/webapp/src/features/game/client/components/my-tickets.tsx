@@ -5,9 +5,8 @@ import { t } from "@/core/shared/i18n/vi";
 import { useMarks } from "@/features/game/client/hooks/use-marks";
 import type { PlayMode } from "@/features/game/client/hooks/use-play-mode";
 import { autoEffects } from "@/features/game/shared/domain/auto-effects";
-import { ticketWidth } from "@/features/game/shared/domain/ticket-layout";
 import type { GameView } from "@/features/room/shared/types";
-import { PaperTicket, useTicketActions } from "@/features/ticket/client";
+import { PaperTicket, TICKET_MIN_WIDTH, useTicketActions } from "@/features/ticket/client";
 import type { TicketView } from "@/features/ticket/shared/types";
 
 type Props = {
@@ -91,11 +90,11 @@ function TicketList({
       className={tickets.length >= 2 ? "flex flex-row items-start justify-center gap-2" : "flex flex-col"}
     >
       {tickets.slice(0, 2).map((ticket) => (
-        // 2 vé song song: mỗi cột chiếm nửa hàng, tối đa bề rộng vé (Q-065).
+        // 2 vé song song: mỗi cột chiếm nửa hàng → 2 vé gần full width (Q-065, Q-066).
         <div
           key={ticket.id}
           className={size === "double" ? "min-w-0 flex-1" : "w-full"}
-          style={size === "double" ? { maxWidth: ticketWidth(2) } : undefined}
+          style={size === "double" ? { minWidth: TICKET_MIN_WIDTH.double } : undefined}
         >
           <MyTicket
             gameId={gameId}

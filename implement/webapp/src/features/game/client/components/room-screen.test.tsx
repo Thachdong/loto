@@ -46,6 +46,7 @@ vi.mock("@/features/ticket/client", async () => {
   const actual = await vi.importActual<typeof import("@/features/ticket/client")>("@/features/ticket/client");
   return {
     PaperTicket: actual.PaperTicket,
+    TICKET_MIN_WIDTH: actual.TICKET_MIN_WIDTH,
     useTicketActions: () => ({ pending: null, release: (id: string) => h.release(id) }),
     TicketSheet: (p: { open: boolean }) => (p.open ? <div data-testid="ticket-sheet" /> : null),
   };
