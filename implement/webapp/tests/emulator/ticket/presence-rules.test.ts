@@ -34,6 +34,12 @@ describe("AC-22: RTDB presence rules (ADR-06)", () => {
     await assertSucceeds(db.ref("presence/X/A").set({ ...node(), photo_url: "http://x/p.png" }));
   });
 
+  it("node not created yet: partial {online, at} (old onDisconnect.update) is rejected, full offline node is accepted", async () => {
+    const db = as("A");
+    await assertFails(db.ref("presence/X/A").update({ online: false, at: 1 }));
+    await assertSucceeds(db.ref("presence/X/A").set({ ...node(false) }));
+  });
+
   it("cannot write another user's node", async () => {
     await assertFails(as("A").ref("presence/X/B").set(node(false)));
   });
