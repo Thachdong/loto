@@ -420,10 +420,11 @@ paths:
     patch:
       tags: [Rooms]
       operationId: updateRoom
-      summary: Đổi nhịp quay (host)
+      summary: Đổi nhịp quay / giọng rao (host)
       description: |
         Ghi `rooms.draw_interval_sec` (5 / 10 / 15, BR-15, Q-070). Đổi được ở mọi trạng thái ván; có hiệu lực từ số kế tiếp vì
         Nhịp mới áp dụng từ lần `drawNumber` kế tiếp (`next_call_at` tính lúc rao số – ADR-05). Tên phòng chỉ đặt khi tạo (ENT-02) nên không sửa ở đây.
+        `voicePack` ghi `rooms.voice_pack` (không ghi `last_event`); stream server đổi bộ giọng từ câu rao kế tiếp (ADR-08).
       x-business: [BIZ-06]
       x-screens: [SCR-11.A3]
       x-roles: [ACT-02]
@@ -1694,6 +1695,10 @@ components:
           minLength: 1
           maxLength: 50
           description: Tên phòng, đã trim; bỏ trống → "Phòng của {display_name}"
+        voicePack:
+          type: string
+          enum: [v1]
+          description: Bộ giọng rao (`public/audio/<id>/`, ADR-08); thiếu → `v1`
     RoomCreated:
       type: object
       required: [roomId, name, inviteCode, inviteUrl, roomCode, currentGameId, drawIntervalSec, expiresAt]
@@ -1715,28 +1720,41 @@ components:
         drawIntervalSec:
           type: integer
           enum: [5, 10, 15]
+        voicePack:
+          type: string
+          enum: [v1]
+          description: Bộ giọng rao (`public/audio/<id>/`, ADR-08)
         expiresAt:
           type: string
           format: date-time
           description: created_at + 8 giờ (BR-04, BR-05)
     RoomUpdate:
       type: object
-      required: [drawIntervalSec]
+      minProperties: 1
       additionalProperties: false
+      description: Gửi ít nhất một field.
       properties:
         drawIntervalSec:
           type: integer
           enum: [5, 10, 15]
           description: Nhịp quay (giây/số) (BR-15)
+        voicePack:
+          type: string
+          enum: [v1]
+          description: Bộ giọng rao (`public/audio/<id>/`, ADR-08); áp dụng từ câu rao kế tiếp, không ghi `last_event`
     RoomSettings:
       type: object
-      required: [roomId, drawIntervalSec]
+      required: [roomId, drawIntervalSec, voicePack]
       properties:
         roomId:
           $ref: '#/components/schemas/RoomId'
         drawIntervalSec:
           type: integer
           enum: [5, 10, 15]
+        voicePack:
+          type: string
+          enum: [v1]
+          description: Bộ giọng rao (`public/audio/<id>/`, ADR-08)
     InvitePreview:
       type: object
       required: [status, room, viewer]

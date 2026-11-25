@@ -110,7 +110,7 @@ erDiagram
 | ENT-05 Ván | TBL-05 `games` (+ `rooms.called_numbers`) | Số đã rao nằm ở phòng, làm rỗng khi Bắt đầu ván mới (Q-046) |
 | ENT-06 Bộ vé | field `rooms.ticket_set_no` | 16 doc `tickets` là bộ hiện hành |
 | ENT-07 Vé | TBL-03 `tickets` + `players.{uid}.ticket_ids` | Người giữ chỉ lưu phía player (A1) |
-| ENT-09 Tiếng rao | — | File tĩnh `public/audio/` (ADR-08) |
+| ENT-09 Tiếng rao | — | File tĩnh `public/audio/<bộ giọng>/`, stream server phát (ADR-08); phòng chọn bộ qua `rooms.voice_pack` |
 | ENT-10 Tin nhắn chat | TBL-04 `rooms/*/messages` | Chat thuộc phòng (Q-046) |
 | ENT-11 Lượt báo Kinh | `games.claims` (đang chờ duyệt, có gợi ý đúng/hụt) → `games.winners` (đúng, sau khi host xác nhận) | Lượt hụt bị xóa khỏi `claims` khi bác bỏ/kết thúc; không lưu lâu dài (Q-031, Q-055) |
 | ~~ENT-08~~ | — | Đã gộp vào `rooms.called_numbers` |

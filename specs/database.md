@@ -56,6 +56,7 @@ Quy ước chung cho TBL-02..TBL-06: có `expire_at` (timestamp) = `rooms.create
 | invite_expires_at | timestamp | NO | = expires_at | | BR-05 |
 | expires_at | timestamp | NO | created_at + 8h | | BR-04 |
 | draw_interval_sec | int | NO | 5 | 5 / 10 / 15 (Q-070) | BR-15 |
+| voice_pack | string | YES | v1 | Bộ giọng rao `public/audio/<id>/`; thiếu (phòng cũ) → v1 | ADR-08 |
 | called_numbers | array<int> | NO | [] | phần tử 1–90, không trùng, theo thứ tự rao | Chỉ tick ghi; làm rỗng khi Bắt đầu ván mới (Q-046) |
 | current_game_id | string | NO | | → TBL-05 | Ván chưa kết thúc (BR-07) |
 | game_count | int | NO | 1 | | seq_no của ván hiện tại |

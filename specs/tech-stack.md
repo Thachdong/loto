@@ -22,7 +22,7 @@
 | Online/offline để hiển thị và thu hồi vé | SUP-04, BR-13 | Realtime Database `onDisconnect` (ADR-06) |
 | Hẹn giờ dài: cảnh báo 15 phút, đóng phòng 8 giờ | BR-04, SUP-03 | Client tự cảnh báo từ `expires_at`, gọi `expireRoom` khi tới hạn; server lazy expiry ở mọi thao tác (ADR-05, Q-051) |
 | Xóa dữ liệu phòng sau 30 ngày | NFR-11 | Firestore TTL theo `expireAt` trên mọi tài liệu thuộc phòng (ADR-10) |
-| Tiếng rao khớp số ≤ 0,5 giây, trình duyệt chặn tự phát tiếng | NFR-05, NFR-14, SUP-02 | File audio tĩnh qua CDN, tải trước + giải mã bằng Web Audio API sau lần chạm "Bật tiếng" (ADR-08) |
+| Tiếng rao khớp số ≤ 0,5 giây, trình duyệt chặn tự phát tiếng | NFR-05, NFR-14, SUP-02 | Stream server gửi 1 luồng MP3 liên tục / phòng, client phát bằng `<audio>` sau lần chạm "Bật tiếng" (ADR-08) |
 | Thẻ xem trước link mời khi dán vào ứng dụng chat | SUP-06 | Trang `/join/[code]` render ở server với Open Graph meta, không cần đăng nhập (ADR-09) |
 | Trình duyệt trong Zalo/Messenger chặn đăng nhập Google | NFR-13 | Nhận diện user-agent in-app, hiện hướng dẫn "Mở bằng trình duyệt" (ADR-07) |
 | Quy tắc chéo nhiều: 1 phòng/người, 16 người, 2 vé, vé cặp, quyền host | BR-02, BR-03, BR-09, BR-21, NFR-09 | Ghi qua server trong Firestore transaction (ADR-03) |
@@ -45,7 +45,7 @@ Phiên bản: dùng bản ổn định mới nhất trong nhánh ghi dưới đ�
 | Client SDK | Firebase JS SDK (modular) | 12.x | ADR-03 |
 | Auth | Firebase Authentication — Google provider + session cookie `__session` | — | ADR-07 |
 | Storage | Cloud Storage for Firebase: `avatars/` (ảnh đại diện) | — | ADR-12 |
-| Audio | File tĩnh trong `public/audio/` + `manifest.json`, phát qua CDN của App Hosting; Web Audio API | — | ADR-08 |
+| Audio | File MP3 trong `public/audio/<bộ giọng>/` + `manifest.json`; stream server Node riêng (`stream/`, Cloud Run) đẩy luồng `audio/mpeg`; client `<audio>` | — | ADR-08 |
 | Hosting / Deploy | Firebase App Hosting (nối GitHub, deploy nhánh `main`) | — | ADR-02 |
 | CI | GitHub Actions: lint, typecheck, Vitest, test Security Rules + Functions trên Emulator Suite, kịch bản test do AI chạy trên Chrome ở localhost (Q-053) | — | ADR-13 |
 | Theo dõi | Cloud Logging, Error Reporting, Cloud Monitoring alert | — | ADR-13, NFR-17 |
@@ -57,12 +57,14 @@ Phiên bản: dùng bản ổn định mới nhất trong nhánh ghi dưới đ�
 flowchart LR
   subgraph Client["Trình duyệt điện thoại (Next.js client)"]
     UI["UI React"]
-    AU["Web Audio<br/>tải trước tiếng rao"]
+    AU["&lt;audio&gt;<br/>nghe luồng tiếng rao"]
   end
   subgraph AH["Firebase App Hosting"]
     SSR["Next.js SSR<br/>/join/[code] Open Graph"]
     SA["Server Actions<br/>firebase-admin"]
-    ST_A["public/audio<br/>(CDN)"]
+  end
+  subgraph CR["Cloud Run"]
+    STR["Stream server<br/>stream/ + public/audio"]
   end
   subgraph FB["Firebase / Google Cloud (asia-southeast1)"]
     AUTH["Firebase Auth<br/>Google"]
@@ -80,7 +82,9 @@ flowchart LR
   UI -.->|đọc realtime| FS
   UI <-.->|online/offline| RTDB
   UI -->|upload ảnh| GCS
-  AU -->|tải| ST_A
+  AU -->|HTTP stream audio/mpeg| STR
+  STR -->|listener rooms| FS
+  STR -->|verifyIdToken| AUTH
   CHAT -->|đọc OG meta| SSR
   SA --> FS
   FN --> FS
@@ -161,15 +165,16 @@ flowchart LR
 - **Hệ quả:** Không tự quản mật khẩu. Hành trình mời qua Zalo/Messenger có thêm một bước cho người dùng iOS.
 - **Ref:** BR-01, SUP-05, NFR-13
 
-### ADR-08 Tiếng rao: file tĩnh + Web Audio API
-- **Bối cảnh:** Phát rao ≤ 0,5 giây sau khi số hiện (NFR-05); trình duyệt di động chặn autoplay (NFR-14); kho tiếng làm sẵn bởi đội phát triển (BIZ-09).
-- **Các phương án:** A. File tĩnh trong repo, phục vụ qua CDN của App Hosting · B. Cloud Storage + signed URL · C. Text-to-speech real-time (loại theo Q-018).
-- **Quyết định:** A.
-  - Định dạng **AAC (.m4a) mono 48 kbps**, tương thích Safari iOS và Chrome Android.
-  - `public/audio/manifest.json` mô tả `{version, numbers: {"1": ["n01a.m4a", …]}, connectors: [...], congrats: [...], miss: [...]}`. Đổi bộ tiếng = đổi `version` (đường dẫn có version để phá cache).
-  - Khi người chơi chạm "Bật tiếng" (NFR-14): tạo `AudioContext`, tải và giải mã các câu theo thứ tự ưu tiên (câu nối, chúc mừng, kinh hụt, rồi các số). Tổng ước ~3–6 MB.
-  - Client phát khi nhận số mới từ listener. Thiếu câu thì chỉ hiển thị số (Q-029).
-- **Hệ quả:** Không tốn chi phí server cho audio. Kho tiếng nạp bằng commit + deploy (FLOW-09).
+### ADR-08 Tiếng rao: stream server + bộ giọng do host chọn (sửa đổi 2026-11-25)
+- **Bối cảnh:** Phát rao khớp số (NFR-05); trình duyệt di động chặn autoplay (NFR-14); kho tiếng làm sẵn (BIZ-09). Bộ giọng thật (`v1`) ~48 MB, tải trước toàn bộ về máy là quá nặng. Host muốn chọn bộ giọng cho phòng.
+- **Các phương án:** A. File tĩnh + Web Audio, client tự phát (quyết định cũ) · B. Server stream 1 luồng MP3 liên tục / phòng, client chỉ phát · C. WebRTC (LiveKit) · D. HLS segment.
+- **Quyết định:** B.
+  - Bộ giọng = thư mục `public/audio/<id>/` (MP3, cùng sample rate trong một bộ) + `manifest.json` `{version, format, silence, numbers, connectors?, kinh?, miss?, congrats?}` + `silence.mp3`. Danh sách bộ: `VOICE_PACKS` (`src/features/room/shared/domain/voice-pack.ts`). Không dùng Cloud Storage.
+  - Phòng lưu `rooms.voice_pack` (host chọn khi tạo phòng – SCR-02, đổi ở SCR-11; thiếu → `v1`).
+  - Stream server (`stream/`, Node, chạy riêng trên Cloud Run vì Next.js serverless không giữ kết nối dài): `GET /rooms/{roomId}/stream?token=<ID token>` → `audio/mpeg` chunked không kết thúc. Kiểm token + `users.current_room_id == roomId` (401/403).
+  - Mỗi phòng một broadcaster: nghe `rooms/{id}`; `called_numbers` tăng → xếp clip số (+ câu nối nếu còn ≥ 1 giây trước số kế tiếp); `last_event` `claim_submitted` / `claims_rejected` / `game_finished` → KINH / kinh hụt / chúc mừng. Hết câu → chèn frame im lặng để luồng không cạn. Frame MP3 gửi theo đồng hồ thật, đi trước 400 ms. Số mới tới khi số cũ chưa phát → bỏ số cũ. Không còn ai nghe 30 giây / phòng đóng → dừng luồng.
+  - Client (`stream-player.ts`): một `<audio>` dùng chung; chạm "Bật tiếng" (NFR-14) → `play()`; lỗi / hết luồng → nối lại lùi dần 1–8 giây, lỗi liên tiếp → toast "Không tải được tiếng rao" (vẫn chơi bằng hình); tắt tiếng → ngắt luồng; đệm dồn > 4 giây → nối lại để bắt kịp.
+- **Hệ quả:** Thêm 1 service + chi phí Cloud Run (băng thông ~16 KB/giây/người nghe ở 128 kbps). Độ trễ tiếng so với số trên màn hình ~0,5–2 giây (đệm `<audio>`), không còn ≤ 0,5 giây như NFR-05 cũ. Không đảm bảo phát khi khóa màn hình (iOS). Thiếu clip → chỉ hiện số (Q-029). Kho tiếng nạp bằng commit + deploy cả Next.js lẫn stream server (FLOW-09).
 - **Ref:** SUP-02, BR-26, NFR-05, NFR-14
 
 ### ADR-09 Link mời: mã ngẫu nhiên lưu DB + trang SSR có Open Graph
@@ -223,7 +228,7 @@ flowchart LR
 | SUP | Giải pháp |
 |---|---|
 | SUP-01 Thông báo trong phòng | Firestore listener trên `rooms/{roomId}` (field `last_event` ghi đè mỗi sự kiện: vào/rời, kinh hụt, kick, đổi host…) và ván hiện tại; client hiển thị toast (Q-046) |
-| SUP-02 Phát tiếng rao | ADR-08: file tĩnh AAC + manifest, Web Audio API, chọn ngẫu nhiên câu/số ở client; bật/tắt tiếng lưu localStorage của máy (Q-046) |
+| SUP-02 Phát tiếng rao | ADR-08: stream server phát 1 luồng MP3 / phòng theo bộ giọng `rooms.voice_pack`, chọn ngẫu nhiên câu/số ở server; client `<audio>`; bật/tắt tiếng lưu localStorage của máy (Q-046) |
 | SUP-03 Hẹn giờ | ADR-05: client điều nhịp — `startGame` rao số đầu, `drawNumber` (host + player dự phòng mỗi 5 giây), `expireRoom`; server lazy expiry và kiểm thời điểm; link hết hạn kiểm lúc mở (ADR-09) |
 | SUP-04 Online/offline | ADR-06: RTDB `presence` + `onDisconnect`; không trigger |
 | SUP-05 Phiên đăng nhập | ADR-07: Firebase Auth + session cookie `__session`; `returnTo` giữ link mời |

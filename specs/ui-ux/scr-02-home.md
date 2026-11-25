@@ -7,7 +7,7 @@
 - **Wireframe:** [drawio](./drawio/scr-02-home.drawio) — 2 trang: *Chưa ở phòng*, *Đang ở phòng + menu avatar*. Chưa export PNG.
 
 ## 1. Layout
-Header chung ngoài phòng (logo trái, avatar phải — wireframe mục 5) → banner lý do vừa rời phòng (khi có) → lời chào → card "Tạo phòng mới" (ô tên + nút) → card "Vào phòng" (nút mở ô nhập mã) — hoặc card "Bạn đang ở phòng" thay cả hai khi `current_room_id` ≠ null. Cột nội dung lề 16px; máy tính rộng tối đa 480px.
+Header chung ngoài phòng (logo trái, avatar phải — wireframe mục 5) → banner lý do vừa rời phòng (khi có) → lời chào → card "Tạo phòng mới" (ô tên + chọn giọng rao + nút) → card "Vào phòng" (nút mở ô nhập mã) — hoặc card "Bạn đang ở phòng" thay cả hai khi `current_room_id` ≠ null. Cột nội dung lề 16px; máy tính rộng tối đa 480px.
 
 ## 2. Thành phần
 | # | Component | Loại | Dữ liệu hiển thị / nhập | Validation (BR) |
@@ -18,6 +18,7 @@ Header chung ngoài phòng (logo trái, avatar phải — wireframe mục 5) →
 | 4 | Banner lý do rời phòng | dismissible banner | Một trong: "Bạn đã bị mời ra khỏi phòng "{tên}"." / "Phòng "{tên}" đã hết hạn." / "Host đã đóng phòng "{tên}"." (Q-057) / "Bạn đã rời phòng "{tên}"." / "Bạn không còn ở trong phòng." (không rõ lý do). Nguồn: trạng thái client lưu lúc rời SCR-04 (`sessionStorage`) `(Q-050)` | — |
 | 5 | Lời chào | text | "Xin chào, {users.display_name}" | — |
 | 6 | Ô tên phòng | input | Placeholder "Phòng của {display_name}"; bộ đếm x/50; để trống → server dùng tên mặc định | `rooms.name` 1–50 ký tự sau trim (TBL-02); mặc định theo Q-024 |
+| 6b | Giọng rao | chip chọn một | Danh sách `VOICE_PACKS` (hiện: "Miền Tây"), mặc định bộ đầu; khóa khi đang gửi | `rooms.voice_pack` (ADR-08) |
 | 7 | Nút "Tạo phòng" | button chính | → A1. Khóa khi đang gửi | BR-02 |
 | 8 | Card "Vào phòng" | card + button | Nút "Vào phòng" → mở 10; dòng phụ "Có mã phòng 6 ký tự từ bạn bè? Hoặc mở link mời bạn nhận được." (Q-056, thay Q-022) | — |
 | 10 | Dialog nhập mã phòng | dialog + input | Ô 6 ký tự (font to, cách quãng, tự in hoa, bỏ khoảng trắng, bàn phím chữ); nút "Vào" bật khi đủ 6 ký tự hợp lệ → A4; dòng lỗi dưới ô | BR-30: `^[A-HJ-NP-Z2-9]{6}$` |
@@ -27,7 +28,7 @@ Header chung ngoài phòng (logo trái, avatar phải — wireframe mục 5) →
 | Mã | Thao tác | API (operationId) | Kết quả thành công | Khi lỗi |
 |---|---|---|---|---|
 | SCR-02.A0 | Tải hồ sơ + phòng hiện tại | realtime — Firestore listener `users/{uid}`; nếu `current_room_id` ≠ null thì listener `rooms/{current_room_id}` cho 9 | Hiện 5 và 6–7 hoặc 9. `current_room_id` đổi từ null sang có giá trị (vd vừa vào phòng ở tab khác) → hiện 9 | Mất phiên (cookie hết hạn) → SCR-01; lỗi mạng → banner "Mất kết nối – đang thử lại…" |
-| SCR-02.A1 | Tạo phòng (6 → 7) | `createRoom` (`POST /rooms`, body `{name?}`) | Phòng `active`, ván 1 `waiting`, 16 vé, `invite_code`; `users.current_room_id` = phòng mới → điều hướng SCR-04 (FLOW-02 bước 7) | `ALREADY_IN_ROOM` (BR-02, FLOW-02 E1) → toast "Bạn đang ở phòng {tên}" + chuyển sang 9; `ROOM_NAME_INVALID` (422) (tên > 50) → lỗi dưới 6; lỗi khác → toast "Không tạo được phòng, thử lại" |
+| SCR-02.A1 | Tạo phòng (6 → 7) | `createRoom` (`POST /rooms`, body `{name?, voicePack?}`) | Phòng `active`, ván 1 `waiting`, 16 vé, `invite_code`; `users.current_room_id` = phòng mới → điều hướng SCR-04 (FLOW-02 bước 7) | `ALREADY_IN_ROOM` (BR-02, FLOW-02 E1) → toast "Bạn đang ở phòng {tên}" + chuyển sang 9; `ROOM_NAME_INVALID` (422) (tên > 50) → lỗi dưới 6; lỗi khác → toast "Không tạo được phòng, thử lại" |
 | SCR-02.A2 | Về phòng hiện tại (9) | client (điều hướng `/room`) | → SCR-04 | Phòng vừa đóng → listener `users` báo `current_room_id = null`, ẩn 9, hiện 4 "Phòng đã hết hạn" |
 | SCR-02.A3 | Đăng xuất (3) | `deleteCurrentSession` (`DELETE /sessions/current`) + Firebase Auth `signOut` (client) | Ở SCR-02 người dùng không ở phòng nào → chỉ hủy phiên → SCR-01. (Người đang ở phòng đăng xuất từ SCR-10.A4: player = rời phòng, host = đóng phòng – Q-052, Q-057) | BR-21 |
 | SCR-02.A4 | Vào phòng bằng mã (8 → 10) | `joinRoom` (`POST /rooms/join`, body `{roomCode}`) | Server kiểm BR-30, BR-06, BR-02, BR-03 trong transaction → `users.current_room_id`, `member_count + 1`, `last_event = member_joined` → điều hướng SCR-04 (cả phòng thấy toast "{tên} đã vào phòng"); đã là thành viên → sang SCR-04 | `ROOM_CODE_INVALID` → lỗi dưới ô "Mã phòng không đúng hoặc đã hết hạn", giữ dialog; `ROOM_FULL` → "Phòng đã đầy"; `BLOCKED_FROM_ROOM` → "Bạn không thể vào phòng này"; `ALREADY_IN_ROOM` → đóng dialog, chuyển sang 9; lỗi mạng → "Không vào được phòng, thử lại" |

@@ -13,7 +13,7 @@
 | BIZ-06 Điều khiển ván | FLOW-06 | SUP-01, SUP-03 | ENT-05 | TBL-02, TBL-05, TBL-06 | startGame, pauseGame, resumeGame, updateRoom | SCR-04, SCR-11 | ✅ |
 | BIZ-07 Quay số & rao | FLOW-07 | SUP-02, SUP-03, SUP-10 | ENT-05, ENT-09 | TBL-02 (`called_numbers`), TBL-05 | startGame (số đầu), drawNumber (host + player dự phòng – Q-052) | SCR-04 | ✅ |
 | BIZ-08 Dò số & báo Kinh | FLOW-08 | SUP-01, SUP-02, SUP-03 | ENT-05, ENT-07, ENT-11 | TBL-02, TBL-03, TBL-05, TBL-06 | createClaim, rejectClaims, confirmGame (Q-055; bỏ closeClaimWindow) | SCR-04, SCR-09 | ✅ |
-| BIZ-09 Kho tiếng rao | FLOW-09 | SUP-02 | ENT-09 | — (file tĩnh, ADR-08) | — (ngoài ứng dụng) | — (Q-018) | ✅ |
+| BIZ-09 Kho tiếng rao | FLOW-09 | SUP-02 | ENT-09 | — (file tĩnh + stream server, ADR-08) | — (ngoài ứng dụng) | — (Q-018) | ✅ |
 | BIZ-10 Kick player | FLOW-10 | SUP-01 | ENT-03 | TBL-01, TBL-02, TBL-06, TBL-08 | kickPlayer | SCR-07 | ✅ |
 | BIZ-11 Rời phòng | FLOW-11 | SUP-01 | ENT-03 | TBL-01, TBL-02, TBL-06, TBL-08 | leaveRoom (player rời; host rời = đóng phòng – Q-057) | SCR-04 | ✅ |
 | BIZ-12 Chat | FLOW-12 | SUP-01, SUP-07 | ENT-10 | TBL-01 (`chat_recent_at`), TBL-04 | sendMessage | SCR-06 | ✅ |
@@ -31,7 +31,7 @@
 | NFR-02 Sự kiện phòng ≤ 1s | ADR-03, `rooms.last_event` + listener (SUP-01) | ✅ |
 | NFR-03 Kết quả Kinh ≤ 1s | createClaim kiểm đồng bộ trong transaction, O(81); gợi ý đúng/hụt hiện ngay, host chốt sau (Q-055) | ✅ |
 | NFR-04 Mở phòng từ link ≤ 3s | ADR-02 SSR `/join/{code}`, getInvite | ✅ |
-| NFR-05 Tiếng rao ≤ 0,5s | ADR-08 tải trước + Web Audio API | ✅ |
+| NFR-05 Tiếng rao ≤ 0,5s | ADR-08 stream server (trễ ~0,5–2s do đệm `<audio>` — chấp nhận) | ⚠ |
 | NFR-06 800 người đồng thời, mở rộng 500 phòng | ADR-05 không còn hẹn giờ server; dữ liệu gom theo phòng | ✅ |
 | NFR-07 Uptime 99%, khôi phục khi mất mạng | Firestore SLA, listener tự nối lại; ô đánh dấu ở localStorage; ADR-13 backup | ✅ |
 | NFR-08 Công bằng | ADR-05 server chọn số bằng `crypto.randomInt` và từ chối gọi sớm (`DRAW_TOO_EARLY`); ADR-14 sinh vé ở server; Kinh kiểm ở server | ✅ |
