@@ -131,7 +131,7 @@ flowchart LR
 | SCR-10 | SCR-10.A4 | Đăng xuất (cảnh báo nếu đang chơi; player = rời phòng; host = đóng phòng – Q-052, Q-057) | ghi: hủy phiên; rời phòng | BIZ-01, BIZ-11 | deleteCurrentSession |
 | SCR-11 | SCR-11.A1 | Đổi mode dò (Tự dò / Auto) | client: localStorage | BIZ-15 | — (client) |
 | SCR-11 | SCR-11.A2 | Bật/tắt tiếng rao | client: localStorage | BIZ-15 | — (client) |
-| SCR-11 | SCR-11.A3 | Đổi nhịp quay 5 / 10 / 15 giây (host) | ghi: `rooms.draw_interval_sec` | BIZ-06 | updateRoom |
+| SCR-11 | SCR-11.A4 | Đổi giọng rao (host) — nhịp quay 5/10/15 đã bỏ | ghi: `rooms.voice_pack` | BIZ-06 | updateRoom |
 
 ## 5. Layout chung
 - **Mobile-first** (360–430px là chính); máy tính hiển thị cột giữa rộng tối đa 480px. Vùng bấm ≥ 44px (NFR-12).

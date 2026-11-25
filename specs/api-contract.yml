@@ -94,7 +94,7 @@ info:
     | TICKET_LIMIT_REACHED | 422 | Đã giữ 2 vé | BR-09 |
     | CANNOT_TARGET_SELF | 422 | Host tự kick / tự thu hồi vé của mình | BIZ-10 E1 |
     | ROOM_NAME_INVALID | 422 | Tên phòng rỗng sau trim hoặc > 50 ký tự | ENT-02 |
-    | DRAW_INTERVAL_INVALID | 422 | Nhịp quay không phải 5, 10 hoặc 15 giây | BR-15 |
+    | DRAW_INTERVAL_INVALID | 422 | (Không dùng nữa — nhịp quay đã bỏ, ADR-05 sửa đổi) | BR-15 |
     | DISPLAY_NAME_INVALID | 422 | Tên hiển thị ngoài 2–30 ký tự | BR-27 |
     | AVATAR_INVALID | 422 | Ảnh không thuộc `avatars/{uid}/`, không tồn tại, sai định dạng / > 5 MB, hoặc avatar có sẵn không tồn tại | BR-27, ADR-12 |
     | MESSAGE_EMPTY | 422 | Tin rỗng sau trim | BR-23 |
@@ -420,18 +420,18 @@ paths:
     patch:
       tags: [Rooms]
       operationId: updateRoom
-      summary: Đổi nhịp quay / giọng rao (host)
+      summary: Đổi giọng rao (host)
       description: |
-        Ghi `rooms.draw_interval_sec` (5 / 10 / 15, BR-15, Q-070). Đổi được ở mọi trạng thái ván; có hiệu lực từ số kế tiếp vì
-        Nhịp mới áp dụng từ lần `drawNumber` kế tiếp (`next_call_at` tính lúc rao số – ADR-05). Tên phòng chỉ đặt khi tạo (ENT-02) nên không sửa ở đây.
-        `voicePack` ghi `rooms.voice_pack` (không ghi `last_event`); stream server đổi bộ giọng từ câu rao kế tiếp (ADR-08).
+        Ghi `rooms.voice_pack` (không ghi `last_event`); áp dụng từ số chờ kế tiếp — clip + giờ hiện số chọn lúc `drawNumber`
+        (ADR-05, ADR-08 sửa đổi 2026-11-25). Nhịp quay 5 / 10 / 15 giây (Q-070) **đã bỏ**: nhịp rao theo độ dài clip, gửi
+        `drawIntervalSec` → `400 VALIDATION_FAILED`. Tên phòng chỉ đặt khi tạo (ENT-02) nên không sửa ở đây.
       x-business: [BIZ-06]
       x-screens: [SCR-11.A3]
       x-roles: [ACT-02]
       x-supporting: [SUP-01]
       x-nfr: [NFR-09]
-      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST, DRAW_INTERVAL_INVALID]
-      x-last-event: [interval_changed]
+      x-errors: [VALIDATION_FAILED, UNAUTHENTICATED, NOT_ROOM_MEMBER, NOT_ROOM_HOST]
+      x-last-event: []
       requestBody:
         required: true
         content:
@@ -439,7 +439,7 @@ paths:
             schema:
               $ref: '#/components/schemas/RoomUpdate'
             example:
-              drawIntervalSec: 8
+              voicePack: v1
       responses:
         '200':
           description: Cài đặt phòng sau khi đổi
@@ -449,7 +449,7 @@ paths:
                 $ref: '#/components/schemas/RoomSettings'
               example:
                 roomId: r_9fK2mQ
-                drawIntervalSec: 8
+                voicePack: v1
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1070,8 +1070,11 @@ paths:
         1. Lazy expiry phòng (BR-04). Ván phải là ván hiện tại (`GAME_STALE`) và `running`, ngược lại `409 GAME_NOT_RUNNING`.
         2. `seq ≠ len(rooms.called_numbers)` → **200 `drawn: false`** kèm trạng thái hiện tại (lượt gọi trùng/cũ – không lỗi).
         3. `now < next_call_at − 300ms` → `409 DRAW_TOO_EARLY` (kèm `nextCallAt`) — chống gọi sớm để đẩy nhanh ván (NFR-08).
-        4. `crypto.randomInt` một số trong 1–90 chưa có trong `called_numbers`, append; `next_call_at = now + draw_interval_sec`
-           (nhịp mới áp dụng từ đây – BR-15).
+        4. **Nhịp theo audio (ADR-05 sửa đổi 2026-11-25):** số chờ `rooms.pending_call` (cùng ván) được append vào
+           `called_numbers` (lúc này clip của nó vừa gần hết); rồi `crypto.randomInt` chọn **số chờ mới** trong các số chưa
+           rao, chọn clip theo `rooms.voice_pack`, ghi `pending_call = {number, clip, duration_ms, game_id}` (stream server
+           phát clip ngay); `next_call_at = giờ hẹn cũ + duration_ms` (gọi trễ > 3 giây → `now + duration_ms`). Không có số
+           chờ (dữ liệu cũ) → chỉ chọn số chờ, không hiện số. `number` trong response = số vừa hiện.
         5. Đã đủ 90 số → ván `finished`, `result = no_winner`, `ended_at`, `last_event = game_finished`; phòng `active` thì
            tạo ván mới `waiting` + chép player còn trong phòng **và đang online** (BR-19, BR-07, BR-11, BR-29 – Q-058);
            phòng `closing` thì đóng phòng.
@@ -1172,7 +1175,7 @@ paths:
       description: |
         (Q-055) Chỉ host; ván `awaiting_confirm`. Transaction:
         - Có phần tử `claims[].result = win` → `409 CLAIM_HAS_WIN` (host không làm trái gợi ý – BR-28; phải dùng `confirmGame`).
-        - Ngược lại: `claims = []`, `status = resume_status` (`running` → `next_call_at = now + draw_interval_sec`;
+        - Ngược lại: `claims = []`, `status = resume_status` (`running` → `next_call_at = now + 1,5 giây` (hiện số chờ — clip đã rao trước khi dừng);
           `paused` → giữ `pause_reason = host`), `resume_status = null`, `last_event = claims_rejected`
           (text liệt kê "<tên> kinh hụt"). Client phát tiếng kinh hụt (SUP-02). Không lưu lượt hụt (Q-031).
       x-business: [BIZ-08]
@@ -1730,27 +1733,19 @@ components:
           description: created_at + 8 giờ (BR-04, BR-05)
     RoomUpdate:
       type: object
-      minProperties: 1
+      required: [voicePack]
       additionalProperties: false
-      description: Gửi ít nhất một field.
       properties:
-        drawIntervalSec:
-          type: integer
-          enum: [5, 10, 15]
-          description: Nhịp quay (giây/số) (BR-15)
         voicePack:
           type: string
           enum: [v1]
           description: Bộ giọng rao (`public/audio/<id>/`, ADR-08); áp dụng từ câu rao kế tiếp, không ghi `last_event`
     RoomSettings:
       type: object
-      required: [roomId, drawIntervalSec, voicePack]
+      required: [roomId, voicePack]
       properties:
         roomId:
           $ref: '#/components/schemas/RoomId'
-        drawIntervalSec:
-          type: integer
-          enum: [5, 10, 15]
         voicePack:
           type: string
           enum: [v1]
