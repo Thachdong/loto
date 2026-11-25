@@ -4,10 +4,8 @@ import type { Transaction } from "firebase-admin/firestore";
 import { AppError } from "@/core/server/action";
 import { now } from "@/core/server/clock";
 import type { ErrorCode } from "@/core/shared/errors";
-import { t } from "@/core/shared/i18n/vi";
 import { getUserInTx } from "@/features/auth/db/user.repository";
-import { runTransaction, setDrawIntervalInTx, setVoicePackInTx } from "@/features/room/db/room.repository";
-import { isValidDrawInterval } from "@/features/room/shared/domain/draw-interval";
+import { runTransaction, setVoicePackInTx } from "@/features/room/db/room.repository";
 import { voicePackOf } from "@/features/room/shared/domain/voice-pack";
 import type { UpdateRoomInput } from "@/features/room/shared/schemas/update-room";
 import type { RoomSettings } from "@/features/room/shared/types";
@@ -16,13 +14,12 @@ import { planLazyExpiry, type LazyExpiryPlan } from "./room-expiry.service";
 type Outcome = { kind: "ok"; plan: LazyExpiryPlan; settings: RoomSettings } | { kind: "error"; code: ErrorCode; plan: LazyExpiryPlan | null };
 
 /**
- * api-contract › updateRoom (BR-15, Q-070; `voicePack` — ADR-08 sửa đổi, đổi bộ giọng áp dụng từ câu rao kế tiếp). 5 / 10 / 15 → transaction: thành viên (kể cả phòng vừa hết hạn) → host → ghi
- * `draw_interval_sec` + `last_event = interval_changed`. Không đụng `games.next_call_at` (nhịp mới áp dụng từ lần
- * `drawNumber` kế tiếp — ADR-05). Giá trị không đổi → trả 200, không ghi.
+ * api-contract › updateRoom (ADR-08 sửa đổi): host đổi `rooms.voice_pack`. Transaction: thành viên (kể cả phòng vừa hết
+ * hạn) → host → ghi (không `last_event`). Áp dụng từ số chờ kế tiếp (clip + giờ hiện chọn lúc `drawNumber`). Không đổi
+ * → trả 200, không ghi. Nhịp quay 5/10/15 đã bỏ (nhịp theo audio — ADR-05 sửa đổi).
  */
 export async function updateRoom(uid: string, input: UpdateRoomInput): Promise<RoomSettings> {
-  const { roomId, drawIntervalSec, voicePack } = input;
-  if (drawIntervalSec !== undefined && !isValidDrawInterval(drawIntervalSec)) throw new AppError("DRAW_INTERVAL_INVALID");
+  const { roomId, voicePack } = input;
   const at = now();
 
   const outcome = await runTransaction<Outcome>(async (tx: Transaction) => {
@@ -36,20 +33,11 @@ export async function updateRoom(uid: string, input: UpdateRoomInput): Promise<R
     if (!room || plan.status === "closed" || plan.status === null) return { kind: "error", code: "NOT_ROOM_MEMBER", plan };
     if (room.hostUid !== uid) return { kind: "error", code: "NOT_ROOM_HOST", plan };
 
-    if (drawIntervalSec !== undefined && room.drawIntervalSec !== drawIntervalSec) {
-      setDrawIntervalInTx(tx, roomId, drawIntervalSec, {
-        type: "interval_changed",
-        text: t("toast.intervalChanged", { n: drawIntervalSec }),
-        actorUid: uid,
-        targetUid: null,
-        now: at,
-      });
-    }
-    if (voicePack !== undefined && room.voicePack !== voicePack) setVoicePackInTx(tx, roomId, voicePack, at);
+    if (room.voicePack !== voicePack) setVoicePackInTx(tx, roomId, voicePack, at);
     return {
       kind: "ok",
       plan,
-      settings: { roomId, drawIntervalSec: drawIntervalSec ?? room.drawIntervalSec, voicePack: voicePackOf(voicePack ?? room.voicePack) },
+      settings: { roomId, voicePack: voicePackOf(voicePack) },
     };
   });
 

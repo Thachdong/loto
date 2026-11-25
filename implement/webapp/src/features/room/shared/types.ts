@@ -109,4 +109,4 @@ export type LeaveReasonRecord = { reason: LeaveReason; roomName: string | null }
 export type KickResult = { uid: string; ticketsFreedNow: boolean; gameStatus: GameStatus };
 
 /** api-contract › RoomSettings. */
-export type RoomSettings = { roomId: string; drawIntervalSec: number; voicePack: VoicePackId };
+export type RoomSettings = { roomId: string; voicePack: VoicePackId };

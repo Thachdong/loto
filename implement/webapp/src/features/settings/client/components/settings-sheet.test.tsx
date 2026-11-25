@@ -15,7 +15,6 @@ function setup(over: Partial<Parameters<typeof SettingsSheet>[0]> = {}) {
     bottom: 0,
     roomId: "r1",
     isHost: false,
-    drawIntervalSec: 5,
     voicePack: "v1" as const,
     expiresAt: EXPIRES,
     mode: "manual" as const,
@@ -39,10 +38,10 @@ describe("SettingsSheet", () => {
     expect(screen.getByTestId("settings-voice-pack-v1")).toHaveAttribute("aria-checked", "true");
   });
 
-  it("AC-8/AC-12: player sees read-only interval and expiry time GMT+7; no profile row (Q-069)", () => {
-    setup();
-    expect(screen.getByTestId("settings-interval-readonly")).toHaveTextContent("5 giây/số (host chỉnh)");
+  it("AC-12: expiry time GMT+7; no interval row (nhịp theo audio); no profile row (Q-069)", () => {
+    setup({ isHost: true });
     expect(screen.queryByTestId("settings-interval-stepper")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("settings-interval-readonly")).not.toBeInTheDocument();
     expect(screen.getByTestId("settings-expires")).toHaveTextContent("Phòng hết hạn lúc 22:00");
     expect(screen.queryByTestId("settings-profile")).not.toBeInTheDocument();
   });
@@ -62,22 +61,5 @@ describe("SettingsSheet", () => {
     expect(screen.getByTestId("settings-sound")).toHaveAttribute("aria-checked", "false");
     await userEvent.click(screen.getByTestId("settings-sound"));
     expect(props.onSoundChange).toHaveBeenCalledWith(true);
-  });
-
-  it("AC-7: host stepper 5/10/15 — minus disabled at 5, plus disabled at 15", async () => {
-    const step = vi.fn();
-    setup({ isHost: true, interval: { value: 5, step, forbidden: false } });
-    expect(screen.getByTestId("settings-interval-value")).toHaveTextContent("5 giây");
-    expect(screen.getByTestId("btn-interval-minus")).toBeDisabled();
-    await userEvent.click(screen.getByTestId("btn-interval-plus"));
-    expect(step).toHaveBeenCalledWith(1);
-    cleanup();
-    setup({ isHost: true, interval: { value: 15, step, forbidden: false } });
-    expect(screen.getByTestId("btn-interval-plus")).toBeDisabled();
-  });
-
-  it("NOT_ROOM_HOST → host stepper becomes read-only", () => {
-    setup({ isHost: true, interval: { value: 5, step: vi.fn(), forbidden: true } });
-    expect(screen.getByTestId("settings-interval-readonly")).toBeInTheDocument();
   });
 });

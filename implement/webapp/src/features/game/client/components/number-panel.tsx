@@ -6,10 +6,6 @@ type Props = {
   game: GameView;
   /** Panel 1 dòng 52px khi giữ 2 vé (Q-049); ngược lại 96px. */
   compact: boolean;
-  /** Giờ máy hiện tại (epoch ms). */
-  nowMs: number;
-  /** `serverTime − localTime` (ms) để tính đếm ngược. */
-  serverOffsetMs: number;
   onOpenBoard: () => void;
 };
 
@@ -18,23 +14,21 @@ function visibleNumbers(room: RoomView, game: GameView): number[] {
   return game.status === "waiting" ? [] : room.calledNumbers;
 }
 
-function countdownText(game: GameView, nowMs: number, offsetMs: number): string | null {
+function countdownText(game: GameView): string | null {
   if (game.status === "awaiting_confirm") return t("panel.checking");
   if (game.status === "paused") return t("panel.paused");
-  if (game.status === "running" && game.nextCallAt) {
-    const secs = Math.max(0, Math.ceil((game.nextCallAt.getTime() - (nowMs + offsetMs)) / 1000));
-    return t("panel.next", { n: secs });
-  }
+  // Nhịp theo audio (ADR-05 sửa đổi): số hiện khi clip rao gần hết — không đếm giây.
+  if (game.status === "running") return t("panel.calling");
   return null;
 }
 
-/** SCR-04 #5–#8: số vừa rao, "Số thứ n/90", đếm ngược số kế tiếp, 5 số gần nhất, link "Bảng 90". */
-export function NumberPanel({ room, game, compact, nowMs, serverOffsetMs, onOpenBoard }: Props) {
+/** SCR-04 #5–#8: số vừa rao, "Số thứ n/90", trạng thái rao, 5 số gần nhất, link "Bảng 90". */
+export function NumberPanel({ room, game, compact, onOpenBoard }: Props) {
   const numbers = visibleNumbers(room, game);
   const last = numbers.length > 0 ? numbers[numbers.length - 1] : null;
   // Mọi số đã rao trước số vừa rao, mới nhất bên trái; vuốt ngang để xem số cũ hơn.
   const recent = numbers.slice(0, -1).reverse();
-  const countdown = countdownText(game, nowMs, serverOffsetMs);
+  const countdown = countdownText(game);
 
   const board = (
     <button
@@ -76,7 +70,7 @@ export function NumberPanel({ room, game, compact, nowMs, serverOffsetMs, onOpen
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {recentChips}
           <span data-testid="next-countdown" className="truncate text-[11px] leading-none text-muted-foreground">
-            {countdown ?? t("panel.interval", { n: room.drawIntervalSec })}
+            {countdown ?? ""}
           </span>
         </div>
         <span data-testid="called-count" className="sr-only">{`${numbers.length}/90`}</span>
@@ -102,7 +96,7 @@ export function NumberPanel({ room, game, compact, nowMs, serverOffsetMs, onOpen
           <>
             <span className="text-sm font-medium">{t("panel.none")}</span>
             <span data-testid="next-countdown" className="text-xs text-muted-foreground">
-              {countdown ?? t("panel.interval", { n: room.drawIntervalSec })}
+              {countdown ?? ""}
             </span>
             <span data-testid="called-count" className="sr-only">{`${numbers.length}/90`}</span>
             {recentChips}

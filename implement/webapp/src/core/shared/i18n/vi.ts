@@ -90,9 +90,8 @@ export const vi = {
   panel: {
     recentScroll: "Các số đã rao, vuốt ngang để xem thêm",
     none: "Chưa rao số nào",
-    interval: "Nhịp quay {n} giây/số",
+    calling: "Đang rao số kế tiếp…",
     count: "Số thứ {n}/90",
-    next: "Số kế tiếp sau {n} giây",
     paused: "⏸ Host đã tạm dừng",
     checking: "⏳ Chờ host duyệt KINH",
     board: "Bảng 90 ›",

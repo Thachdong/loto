@@ -178,8 +178,6 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         room={room}
         game={game}
         compact={compact}
-        nowMs={nowMs}
-        serverOffsetMs={serverOffsetMs}
         onOpenBoard={() => setOverlay("board90")}
       />
       {isHost ? (
@@ -261,7 +259,6 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         bottom={dockHeight}
         roomId={room.id}
         isHost={isHost}
-        drawIntervalSec={room.drawIntervalSec}
         voicePack={room.voicePack}
         expiresAt={room.expiresAt}
         mode={mode}

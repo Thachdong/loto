@@ -1,12 +1,8 @@
 "use client";
 
-import { MinusIcon, PlusIcon } from "lucide-react";
-import { Button } from "@/core/client/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/core/client/ui/sheet";
 import { t } from "@/core/shared/i18n/vi";
 import { formatTimeVN } from "@/core/shared/time";
-import { stepDrawInterval } from "@/features/room/shared/domain/draw-interval";
-import { useDrawInterval, type DrawIntervalState } from "@/features/settings/client/hooks/use-draw-interval";
 import { useVoicePack } from "@/features/settings/client/hooks/use-voice-pack";
 import { ChipRadioGroup } from "@/core/client/ui/chip-radio-group";
 import { VOICE_PACK_OPTIONS, VOICE_PACKS, type VoicePackId } from "@/features/room/shared/domain/voice-pack";
@@ -20,23 +16,18 @@ type Props = {
   bottom: number;
   roomId: string;
   isHost: boolean;
-  drawIntervalSec: number;
   voicePack: VoicePackId;
   expiresAt: Date;
   mode: TrackMode;
   onModeChange: (mode: TrackMode) => void;
   soundOn: boolean;
   onSoundChange: (on: boolean) => void;
-  /** Tiêm khi test. */
-  interval?: DrawIntervalState;
 };
 
-/** SCR-11 Cài đặt (sheet thấp trên SCR-04): cách dò, tiếng rao, nhịp quay (5/10/15 — Q-070), giọng rao, giờ hết hạn phòng. */
+/** SCR-11 Cài đặt (sheet thấp trên SCR-04): cách dò, tiếng rao, giọng rao (nhịp rao theo audio — bỏ nhịp quay), giờ hết hạn phòng. */
 export function SettingsSheet(props: Props) {
   const { open, onClose, bottom, isHost, mode, soundOn } = props;
-  const live = useDrawInterval(props.roomId, props.drawIntervalSec);
-  const interval = props.interval ?? live;
-  const canEdit = isHost && !interval.forbidden;
+  const canEdit = isHost;
   const voice = useVoicePack(props.roomId, props.voicePack);
 
   return (
@@ -83,46 +74,6 @@ export function SettingsSheet(props: Props) {
             >
               <span className={`absolute top-1 size-5 rounded-full bg-background shadow transition-all ${soundOn ? "left-6" : "left-1"}`} />
             </button>
-          </section>
-
-          <section className="flex items-center justify-between gap-3">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{t("settings.interval")}</span>
-              {canEdit && <span className="text-xs text-muted-foreground">{t("settings.nextNumber")}</span>}
-            </div>
-            {canEdit ? (
-              <div className="flex items-center gap-2" data-testid="settings-interval-stepper">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  aria-label={t("settings.decrease")}
-                  data-testid="btn-interval-minus"
-                  disabled={stepDrawInterval(interval.value, -1) === interval.value}
-                  onClick={() => interval.step(-1)}
-                >
-                  <MinusIcon />
-                </Button>
-                <span data-testid="settings-interval-value" className="w-16 text-center font-semibold tabular-nums">
-                  {t("settings.seconds", { n: interval.value })}
-                </span>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  aria-label={t("settings.increase")}
-                  data-testid="btn-interval-plus"
-                  disabled={stepDrawInterval(interval.value, 1) === interval.value}
-                  onClick={() => interval.step(1)}
-                >
-                  <PlusIcon />
-                </Button>
-              </div>
-            ) : (
-              <span data-testid="settings-interval-readonly" className="text-sm text-muted-foreground tabular-nums">
-                {t("settings.intervalReadonly", { n: props.drawIntervalSec })}
-              </span>
-            )}
           </section>
 
           <section className="flex flex-col gap-1.5">

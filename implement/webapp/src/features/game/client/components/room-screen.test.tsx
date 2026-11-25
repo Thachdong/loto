@@ -102,7 +102,7 @@ describe("RoomScreen", () => {
     expect(screen.getByTestId("btn-invite")).toBeInTheDocument();
     expect(screen.getByTestId("btn-leave")).toBeInTheDocument();
     expect(screen.getByTestId("last-number")).toHaveTextContent("–");
-    expect(screen.getByTestId("next-countdown")).toHaveTextContent("Nhịp quay 5 giây/số");
+    expect(screen.getByTestId("next-countdown")).toHaveTextContent("");
     expect(screen.getByTestId("btn-start")).toBeEnabled();
     expect(screen.getByTestId("host-hint")).toHaveTextContent("3/16 vé đã có chủ · 3 người trong phòng");
     expect(screen.getByTestId("no-ticket-card")).toHaveTextContent(dict.me.noTicket);
@@ -150,7 +150,7 @@ describe("RoomScreen", () => {
     expect(screen.getByTestId("btn-leave")).toBeInTheDocument();
   });
 
-  it("running (host): countdown, last number, count, all earlier numbers newest-first (horizontal scroll), Tạm dừng", async () => {
+  it("running (host): 'Đang rao' status, last number, count, all earlier numbers newest-first (horizontal scroll), Tạm dừng", async () => {
     setState({
       room: makeRoom({ calledNumbers: [4, 8, 15, 16, 23, 42, 7] }),
       game: makeGame("running"),
@@ -158,7 +158,7 @@ describe("RoomScreen", () => {
     render(<RoomScreen uid={HOST} roomId="r1" />);
     expect(screen.getByTestId("last-number")).toHaveTextContent("7");
     expect(screen.getByTestId("called-count")).toHaveTextContent("Số thứ 7/90");
-    expect(screen.getByTestId("next-countdown")).toHaveTextContent(/Số kế tiếp sau [1-3] giây/);
+    expect(screen.getByTestId("next-countdown")).toHaveTextContent(dict.panel.calling);
     const recent = within(screen.getByTestId("recent-numbers")).getAllByRole("listitem").map((li) => li.textContent);
     expect(recent).toEqual(["42", "23", "16", "15", "8", "4"]);
     expect(screen.getByTestId("recent-numbers").className).toContain("overflow-x-auto");
