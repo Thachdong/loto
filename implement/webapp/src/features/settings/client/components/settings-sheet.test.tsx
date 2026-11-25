@@ -16,6 +16,7 @@ function setup(over: Partial<Parameters<typeof SettingsSheet>[0]> = {}) {
     roomId: "r1",
     isHost: false,
     drawIntervalSec: 5,
+    voicePack: "v1" as const,
     expiresAt: EXPIRES,
     mode: "manual" as const,
     onModeChange: vi.fn(),
@@ -29,6 +30,14 @@ function setup(over: Partial<Parameters<typeof SettingsSheet>[0]> = {}) {
 
 describe("SettingsSheet", () => {
   afterEach(cleanup);
+
+  it("giọng rao: người chơi chỉ xem, host chọn được", () => {
+    setup();
+    expect(screen.getByTestId("settings-voice-pack-readonly")).toHaveTextContent("Miền Tây");
+    cleanup();
+    setup({ isHost: true });
+    expect(screen.getByTestId("settings-voice-pack-v1")).toHaveAttribute("aria-checked", "true");
+  });
 
   it("AC-8/AC-12: player sees read-only interval and expiry time GMT+7; no profile row (Q-069)", () => {
     setup();

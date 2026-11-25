@@ -15,7 +15,7 @@ describe("useDrawInterval (SCR-11.A3)", () => {
   });
 
   it("AC-6: 2 quick + (5 → 10 → 15) → one call with 15 after 600 ms, optimistic value meanwhile", async () => {
-    const update = vi.fn(async () => ({ ok: true as const, data: { roomId: "r1", drawIntervalSec: 15 } }));
+    const update = vi.fn(async () => ({ ok: true as const, data: { roomId: "r1", drawIntervalSec: 15, voicePack: "v1" as const } }));
     const { result } = renderHook(() => useDrawInterval("r1", 5, update));
     act(() => result.current.step(1));
     act(() => result.current.step(1));

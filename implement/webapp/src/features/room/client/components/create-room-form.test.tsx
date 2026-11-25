@@ -64,7 +64,7 @@ describe("CreateRoomForm", () => {
     renderForm();
     await userEvent.type(input(), "   ");
     await userEvent.click(screen.getByTestId("create-room-button"));
-    expect(mocks.createRoomAction).toHaveBeenCalledWith({});
+    expect(mocks.createRoomAction).toHaveBeenCalledWith({ voicePack: "v1" });
     await waitFor(() => expect(screen.getByTestId("create-room-button")).toBeEnabled());
   });
 
@@ -75,7 +75,7 @@ describe("CreateRoomForm", () => {
     await userEvent.type(input(), "  Lô tô Tết  ");
     await userEvent.click(screen.getByTestId("create-room-button"));
 
-    expect(mocks.createRoomAction).toHaveBeenCalledWith({ name: "Lô tô Tết" });
+    expect(mocks.createRoomAction).toHaveBeenCalledWith({ name: "Lô tô Tết", voicePack: "v1" });
     const button = screen.getByTestId("create-room-button");
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent(dict.home.creating);

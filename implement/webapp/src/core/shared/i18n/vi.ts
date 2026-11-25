@@ -42,6 +42,7 @@ export const vi = {
     roomNamePlaceholder: "Phòng của {name}",
     roomNameCounter: "{count}/50",
     roomNameInvalid: "Tên phòng từ 1 đến 50 ký tự",
+    voicePack: "Giọng rao",
     createRoom: "Tạo phòng",
     creating: "Đang tạo phòng…",
     createFailed: "Không tạo được phòng, thử lại",
@@ -180,6 +181,8 @@ export const vi = {
     decrease: "Giảm nhịp quay",
     increase: "Tăng nhịp quay",
     intervalFailed: "Chưa đổi được nhịp quay",
+    voicePack: "Giọng rao",
+    voicePackFailed: "Chưa đổi được giọng rao",
     expires: "Phòng hết hạn lúc {time}",
   },
   chat: {

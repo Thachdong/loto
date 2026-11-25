@@ -124,7 +124,7 @@ describe("HomeScreen", () => {
 
     mocks.createRoomAction.mockResolvedValue({ ok: false, error: { code: "INTERNAL_ERROR", message: "x" } });
     await userEvent.click(button);
-    expect(mocks.createRoomAction).toHaveBeenCalledWith({});
+    expect(mocks.createRoomAction).toHaveBeenCalledWith({ voicePack: "v1" });
     await waitFor(() => expect(mocks.toast.error).toHaveBeenCalledWith(dict.home.createFailed));
   });
 
@@ -149,7 +149,7 @@ describe("HomeScreen", () => {
     await userEvent.type(screen.getByTestId("room-name-input"), "Lô tô Tết");
     await userEvent.click(screen.getByTestId("create-room-button"));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/room"));
-    expect(mocks.createRoomAction).toHaveBeenCalledWith({ name: "Lô tô Tết" });
+    expect(mocks.createRoomAction).toHaveBeenCalledWith({ name: "Lô tô Tết", voicePack: "v1" });
     expect(screen.getByTestId("create-room-button")).toBeDisabled();
   });
 

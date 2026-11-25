@@ -7,6 +7,9 @@ import { t } from "@/core/shared/i18n/vi";
 import { formatTimeVN } from "@/core/shared/time";
 import { stepDrawInterval } from "@/features/room/shared/domain/draw-interval";
 import { useDrawInterval, type DrawIntervalState } from "@/features/settings/client/hooks/use-draw-interval";
+import { useVoicePack } from "@/features/settings/client/hooks/use-voice-pack";
+import { ChipRadioGroup } from "@/core/client/ui/chip-radio-group";
+import { VOICE_PACK_OPTIONS, VOICE_PACKS, type VoicePackId } from "@/features/room/shared/domain/voice-pack";
 
 export type TrackMode = "manual" | "auto";
 
@@ -18,6 +21,7 @@ type Props = {
   roomId: string;
   isHost: boolean;
   drawIntervalSec: number;
+  voicePack: VoicePackId;
   expiresAt: Date;
   mode: TrackMode;
   onModeChange: (mode: TrackMode) => void;
@@ -27,12 +31,13 @@ type Props = {
   interval?: DrawIntervalState;
 };
 
-/** SCR-11 Cài đặt (sheet thấp trên SCR-04): cách dò, tiếng rao, nhịp quay (5/10/15 — Q-070), giờ hết hạn phòng. */
+/** SCR-11 Cài đặt (sheet thấp trên SCR-04): cách dò, tiếng rao, nhịp quay (5/10/15 — Q-070), giọng rao, giờ hết hạn phòng. */
 export function SettingsSheet(props: Props) {
   const { open, onClose, bottom, isHost, mode, soundOn } = props;
   const live = useDrawInterval(props.roomId, props.drawIntervalSec);
   const interval = props.interval ?? live;
   const canEdit = isHost && !interval.forbidden;
+  const voice = useVoicePack(props.roomId, props.voicePack);
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
@@ -116,6 +121,24 @@ export function SettingsSheet(props: Props) {
             ) : (
               <span data-testid="settings-interval-readonly" className="text-sm text-muted-foreground tabular-nums">
                 {t("settings.intervalReadonly", { n: props.drawIntervalSec })}
+              </span>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">{t("settings.voicePack")}</span>
+            {canEdit ? (
+              <ChipRadioGroup
+                options={VOICE_PACK_OPTIONS}
+                value={voice.value}
+                onChange={voice.change}
+                label={t("settings.voicePack")}
+                disabled={voice.pending}
+                testId="settings-voice-pack"
+              />
+            ) : (
+              <span data-testid="settings-voice-pack-readonly" className="text-sm text-muted-foreground">
+                {VOICE_PACKS.find((p) => p.id === props.voicePack)?.name ?? props.voicePack}
               </span>
             )}
           </section>

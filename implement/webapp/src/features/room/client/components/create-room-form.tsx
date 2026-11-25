@@ -10,6 +10,8 @@ import { t } from "@/core/shared/i18n/vi";
 import { createRoomAction } from "@/features/room/server/actions/create-room.action";
 import { clearLeaveReason } from "@/features/room/client/lib/leave-reason-store";
 import { ROOM_NAME_MAX } from "@/features/room/shared/constants";
+import { ChipRadioGroup } from "@/core/client/ui/chip-radio-group";
+import { DEFAULT_VOICE_PACK, VOICE_PACK_OPTIONS, type VoicePackId } from "@/features/room/shared/domain/voice-pack";
 
 /** Đếm theo ký tự Unicode (code point), không theo UTF-16. */
 export const countChars = (value: string) => Array.from(value).length;
@@ -28,6 +30,7 @@ export function CreateRoomForm({ displayName, onAlreadyInRoom }: Props) {
   const inputId = useId();
   const [name, setName] = useState("");
   const [invalid, setInvalid] = useState(false);
+  const [voicePack, setVoicePack] = useState<VoicePackId>(DEFAULT_VOICE_PACK);
   const [navigating, setNavigating] = useState(false);
   const [pending, startTransition] = useTransition();
   const busy = pending || navigating;
@@ -38,7 +41,7 @@ export function CreateRoomForm({ displayName, onAlreadyInRoom }: Props) {
     const trimmed = name.trim();
     startTransition(async () => {
       try {
-        const result = await createRoomAction(trimmed ? { name: trimmed } : {});
+        const result = await createRoomAction(trimmed ? { name: trimmed, voicePack } : { voicePack });
         if (result.ok) {
           clearLeaveReason();
           setNavigating(true); // giữ nút khóa tới khi chuyển trang
@@ -98,6 +101,18 @@ export function CreateRoomForm({ displayName, onAlreadyInRoom }: Props) {
             {t("home.roomNameInvalid")}
           </p>
         )}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium">{t("home.voicePack")}</span>
+        <ChipRadioGroup
+          options={VOICE_PACK_OPTIONS}
+          value={voicePack}
+          onChange={setVoicePack}
+          label={t("home.voicePack")}
+          disabled={busy}
+          testId="voice-pack"
+        />
       </div>
 
       {/* 7 */}
