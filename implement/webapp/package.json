@@ -11,7 +11,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "emulators": "npm --prefix functions run build && firebase emulators:start --export-on-exit=.emulator-data $([ -d .emulator-data ] && echo --import=.emulator-data)",
     "test": "firebase emulators:exec --only auth,firestore,database,storage \"vitest run\"",
-    "seed": "tsx --env-file-if-exists=.env.local scripts/seed/index.ts"
+    "seed": "tsx --env-file-if-exists=.env.local scripts/seed/index.ts",
+    "stream": "tsx watch --env-file-if-exists=.env.local stream/server.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",
