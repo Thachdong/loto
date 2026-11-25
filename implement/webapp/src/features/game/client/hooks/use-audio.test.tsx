@@ -1,70 +1,52 @@
 // @vitest-environment jsdom
 import { cleanup, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { makeGame, makeRoom } from "@/features/game/client/test-fixtures";
-import type { AudioEngine } from "@/features/game/client/lib/audio-engine";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { makeRoom } from "@/features/game/client/test-fixtures";
+import type { StreamPlayer } from "@/features/game/client/lib/stream-player";
 import type { RoomView } from "@/features/room/shared/types";
 import { useAudio } from "./use-audio";
 
-function fakeEngine(unlocked = true) {
-  return {
-    unlock: vi.fn(),
-    isUnlocked: () => unlocked,
-    contextState: () => "running" as const,
-    playNumber: vi.fn().mockResolvedValue(null),
-    playEvent: vi.fn().mockResolvedValue(null),
+const fakePlayer = () =>
+  ({
+    unlock: vi.fn().mockResolvedValue(undefined),
+    isUnlocked: () => true,
+    isBlocked: () => false,
+    attach: vi.fn(),
+    setMuted: vi.fn(),
     dispose: vi.fn(),
-  } satisfies AudioEngine;
-}
+  }) satisfies StreamPlayer;
 const ev = (type: string, atMs: number): RoomView["lastEvent"] => ({ type, targetUid: null, text: null, atMs });
 
-describe("useAudio", () => {
-  beforeEach(() => window.localStorage.clear());
+describe("useAudio (stream)", () => {
   afterEach(cleanup);
 
-  const render = (engine: AudioEngine, initial: RoomView) =>
-    renderHook(({ room }) => useAudio({ room, game: makeGame("running"), offsetMs: 0, engine, now: () => 0 }), { initialProps: { room: initial } });
-
-  it("does not play for the first snapshot, plays when called_numbers grows", () => {
-    const engine = fakeEngine();
-    const { rerender } = render(engine, makeRoom({ calledNumbers: [3, 4] }));
-    expect(engine.playNumber).not.toHaveBeenCalled();
-    rerender({ room: makeRoom({ calledNumbers: [3, 4, 9] }) });
-    expect(engine.playNumber).toHaveBeenCalledWith(9, expect.objectContaining({ receivedAt: 0 }));
+  it("gắn player vào phòng, gỡ khi unmount", () => {
+    const player = fakePlayer();
+    const { unmount } = renderHook(() => useAudio({ room: makeRoom(), soundOn: true, player }));
+    expect(player.attach).toHaveBeenCalledWith("r1");
+    unmount();
+    expect(player.attach).toHaveBeenLastCalledWith(null);
   });
 
-  it("does not play when the list shrinks (new game) or stays the same", () => {
-    const engine = fakeEngine();
-    const { rerender } = render(engine, makeRoom({ calledNumbers: [3, 4] }));
-    rerender({ room: makeRoom({ calledNumbers: [] }) });
-    rerender({ room: makeRoom({ calledNumbers: [] }) });
-    expect(engine.playNumber).not.toHaveBeenCalled();
+  it("bật/tắt tiếng → setMuted", () => {
+    const player = fakePlayer();
+    const { rerender } = renderHook(({ soundOn }) => useAudio({ room: makeRoom(), soundOn, player }), { initialProps: { soundOn: true } });
+    expect(player.setMuted).toHaveBeenLastCalledWith(false);
+    rerender({ soundOn: false });
+    expect(player.setMuted).toHaveBeenLastCalledWith(true);
   });
 
-  it("is silent before unlock or when sound is off", () => {
-    const locked = fakeEngine(false);
-    const a = render(locked, makeRoom({ calledNumbers: [1] }));
-    a.rerender({ room: makeRoom({ calledNumbers: [1, 2] }) });
-    expect(locked.playNumber).not.toHaveBeenCalled();
-
-    window.localStorage.setItem("loto:sound", "off");
-    const engine = fakeEngine();
-    const b = render(engine, makeRoom({ calledNumbers: [1] }));
-    b.rerender({ room: makeRoom({ calledNumbers: [1, 2] }) });
-    expect(engine.playNumber).not.toHaveBeenCalled();
-  });
-
-  it("plays KINH on a new claim_submitted and miss on claims_rejected, not on the first snapshot", () => {
-    const engine = fakeEngine();
-    const { rerender } = render(engine, makeRoom({ lastEvent: ev("claim_submitted", 1) }));
-    expect(engine.playEvent).not.toHaveBeenCalled();
+  it("rung khi có lượt KINH mới, không rung ở snapshot đầu", () => {
+    const vibrate = vi.fn();
+    Object.defineProperty(navigator, "vibrate", { value: vibrate, configurable: true });
+    const player = fakePlayer();
+    const { rerender } = renderHook(({ room }) => useAudio({ room, soundOn: true, player }), {
+      initialProps: { room: makeRoom({ lastEvent: ev("claim_submitted", 1) }) },
+    });
+    expect(vibrate).not.toHaveBeenCalled();
     rerender({ room: makeRoom({ lastEvent: ev("claim_submitted", 2) }) });
-    expect(engine.playEvent).toHaveBeenLastCalledWith("kinh", expect.anything());
-    rerender({ room: makeRoom({ lastEvent: ev("claim_submitted", 2) }) });
-    expect(engine.playEvent).toHaveBeenCalledTimes(1);
-    rerender({ room: makeRoom({ lastEvent: ev("claims_rejected", 3) }) });
-    expect(engine.playEvent).toHaveBeenLastCalledWith("miss", expect.anything());
-    rerender({ room: makeRoom({ lastEvent: ev("game_paused", 4) }) });
-    expect(engine.playEvent).toHaveBeenCalledTimes(2);
+    expect(vibrate).toHaveBeenCalledTimes(1);
+    rerender({ room: makeRoom({ lastEvent: ev("game_finished", 3) }) });
+    expect(vibrate).toHaveBeenCalledTimes(1);
   });
 });

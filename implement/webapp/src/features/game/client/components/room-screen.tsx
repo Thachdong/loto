@@ -19,7 +19,7 @@ import { useDebugConnection, useConnection } from "@/features/game/client/hooks/
 import { useNow } from "@/features/game/client/hooks/use-now";
 import { setPlayMode, usePlayMode } from "@/features/game/client/hooks/use-play-mode";
 import { useSoundOn } from "@/features/game/client/hooks/use-sound-on";
-import { getAudioEngine } from "@/features/game/client/lib/audio-singleton";
+import { getStreamPlayer } from "@/features/game/client/lib/stream-singleton";
 import { markSoundUnlocked, setSoundOn } from "@/features/game/client/lib/sound-pref";
 import { syncTicketMarks } from "@/features/game/client/hooks/use-marks";
 import { toast } from "sonner";
@@ -148,7 +148,9 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
     if (on) {
       // Chạm bật tiếng cũng là thao tác người dùng → mở khóa audio luôn (SCR-11.A2).
       markSoundUnlocked();
-      void getAudioEngine().unlock().catch(() => undefined);
+      const player = getStreamPlayer();
+      player.setMuted(false); // phát ngay trong cử chỉ này (iOS), không chờ effect
+      void player.unlock().catch(() => undefined);
     }
     setSoundOn(on);
   };
@@ -260,6 +262,7 @@ export function RoomScreen({ uid, roomId, serverOffsetMs: serverOffsetOverride, 
         roomId={room.id}
         isHost={isHost}
         drawIntervalSec={room.drawIntervalSec}
+        voicePack={room.voicePack}
         expiresAt={room.expiresAt}
         mode={mode}
         onModeChange={changeMode}

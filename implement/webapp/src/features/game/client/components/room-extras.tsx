@@ -3,6 +3,7 @@
 import { useAudio } from "@/features/game/client/hooks/use-audio";
 import { useDrawScheduler } from "@/features/game/client/hooks/use-draw-scheduler";
 import { useExpiryTimer } from "@/features/game/client/hooks/use-expiry-timer";
+import { useSoundOn } from "@/features/game/client/hooks/use-sound-on";
 import { useRoomToasts } from "@/features/game/client/hooks/use-room-toasts";
 import { useWakeLock } from "@/features/game/client/hooks/use-wake-lock";
 import { Board90Sheet } from "./board90-sheet";
@@ -27,10 +28,11 @@ type Props = {
 export function RoomExtras({ ctx, dockHeight, onLeaveStart, onLeaveAbort, onLeft }: Props) {
   const { room, game, players, uid, isHost, myTickets, serverOffsetMs, overlay, closeOverlay } = ctx;
 
+  const soundOn = useSoundOn();
   useDrawScheduler({ room, game, players, meUid: uid, offsetMs: serverOffsetMs });
   useExpiryTimer({ room, offsetMs: serverOffsetMs });
   useWakeLock(game.status === "running");
-  useAudio({ room, game, offsetMs: serverOffsetMs });
+  useAudio({ room, soundOn });
   useRoomToasts(room, uid);
 
   return (

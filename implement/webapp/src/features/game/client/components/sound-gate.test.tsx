@@ -3,18 +3,18 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { vi as dict } from "@/core/shared/i18n/vi";
-import type { AudioEngine } from "@/features/game/client/lib/audio-engine";
+import type { StreamPlayer } from "@/features/game/client/lib/stream-player";
 import { SoundGate } from "./sound-gate";
 
 const engine = () =>
   ({
     unlock: vi.fn().mockResolvedValue(undefined),
     isUnlocked: () => false,
-    contextState: () => "running" as const,
-    playNumber: vi.fn(),
-    playEvent: vi.fn(),
+    isBlocked: () => false,
+    attach: vi.fn(),
+    setMuted: vi.fn(),
     dispose: vi.fn(),
-  }) satisfies AudioEngine;
+  }) satisfies StreamPlayer;
 
 describe("SoundGate", () => {
   beforeEach(() => {
