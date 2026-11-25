@@ -8,6 +8,8 @@ import { startGame } from "@/features/game/server/services/game-lifecycle.servic
 import { createCookieStore } from "../auth/google-token";
 import { db, HOUR, millis } from "../invite/invite-fixtures";
 import { createCast, players, resetAll, signInAs, writePlayer, writePresence, writeTicketRoom, type Cast } from "../ticket/ticket-fixtures";
+import manifest from "../../../public/audio/v1/manifest.json";
+import { RESUME_REVEAL_MS } from "@/features/game/shared/domain/call-timing";
 import { GAME, gameDoc, NOW, patchGame, patchRoom, ROOM, roomDoc, SEC, ts, userDoc } from "./game-fixtures";
 
 const store = vi.hoisted(() => ({ current: null as ReturnType<typeof createCookieStore> | null }));
@@ -83,10 +85,17 @@ describe("startGameAction", () => {
     expect(await start()).toMatchObject({ ok: false, error: { code: "NO_TICKETS_HELD" } });
   });
 
-  it("AC-01: starts the game, calls the first number now, sets player_count and next_call_at", async () => {
+  it("AC-01: starts the game, first number becomes pending (stream calls it now), shown when its clip nearly ends", async () => {
     await twoHolders();
     signInAs(cookieStore, cast.H);
     const res = await start();
+    const room = await roomDoc();
+    const first = room?.pending_call;
+    expect(first?.number).toBeGreaterThanOrEqual(1);
+    expect(first?.number).toBeLessThanOrEqual(90);
+    const clip = `${String(first?.number).padStart(2, "0")}.mp3`;
+    const due = NOW.getTime() + (manifest.durations as Record<string, number>)[clip]!;
+    expect(first).toMatchObject({ clip, game_id: GAME });
 
     expect(res).toEqual({
       ok: true,
@@ -96,27 +105,24 @@ describe("startGameAction", () => {
         status: "running",
         playerCount: 2,
         startedAt: NOW.toISOString(),
-        nextCallAt: new Date(NOW.getTime() + 5 * SEC).toISOString(),
+        nextCallAt: new Date(due).toISOString(),
       },
     });
     const game = await gameDoc();
     expect(game).toMatchObject({ status: "running", player_count: 2, pause_reason: null });
     expect(millis(game?.started_at)).toBe(NOW.getTime());
-    expect(millis(game?.next_call_at)).toBe(NOW.getTime() + 5 * SEC);
-    const room = await roomDoc();
-    expect(room?.called_numbers).toHaveLength(1);
-    expect(room?.called_numbers[0]).toBeGreaterThanOrEqual(1);
-    expect(room?.called_numbers[0]).toBeLessThanOrEqual(90);
+    expect(millis(game?.next_call_at)).toBe(due);
+    expect(room?.called_numbers).toEqual([]);
     expect(room?.last_event).toMatchObject({ type: "game_started", text: "Ván 1 bắt đầu", actor_uid: cast.H.uid });
     expect(millis(room?.last_event?.at)).toBe(NOW.getTime());
   });
 
   it("AC-01: first number comes from the injected random (uniform over 1–90)", async () => {
     await twoHolders();
-    await patchRoom({ called_numbers: [7, 8], draw_interval_sec: 3 });
+    await patchRoom({ called_numbers: [7, 8] });
     const state = await startGame(cast.H.uid, { roomId: ROOM, gameId: GAME }, { randomInt: (max) => max - 1 });
-    expect(state.nextCallAt).toBe(new Date(NOW.getTime() + 3 * SEC).toISOString());
-    expect((await roomDoc())?.called_numbers).toEqual([90]);
+    expect(state.nextCallAt).toBe(new Date(NOW.getTime() + (manifest.durations as Record<string, number>)["90.mp3"]!).toISOString());
+    expect(await roomDoc()).toMatchObject({ called_numbers: [], pending_call: { number: 90, clip: "90.mp3" } });
   });
 
   it("AC-02: deletes players with empty tickets or who left the room; refreshes name/photo", async () => {
@@ -251,13 +257,13 @@ describe("resumeGameAction", () => {
     expect(await resume()).toMatchObject({ ok: false, error: { code: "GAME_NOT_PAUSED" } });
   });
 
-  it("AC-13: paused → running, pause_reason null, next_call_at = now + N, last_event game_resumed", async () => {
+  it("AC-13: paused → running, pause_reason null, pending number shown shortly (RESUME_REVEAL_MS), last_event game_resumed", async () => {
     signInAs(cookieStore, cast.H);
-    const next = new Date(NOW.getTime() + 5 * SEC).toISOString();
+    const next = new Date(NOW.getTime() + RESUME_REVEAL_MS).toISOString();
     expect(await resume()).toMatchObject({ ok: true, data: { status: "running", nextCallAt: next } });
     const game = await gameDoc();
     expect(game).toMatchObject({ status: "running", pause_reason: null });
-    expect(millis(game?.next_call_at)).toBe(NOW.getTime() + 5 * SEC);
+    expect(millis(game?.next_call_at)).toBe(NOW.getTime() + RESUME_REVEAL_MS);
     expect((await roomDoc())?.last_event).toMatchObject({ type: "game_resumed", text: "Ván tiếp tục" });
   });
 

@@ -1,4 +1,6 @@
 import { MIN_PLAYERS_TO_START } from "@/features/game/shared/constants";
+import { nextRevealAt, RESUME_REVEAL_MS } from "@/features/game/shared/domain/call-timing";
+import { pendingCallDoc, planCall } from "@/features/game/server/lib/voice-clips";
 import "server-only";
 
 import { cryptoRandomInt } from "@/core/server/random";
@@ -43,7 +45,7 @@ export type StartGameDeps = { randomInt?: RandomInt };
  * api-contract › startGame (BR-14, BR-15). Thứ tự lỗi: thành viên → host → `GAME_STALE` → `waiting` → phòng còn
  * `active` và chưa quá hạn (`ROOM_CLOSING`; lazy expiry vừa đóng/chuyển `closing` thì commit phần hết hạn rồi báo
  * `ROOM_CLOSING`) → < `MIN_PLAYERS_TO_START` người có vé (`NO_TICKETS_HELD`, không ghi — BR-14, Q-059). Xóa player vé rỗng/đã rời, chép tên-ảnh hiện
- * tại, server rao ngay số đầu và đặt `next_call_at = now + N`.
+ * tại, server chọn số đầu làm số chờ (stream rao ngay) và đặt `next_call_at` = lúc clip gần hết.
  */
 export async function startGame(uid: string, input: StartGameInput, deps: StartGameDeps = {}): Promise<GameState> {
   const randomInt = deps.randomInt ?? cryptoRandomInt;
@@ -80,16 +82,19 @@ export async function startGame(uid: string, input: StartGameInput, deps: StartG
       })),
     );
 
-    const first = pickNextNumber([], randomInt);
-    const nextCallAt = new Date(at.getTime() + room.drawIntervalSec * 1000);
+    // Số đầu là số chờ: stream rao ngay, hiện khi clip gần hết (ADR-05 sửa đổi).
+    const first = pickNextNumber([], randomInt) ?? 1;
+    const planned = planCall(room.voicePack, first);
+    const nextCallAt = nextRevealAt(null, at, planned.durationMs);
     startGameInTx(tx, input.roomId, game.id, { playerCount: valid.length, nextCallAt, now: at });
-    setRoomCalledNumbersInTx(tx, input.roomId, first === null ? [] : [first], at, {
-      type: "game_started",
-      text: t("toast.gameStarted", { game: game.seqNo }),
-      actorUid: uid,
-      targetUid: null,
-      now: at,
-    });
+    setRoomCalledNumbersInTx(
+      tx,
+      input.roomId,
+      [],
+      at,
+      { type: "game_started", text: t("toast.gameStarted", { game: game.seqNo }), actorUid: uid, targetUid: null, now: at },
+      pendingCallDoc(planned, game.id),
+    );
     return ok(state(game, { status: "running", playerCount: valid.length, startedAt: at.toISOString(), nextCallAt: nextCallAt.toISOString() }));
   }, { expiredError: "ROOM_CLOSING" });
 }
@@ -126,7 +131,7 @@ export async function resumeGame(uid: string, input: ResumeGameInput): Promise<G
     if (input.gameId !== room.currentGameId) return fail("GAME_STALE");
     if (game.status !== "paused") return fail("GAME_NOT_PAUSED");
 
-    const nextCallAt = new Date(at.getTime() + room.drawIntervalSec * 1000);
+    const nextCallAt = new Date(at.getTime() + RESUME_REVEAL_MS);
     ctx.applyExpiry(tx);
     setGameRunningInTx(tx, input.roomId, game.id, nextCallAt);
     setRoomEventInTx(tx, input.roomId, {

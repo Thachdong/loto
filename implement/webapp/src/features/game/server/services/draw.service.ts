@@ -15,6 +15,8 @@ import { getPlayerInTx, readRoomPresence } from "@/features/ticket/db/ticket.rep
 import { logError } from "@/core/server/log";
 import { fail, inGameRoom, ok } from "./game-room";
 import { loadRolloverPlayers, rolloverToNewGame } from "./rollover.service";
+import { nextRevealAt } from "@/features/game/shared/domain/call-timing";
+import { pendingCallDoc, planCall } from "@/features/game/server/lib/voice-clips";
 
 /** Sai số cho phép giữa đồng hồ client và `next_call_at` (plan 3.3). */
 export const DRAW_TOLERANCE_MS = 300;
@@ -24,7 +26,8 @@ export type DrawDeps = { randomInt?: RandomInt };
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
 /**
- * api-contract › drawNumber (BR-14, BR-15). Thứ tự lỗi: thành viên → `GAME_STALE` → (host hoặc có doc player,
+ * api-contract › drawNumber (BR-14; nhịp theo audio — ADR-05 sửa đổi): hiện số chờ `rooms.pending_call` vào `called_numbers`,
+ * chọn số chờ mới, `next_call_at` = lúc clip số chờ mới gần hết. Thứ tự lỗi: thành viên → `GAME_STALE` → (host hoặc có doc player,
  * `NOT_ROOM_MEMBER`) → `GAME_NOT_RUNNING` → `seq ≠ số đã rao` ⇒ `drawn:false` → `DRAW_TOO_EARLY`.
  * Số thứ 90: ván `finished`/`no_winner`; phòng `active` → ván mới (`rolloverToNewGame`), `closing` → đóng phòng.
  */
@@ -62,19 +65,25 @@ export async function drawNumber(uid: string, input: DrawNumberInput, deps: Draw
         return fail("DRAW_TOO_EARLY", [{ code: "nextCallAt", nextCallAt: game.nextCallAt.toISOString() }]);
       }
 
-      const picked = pickNextNumber(called, randomInt);
-      if (picked === null) return fail("GAME_NOT_RUNNING");
-      const calledNumbers = [...called, picked];
+      // Hiện số chờ (clip của nó vừa gần hết) rồi chọn số chờ mới — stream phát clip mới ngay (ADR-05 sửa đổi).
+      const pending = room.pendingCall && room.pendingCall.gameId === game.id ? room.pendingCall : null;
+      if (pending && called.includes(pending.number)) return fail("GAME_NOT_RUNNING");
+      const calledNumbers = pending ? [...called, pending.number] : [...called];
+      const shown = calledNumbers.length > 0 ? calledNumbers[calledNumbers.length - 1]! : null;
       const last = calledNumbers.length >= MAX_NUMBER;
-      const draw = { calledNumbers, now: at };
 
       if (!last) {
-        const nextCallAt = new Date(at.getTime() + room.drawIntervalSec * 1000);
+        const next = pickNextNumber(calledNumbers, randomInt);
+        if (next === null) return fail("GAME_NOT_RUNNING");
+        const planned = planCall(room.voicePack, next);
+        const nextCallAt = nextRevealAt(game.nextCallAt, at, planned.durationMs);
         ctx.applyExpiry(tx);
-        appendDrawInTx(tx, input.roomId, game.id, { ...draw, nextCallAt });
+        appendDrawInTx(tx, input.roomId, game.id, { calledNumbers, now: at, nextCallAt, pendingCall: pendingCallDoc(planned, game.id) });
         log.drawn = true;
-        return ok({ drawn: true, number: picked, seq: calledNumbers.length, nextCallAt: nextCallAt.toISOString(), gameStatus: "running" });
+        return ok({ drawn: true, number: shown, seq: calledNumbers.length, nextCallAt: nextCallAt.toISOString(), gameStatus: "running" });
       }
+      const picked = shown!;
+      const draw = { calledNumbers, now: at, pendingCall: null };
 
       // Số thứ 90: ván kết thúc không người thắng.
       if (ctx.plan.status === "closing") {

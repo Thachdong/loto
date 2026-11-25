@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RESUME_REVEAL_MS } from "@/features/game/shared/domain/call-timing";
 import { resetClock, setClock } from "@/core/server/clock";
 import { confirmGameAction } from "@/features/game/server/actions/confirm-game.action";
 import { rejectClaimsAction } from "@/features/game/server/actions/reject-claims.action";
@@ -147,15 +148,14 @@ describe("rejectClaimsAction", () => {
     expect(await reject()).toMatchObject({ ok: false, error: { code: "GAME_NOT_AWAITING_CONFIRM" } });
   });
 
-  it("AC-9: all misses → claims cleared, back to running with next_call_at = now + interval", async () => {
+  it("AC-9: all misses → claims cleared, back to running with next_call_at = now + RESUME_REVEAL_MS", async () => {
     await awaiting([missB(), missC()]);
     signInAs(cookieStore, cast.H);
     const res = await reject();
     expect(res).toMatchObject({ ok: true, data: { gameId: GAME, status: "running" } });
     const g = await gameDoc();
     expect(g).toMatchObject({ status: "running", claims: [], resume_status: null, pause_reason: null });
-    const interval = (await roomDoc())?.draw_interval_sec as number;
-    expect(millis(g?.next_call_at)).toBe(NOW.getTime() + interval * SEC);
+    expect(millis(g?.next_call_at)).toBe(NOW.getTime() + RESUME_REVEAL_MS);
     expect((await roomDoc())?.last_event).toMatchObject({ type: "claims_rejected", text: "Bình B, Cúc C kinh hụt", actor_uid: cast.H.uid });
   });
 

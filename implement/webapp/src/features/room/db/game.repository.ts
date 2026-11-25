@@ -4,6 +4,7 @@ import { Timestamp, type DocumentReference, type Transaction } from "firebase-ad
 import { expireAtFrom } from "@/core/db/ttl";
 import { firestore } from "@/core/db/firestore";
 import type { GameDoc } from "./game.doc";
+import type { PendingCallDoc } from "./room.doc";
 import { claimToDoc, finishedGamePatch, resultOfClaims, type ClaimRecord } from "./game.mapper";
 import { setRoomCalledNumbersInTx, setRoomGameInTx, type RoomEvent } from "./room.repository";
 
@@ -48,14 +49,14 @@ export function setGameRunningInTx(tx: Transaction, roomId: string, gameId: stri
   tx.update(gameRef(roomId, gameId), patch);
 }
 
-/** Rao thêm một số: `rooms.called_numbers` (mảng đầy đủ mới) + `games.next_call_at` (null khi đã đủ 90 số). */
+/** Hiện số chờ + chọn số chờ mới: `rooms.called_numbers`, `rooms.pending_call` + `games.next_call_at` (null khi đã đủ 90 số). */
 export function appendDrawInTx(
   tx: Transaction,
   roomId: string,
   gameId: string,
-  draw: { calledNumbers: readonly number[]; nextCallAt: Date | null; now: Date },
+  draw: { calledNumbers: readonly number[]; nextCallAt: Date | null; now: Date; pendingCall: PendingCallDoc | null },
 ): void {
-  setRoomCalledNumbersInTx(tx, roomId, draw.calledNumbers, draw.now);
+  setRoomCalledNumbersInTx(tx, roomId, draw.calledNumbers, draw.now, undefined, draw.pendingCall);
   const patch: Partial<GameDoc> = { next_call_at: draw.nextCallAt ? Timestamp.fromDate(draw.nextCallAt) : null };
   tx.update(gameRef(roomId, gameId), patch);
 }

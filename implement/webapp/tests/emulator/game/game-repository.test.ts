@@ -54,7 +54,7 @@ describe("game repository (in transaction)", () => {
     expect(await gameDoc()).toMatchObject({ status: "running", pause_reason: null });
 
     await runTransaction(async (tx) =>
-      appendDrawInTx(tx, ROOM, GAME, { calledNumbers: [4, 9], nextCallAt: null, now: later }),
+      appendDrawInTx(tx, ROOM, GAME, { calledNumbers: [4, 9], nextCallAt: null, pendingCall: null, now: later }),
     );
     expect((await roomDoc())?.called_numbers).toEqual([4, 9]);
     expect((await gameDoc())?.next_call_at).toBeNull();

@@ -5,7 +5,7 @@ import { firestore, rtdb } from "@/core/db/firestore";
 import type { CloseReason, RoomStatus } from "@/features/room/shared/types";
 import type { GameDoc, GameResult, WinnerDoc } from "./game.doc";
 import { finishedGamePatch } from "./game.mapper";
-import type { LastEventDoc, RoomDoc } from "./room.doc";
+import type { LastEventDoc, PendingCallDoc, RoomDoc } from "./room.doc";
 import { gameFromDoc, newRoomDocs, roomFromDoc, type GameRecord, type NewRoom, type RoomRecord } from "./room.mapper";
 import type { TicketDoc } from "./ticket.doc";
 
@@ -200,10 +200,12 @@ export function setRoomCalledNumbersInTx(
   calledNumbers: readonly number[],
   now: Date,
   event?: RoomEvent,
+  pendingCall?: PendingCallDoc | null,
 ): void {
   const at = Timestamp.fromDate(now);
   const patch: Partial<RoomDoc> = { called_numbers: [...calledNumbers], updated_at: at };
   if (event) patch.last_event = eventDoc(event, at);
+  if (pendingCall !== undefined) patch.pending_call = pendingCall;
   tx.update(roomRef(roomId), patch);
 }
 
@@ -246,13 +248,6 @@ export function kickMemberInTx(tx: Transaction, roomId: string, uid: string, mem
 /** updateRoom: đổi bộ giọng rao (không ghi `last_event`). */
 export function setVoicePackInTx(tx: Transaction, roomId: string, voicePack: string, now: Date): void {
   const patch: Partial<RoomDoc> = { voice_pack: voicePack, updated_at: Timestamp.fromDate(now) };
-  tx.update(roomRef(roomId), patch);
-}
-
-/** updateRoom (BR-15): `draw_interval_sec` + `last_event = interval_changed`. */
-export function setDrawIntervalInTx(tx: Transaction, roomId: string, drawIntervalSec: number, event: RoomEvent): void {
-  const at = Timestamp.fromDate(event.now);
-  const patch: Partial<RoomDoc> = { draw_interval_sec: drawIntervalSec, last_event: eventDoc(event, at), updated_at: at };
   tx.update(roomRef(roomId), patch);
 }
 

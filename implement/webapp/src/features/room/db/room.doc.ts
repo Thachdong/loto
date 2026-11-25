@@ -12,6 +12,12 @@ export type LastEventDoc = {
   at: Timestamp;
 };
 
+/**
+ * Số đã chọn nhưng CHƯA hiện (ADR-05 sửa đổi): stream server phát clip `clip` ngay; số vào `called_numbers` ở lần
+ * `drawNumber` kế tiếp, lúc clip gần hết (`games.next_call_at`).
+ */
+export type PendingCallDoc = { number: number; clip: string | null; duration_ms: number; game_id: string };
+
 /** database.md › TBL-02 `rooms/{roomId}` — đúng tên field snake_case. */
 export type RoomDoc = {
   name: string;
@@ -27,6 +33,7 @@ export type RoomDoc = {
   /** Bộ giọng rao (`public/audio/<id>/`), thiếu ở phòng cũ → mặc định. */
   voice_pack?: string;
   called_numbers: number[];
+  pending_call?: PendingCallDoc | null;
   current_game_id: string;
   game_count: number;
   ticket_set_no: number;

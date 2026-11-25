@@ -1,5 +1,6 @@
 import "server-only";
 
+import { RESUME_REVEAL_MS } from "@/features/game/shared/domain/call-timing";
 import { logError } from "@/core/server/log";
 import { t } from "@/core/shared/i18n/vi";
 import { clearCurrentRoomInTx, findUidsInRoomInTx } from "@/features/auth/db/user.repository";
@@ -97,7 +98,7 @@ export async function rejectClaims(uid: string, input: RejectClaimsInput): Promi
 
       const names = [...new Set(game.claims.map((c) => c.displayName))].join(", ");
       const resumeTo = game.resumeStatus === "paused" ? "paused" : "running";
-      const nextCallAt = resumeTo === "running" ? new Date(at.getTime() + room.drawIntervalSec * 1000) : null;
+      const nextCallAt = resumeTo === "running" ? new Date(at.getTime() + RESUME_REVEAL_MS) : null;
       ctx.applyExpiry(tx);
       rejectClaimsInTx(tx, input.roomId, game.id, nextCallAt ? { status: "running", nextCallAt } : { status: "paused" });
       setRoomEventInTx(tx, input.roomId, {

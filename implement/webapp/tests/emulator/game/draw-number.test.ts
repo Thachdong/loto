@@ -5,6 +5,7 @@ import { drawNumberAction } from "@/features/game/server/actions/draw-number.act
 import { createCookieStore } from "../auth/google-token";
 import { db, millis } from "../invite/invite-fixtures";
 import { createCast, players, resetAll, signInAs, writePlayer, writePresence, writeTicketRoom, type Cast } from "../ticket/ticket-fixtures";
+import manifest from "../../../public/audio/v1/manifest.json";
 import { GAME, gameDoc, NOW, patchGame, patchRoom, ROOM, roomDoc, SEC, ts, userDoc } from "./game-fixtures";
 
 const store = vi.hoisted(() => ({ current: null as ReturnType<typeof createCookieStore> | null }));
@@ -17,6 +18,9 @@ store.current = cookieStore;
 let cast: Cast;
 const at = (ms: number) => ts(new Date(NOW.getTime() + ms));
 const draw = (seq: number, gameId = GAME) => drawNumberAction({ roomId: ROOM, gameId, seq });
+/** Số chờ (đang rao, chưa hiện — ADR-05 sửa đổi). */
+const pending = (number: number, gameId = GAME) => ({ number, clip: `${String(number).padStart(2, "0")}.mp3`, duration_ms: 1000, game_id: gameId });
+const clipMs = (n: number) => (manifest.durations as Record<string, number>)[`${String(n).padStart(2, "0")}.mp3`]!;
 
 beforeEach(async () => {
   await resetAll();
@@ -27,7 +31,7 @@ beforeEach(async () => {
   await writeTicketRoom(cast.H);
   await writePlayer(cast.B.uid, "Bình B", ["red_a"]);
   await writePlayer(cast.C.uid, "Cúc C", ["blue_a", "blue_b"]);
-  await patchRoom({ called_numbers: [5, 6, 7], draw_interval_sec: 3 });
+  await patchRoom({ called_numbers: [5, 6, 7], pending_call: pending(42) });
   await patchGame({ status: "running", player_count: 2, started_at: ts(NOW), next_call_at: at(0) });
 });
 
@@ -70,15 +74,34 @@ describe("drawNumberAction", () => {
     }
   });
 
-  it("host draws on time: appends a number, next_call_at = now + N, no last_event change", async () => {
+  it("host draws on time: reveals the pending number, picks a new pending one, next_call_at = now + its clip length", async () => {
     signInAs(cookieStore, cast.H);
     const res = await draw(3);
-    expect(res).toMatchObject({ ok: true, data: { drawn: true, seq: 4, gameStatus: "running", nextCallAt: new Date(NOW.getTime() + 3 * SEC).toISOString() } });
     const room = await roomDoc();
-    expect(room?.called_numbers).toHaveLength(4);
-    expect(new Set(room?.called_numbers).size).toBe(4);
-    expect(res.ok && res.data.number).toBe(room?.called_numbers[3]);
-    expect(millis((await gameDoc())?.next_call_at)).toBe(NOW.getTime() + 3 * SEC);
+    expect(room?.called_numbers).toEqual([5, 6, 7, 42]);
+    const next = room?.pending_call;
+    expect(next).toMatchObject({ game_id: GAME, clip: `${String(next?.number).padStart(2, "0")}.mp3`, duration_ms: clipMs(next!.number) });
+    expect([5, 6, 7, 42]).not.toContain(next?.number);
+    const due = NOW.getTime() + clipMs(next!.number);
+    expect(res).toEqual({ ok: true, data: { drawn: true, number: 42, seq: 4, gameStatus: "running", nextCallAt: new Date(due).toISOString() } });
+    expect(millis((await gameDoc())?.next_call_at)).toBe(due);
+  });
+
+  it("late call within drift → next reveal anchored on the previous due time (no accumulated delay)", async () => {
+    setClock(() => new Date(NOW.getTime() + 800));
+    signInAs(cookieStore, cast.H);
+    await draw(3);
+    const next = (await roomDoc())?.pending_call;
+    expect(millis((await gameDoc())?.next_call_at)).toBe(NOW.getTime() + clipMs(next!.number));
+  });
+
+  it("no pending number (stale game id) → only picks a pending one, nothing revealed", async () => {
+    await patchRoom({ pending_call: pending(42, "g_old") });
+    signInAs(cookieStore, cast.H);
+    expect(await draw(3)).toMatchObject({ ok: true, data: { drawn: true, seq: 3, number: 7 } });
+    const room = await roomDoc();
+    expect(room?.called_numbers).toEqual([5, 6, 7]);
+    expect(room?.pending_call?.game_id).toBe(GAME);
   });
 
   it("a backup player (has a player doc) can draw", async () => {
@@ -141,7 +164,7 @@ describe("drawNumberAction", () => {
 describe("drawNumber — the 90th number (rollover)", () => {
   const ninety = Array.from({ length: 89 }, (_, i) => i + 1);
   beforeEach(async () => {
-    await patchRoom({ called_numbers: ninety });
+    await patchRoom({ called_numbers: ninety, pending_call: pending(90) });
     for (const u of [cast.H, cast.B, cast.C]) await writePresence(u.uid, true);
   });
 
@@ -156,6 +179,7 @@ describe("drawNumber — the 90th number (rollover)", () => {
     expect(millis(g1?.ended_at)).toBe(NOW.getTime());
     const room = await roomDoc();
     expect(room?.called_numbers).toHaveLength(90);
+    expect(room?.pending_call).toBeNull();
     expect(room).toMatchObject({ status: "active", game_count: 2 });
     expect(room?.last_event).toMatchObject({ type: "game_finished", text: "Ván 1 kết thúc" });
     expect(room?.current_game_id).not.toBe(GAME);

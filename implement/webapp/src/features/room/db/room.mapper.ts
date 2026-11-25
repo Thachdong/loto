@@ -22,6 +22,8 @@ export type RoomRecord = {
   voicePack: VoicePackId;
   /** `rooms.called_numbers` theo thứ tự rao. */
   calledNumbers: number[];
+  /** Số đã rao (đang phát audio) nhưng chưa hiện. */
+  pendingCall: { number: number; clip: string | null; durationMs: number; gameId: string } | null;
   currentGameId: string;
   gameCount: number;
   ticketSetNo: number;
@@ -80,6 +82,9 @@ export function roomFromDoc(id: string, doc: RoomDoc): RoomRecord {
     drawIntervalSec: doc.draw_interval_sec,
     voicePack: voicePackOf(doc.voice_pack),
     calledNumbers: [...(doc.called_numbers ?? [])],
+    pendingCall: doc.pending_call
+      ? { number: doc.pending_call.number, clip: doc.pending_call.clip, durationMs: doc.pending_call.duration_ms, gameId: doc.pending_call.game_id }
+      : null,
     currentGameId: doc.current_game_id,
     gameCount: doc.game_count,
     ticketSetNo: doc.ticket_set_no,
@@ -128,6 +133,7 @@ export function newRoomDocs(room: NewRoom): NewRoomDocs {
       draw_interval_sec: room.drawIntervalSec,
       voice_pack: room.voicePack,
       called_numbers: [],
+      pending_call: null,
       current_game_id: room.gameId,
       game_count: 1,
       ticket_set_no: 1,
