@@ -31,7 +31,12 @@ export class VoicePack {
 
   clip(kind: ClipKind, n: number | null, rng: () => number = Math.random): Promise<Clip | null> {
     const file = selectClip(this.manifest, kind, n, rng);
-    if (!file) return Promise.resolve(null);
+    return file ? this.file(file) : Promise.resolve(null);
+  }
+
+  /** Clip theo đường dẫn trong bộ (server đã chọn sẵn — `rooms.pending_call.clip`). Chặn thoát khỏi thư mục bộ. */
+  file(file: string): Promise<Clip | null> {
+    if (file.includes("..") || path.isAbsolute(file)) return Promise.resolve(null);
     let pending = this.cache.get(file);
     if (!pending) {
       pending = readFile(path.join(this.dir, file))

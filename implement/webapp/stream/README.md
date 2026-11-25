@@ -2,6 +2,8 @@
 
 Mỗi phòng một luồng MP3 liên tục. Client phát bằng `<audio>`, không tự tải clip.
 
+Luồng phát clip của `rooms.pending_call` (số chờ do `drawNumber` / `startGame` chọn), các clip nối tiếp nhau.
+
 - `GET /rooms/{roomId}/stream?token=<Firebase ID token>` trả `audio/mpeg` chunked, không kết thúc.
   - Lỗi `401`: token sai.
   - Lỗi `403`: user không ở phòng này (`users.current_room_id`).
@@ -30,7 +32,7 @@ Thêm bộ mới:
    ```bash
    ffmpeg -f lavfi -i anullsrc=r=48000:cl=stereo -t 1 -c:a libmp3lame -b:a 128k silence.mp3
    ```
-3. Viết `manifest.json` (xem `v1`).
+3. Viết `manifest.json` (xem `v1`), rồi chạy `npm run audio:manifest -- <id>` để ghi `durations` (ms/clip). Server dùng số này để hẹn giờ hiện số (số hiện khi clip gần hết — ADR-05).
 4. Thêm `{ id, name }` vào `VOICE_PACKS` trong `src/features/room/shared/domain/voice-pack.ts`.
 5. Cập nhật `enum` của `voicePack` trong `specs/api-contract.yml`.
 

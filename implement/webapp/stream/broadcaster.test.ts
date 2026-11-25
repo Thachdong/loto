@@ -10,19 +10,13 @@ function fakePack(id = "v1", clips: Record<string, Clip | null> = {}): VoicePack
   return {
     id,
     silence: [frame("_")],
-    clip: async (kind: string, n: number | null) => clips[kind === "number" ? `n${n}` : kind] ?? null,
+    clip: async (kind: string) => clips[kind] ?? null,
+    file: async (file: string) => clips[file] ?? null,
   } as unknown as VoicePack;
 }
 
-const base: RoomState = {
-  calledNumbers: [],
-  currentGameId: "g1",
-  drawIntervalSec: 5,
-  voicePack: "v1",
-  lastEventKey: null,
-  lastEventType: null,
-  status: "active",
-};
+const base: RoomState = { pending: null, voicePack: "v1", lastEventKey: null, lastEventType: null, status: "active" };
+const call = (n: number, seq = 0, game = "g1"): RoomState => ({ ...base, pending: { key: `${game}:${seq}:${n}`, number: n, clip: `n${n}` } });
 
 function setup(clips: Record<string, Clip | null>) {
   let t = 0;
@@ -52,45 +46,52 @@ describe("RoomBroadcaster", () => {
     expect(new Set(out)).toEqual(new Set(["_"]));
   });
 
-  it("snapshot đầu không phát lại số cũ; số mới → phát clip", async () => {
+  it("snapshot đầu không phát lại số chờ cũ; số chờ mới → phát đúng clip server chọn", async () => {
     const { b, out, sink, advance } = setup({ n7: clip("n7", 3), n8: clip("n8", 2) });
-    await b.onState({ ...base, calledNumbers: [7] });
+    await b.onState(call(7));
     b.add(sink);
     advance(0);
+    await b.onState(call(7)); // cùng key → không phát
     expect(out).not.toContain("n7");
-    await b.onState({ ...base, calledNumbers: [7, 8] });
+    await b.onState(call(8, 1));
     out.length = 0;
     advance(500);
     expect(out.filter((x) => x === "n8")).toHaveLength(2);
-    expect(out).not.toContain("n7");
   });
 
-  it("câu nối chỉ khi còn đủ ≥ 1 giây", async () => {
-    const clips = { n1: clip("n1", 10), n2: clip("n2", 10), connector: clip("c", 5) };
-    const { b, out, sink, advance } = setup(clips);
+  it("không chèn câu nối (giờ hiện số tính theo đúng độ dài clip)", async () => {
+    const { b, out, sink, advance } = setup({ n1: clip("n1", 3), connector: clip("c", 5) });
     await b.onState(base);
     b.add(sink);
-    await b.onState({ ...base, calledNumbers: [1] }); // 5s − 1s − 0.5s ≥ 1s → có nối
-    advance(2000);
-    expect(out.filter((x) => x === "c")).toHaveLength(5);
-    out.length = 0;
-    await b.onState({ ...base, drawIntervalSec: 2, calledNumbers: [1, 2] }); // 2s − 1.5s < 1s → không nối
+    await b.onState(call(1));
     advance(2000);
     expect(out).not.toContain("c");
+    expect(out.filter((x) => x === "n1")).toHaveLength(3);
   });
 
-  it("số mới tới khi số cũ chưa phát → bỏ số cũ", async () => {
-    const { b, out, sink, advance } = setup({ n1: clip("n1", 3), n2: clip("n2", 3), n3: clip("n3", 3) });
+  it("clip phát nối tiếp, không chồng nhau", async () => {
+    const { b, out, sink, advance } = setup({ n1: clip("n1", 3), n2: clip("n2", 3) });
     await b.onState(base);
     b.add(sink);
-    advance(0); // đã gửi trước LEAD_MS im lặng
-    await b.onState({ ...base, calledNumbers: [1] });
-    await b.onState({ ...base, calledNumbers: [1, 2] });
-    await b.onState({ ...base, calledNumbers: [1, 2, 3] });
+    advance(0);
+    out.length = 0;
+    await b.onState(call(1));
+    advance(100); // n1 đã bắt đầu
+    await b.onState(call(2, 1));
+    advance(1000);
+    const seq = out.filter((x) => x !== "_");
+    expect(seq).toEqual(["n1", "n1", "n1", "n2", "n2", "n2"]);
+  });
+
+  it("số chờ chưa kịp phát bị thay → bỏ số cũ", async () => {
+    const { b, out, sink, advance } = setup({ n1: clip("n1", 3), n2: clip("n2", 3) });
+    await b.onState(base);
+    b.add(sink);
+    await b.onState(call(1));
+    await b.onState(call(2, 1));
     advance(1000);
     expect(out).not.toContain("n1");
-    expect(out).not.toContain("n2");
-    expect(out.filter((x) => x === "n3")).toHaveLength(3);
+    expect(out.filter((x) => x === "n2")).toHaveLength(3);
   });
 
   it("sự kiện KINH / chúc mừng phát 1 lần theo last_event", async () => {
@@ -106,12 +107,11 @@ describe("RoomBroadcaster", () => {
     expect(out.filter((x) => x === "w")).toHaveLength(2);
   });
 
-  it("ván mới (game đổi) → số đầu ván mới vẫn phát", async () => {
+  it("ván mới cùng số → key khác → vẫn phát", async () => {
     const { b, out, sink, advance } = setup({ n5: clip("n5", 1) });
-    await b.onState({ ...base, calledNumbers: [1, 2, 3] });
+    await b.onState(call(5, 0, "g1"));
     b.add(sink);
-    await b.onState({ ...base, currentGameId: "g2", calledNumbers: [] });
-    await b.onState({ ...base, currentGameId: "g2", calledNumbers: [5] });
+    await b.onState(call(5, 0, "g2"));
     advance(1000);
     expect(out).toContain("n5");
   });

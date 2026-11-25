@@ -1,5 +1,4 @@
 import type { Mp3Frame } from "./mp3";
-import { totalDurationMs } from "./mp3";
 import type { Clip, VoicePack } from "./pack";
 
 /** Máy nghe gắn vào luồng của phòng (HTTP response). `backlog()` quá lớn = client chậm, bị ngắt. */
@@ -7,9 +6,8 @@ export type Sink = { write(chunk: Buffer): void; close(): void; backlog(): numbe
 
 /** Field `rooms/{id}` stream cần (đã chuẩn hóa). */
 export type RoomState = {
-  calledNumbers: readonly number[];
-  currentGameId: string;
-  drawIntervalSec: number;
+  /** `rooms.pending_call`: số đang rao (chưa hiện) + clip server đã chọn; `key` đổi = số chờ mới. */
+  pending: { key: string; number: number; clip: string | null } | null;
   voicePack: string;
   /** `last_event.type` + `last_event.at` để phát KINH / kinh hụt / chúc mừng đúng 1 lần. */
   lastEventKey: string | null;
@@ -17,7 +15,7 @@ export type RoomState = {
   status: string;
 };
 
-type SegmentKind = "number" | "connector" | "event";
+type SegmentKind = "number" | "event";
 type Segment = { kind: SegmentKind; frames: Mp3Frame[]; index: number };
 
 export type BroadcasterDeps = {
@@ -31,8 +29,6 @@ export type BroadcasterDeps = {
 export const LEAD_MS = 400;
 /** Bị trễ quá mức này (timer bị treo) → bỏ qua, không dồn gửi. */
 const MAX_CATCH_UP_MS = 2000;
-/** Câu nối chỉ phát khi sau số + nối còn ≥ 1 giây trước số kế tiếp (giống engine cũ). */
-export const CONNECTOR_MIN_SLACK_MS = 1000;
 /** Client chậm giữ quá nhiều byte chưa gửi → ngắt. */
 const MAX_BACKLOG_BYTES = 512 * 1024;
 
@@ -132,10 +128,7 @@ export class RoomBroadcaster {
     if (!previous) return; // snapshot đầu: không phát lại số cũ
     if (next.status !== "active") return;
 
-    const sameGame = previous.currentGameId === next.currentGameId;
-    const grew = next.calledNumbers.length > (sameGame ? previous.calledNumbers.length : 0);
-    const last = next.calledNumbers[next.calledNumbers.length - 1];
-    if (grew && last !== undefined) await this.enqueueNumber(last, next.drawIntervalSec * 1000);
+    if (next.pending && next.pending.key !== previous.pending?.key) await this.enqueueNumber(next.pending.number, next.pending.clip);
 
     if (next.lastEventKey && next.lastEventKey !== previous.lastEventKey && next.lastEventType) {
       const kind = EVENT_KIND[next.lastEventType];
@@ -143,24 +136,23 @@ export class RoomBroadcaster {
     }
   }
 
-  private async enqueueNumber(n: number, intervalMs: number): Promise<void> {
+  /**
+   * Số chờ mới: phát nối tiếp sau đoạn đang phát (server đã hẹn giờ hiện số theo độ dài clip — không chèn câu nối để
+   * khỏi lệch). Số chờ cũ chưa kịp phát → bỏ.
+   */
+  private async enqueueNumber(n: number, file: string | null): Promise<void> {
     const pack = this.pack;
     if (!pack) return;
-    // Số mới tới trong khi số cũ chưa kịp phát → bỏ số cũ / câu nối chưa bắt đầu (giữ đoạn đang phát).
     for (let i = this.queue.length - 1; i >= 0; i--) {
       const seg = this.queue[i]!;
-      if (seg.kind !== "event" && seg.index === 0) this.queue.splice(i, 1);
+      if (seg.kind === "number" && seg.index === 0) this.queue.splice(i, 1);
     }
-    const clip = await pack.clip("number", n, this.rng);
+    const clip = file ? await pack.file(file) : null;
     if (!clip) {
       this.log({ op: "missing_clip", roomId: this.roomId, n });
       return;
     }
     await this.enqueue("number", clip);
-    const connector = await pack.clip("connector", null, this.rng);
-    if (connector && intervalMs - totalDurationMs(clip.frames) - totalDurationMs(connector.frames) >= CONNECTOR_MIN_SLACK_MS) {
-      await this.enqueue("connector", connector);
-    }
     this.log({ op: "enqueue", roomId: this.roomId, n, clip: clip.path });
   }
 
