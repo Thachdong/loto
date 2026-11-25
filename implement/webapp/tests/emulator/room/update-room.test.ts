@@ -38,7 +38,7 @@ describe("updateRoomAction", () => {
     const pendingAt = ts(new Date(NOW.getTime() + 2 * SEC));
     await patchGame({ status: "running", player_count: 1, started_at: ts(NOW), next_call_at: pendingAt });
     signInAs(cookieStore, cast.H);
-    expect(await update(10)).toEqual({ ok: true, data: { roomId: ROOM, drawIntervalSec: 10 } });
+    expect(await update(10)).toEqual({ ok: true, data: { roomId: ROOM, drawIntervalSec: 10, voicePack: "v1" } });
     const room = await roomDoc();
     expect(room?.draw_interval_sec).toBe(10);
     expect(room?.last_event).toMatchObject({ type: "interval_changed", text: "Nhịp quay: 10 giây/số", actor_uid: cast.H.uid });
@@ -47,6 +47,19 @@ describe("updateRoomAction", () => {
     setClock(() => new Date(NOW.getTime() + 2 * SEC));
     expect(await drawNumberAction({ roomId: ROOM, gameId: GAME, seq: 3 })).toMatchObject({ ok: true, data: { drawn: true } });
     expect(millis((await gameDoc())?.next_call_at)).toBe(NOW.getTime() + 12 * SEC);
+  });
+
+  it("voicePack: host đổi → voice_pack, không ghi last_event; pack lạ / rỗng → VALIDATION_FAILED; người chơi → NOT_ROOM_HOST", async () => {
+    const pack = (voicePack: unknown, extra: object = {}) => updateRoomAction({ roomId: ROOM, voicePack, ...extra } as never);
+    signInAs(cookieStore, cast.H);
+    expect(await pack("v1")).toEqual({ ok: true, data: { roomId: ROOM, drawIntervalSec: 5, voicePack: "v1" } });
+    // Phòng cũ chưa có field → mặc định v1 = giá trị chọn → không ghi.
+    expect((await roomDoc())?.voice_pack).toBeUndefined();
+    expect((await roomDoc())?.last_event?.type).not.toBe("interval_changed");
+    expect(await pack("v9")).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    expect(await updateRoomAction({ roomId: ROOM } as never)).toMatchObject({ ok: false, error: { code: "VALIDATION_FAILED" } });
+    signInAs(cookieStore, cast.B);
+    expect(await pack("v1")).toMatchObject({ ok: false, error: { code: "NOT_ROOM_HOST" } });
   });
 
   it("AC-7 (Q-070): 10 and 15 ok; 3 / 8 / 16 → DRAW_INTERVAL_INVALID; '8' → VALIDATION_FAILED", async () => {

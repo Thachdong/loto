@@ -88,7 +88,7 @@ describe("createRoomAction", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const created = result.data;
-    expect(created).toMatchObject({ name: "Lô tô Tết", drawIntervalSec: 5, expiresAt: "2026-11-21T11:00:00.000Z" });
+    expect(created).toMatchObject({ name: "Lô tô Tết", drawIntervalSec: 5, voicePack: "v1", expiresAt: "2026-11-21T11:00:00.000Z" });
     expect(created.inviteCode).toMatch(INVITE_CODE_PATTERN);
     expect(created.roomCode).toMatch(ROOM_CODE_PATTERN);
     expect(created.inviteUrl).toBe(`http://localhost:3000/join/${created.inviteCode}`);
@@ -96,6 +96,7 @@ describe("createRoomAction", () => {
     const room = await data(`rooms/${created.roomId}`);
     expect(room).toMatchObject({
       name: "Lô tô Tết",
+      voice_pack: "v1",
       host_uid: uid,
       created_by: uid,
       status: "active",

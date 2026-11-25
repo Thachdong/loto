@@ -2,6 +2,7 @@ import "server-only";
 
 import { Timestamp } from "firebase-admin/firestore";
 import { expireAtFrom } from "@/core/db/ttl";
+import { voicePackOf, type VoicePackId } from "@/features/room/shared/domain/voice-pack";
 import type { CloseReason, GameStatus, RoomCreated, RoomStatus, Ticket } from "@/features/room/shared/types";
 import { claimFromDoc, type ClaimRecord } from "./game.mapper";
 import type { GameDoc } from "./game.doc";
@@ -18,6 +19,7 @@ export type RoomRecord = {
   inviteCode: string;
   joinCode: string;
   drawIntervalSec: number;
+  voicePack: VoicePackId;
   /** `rooms.called_numbers` theo thứ tự rao. */
   calledNumbers: number[];
   currentGameId: string;
@@ -53,6 +55,7 @@ export type NewRoom = {
   inviteCode: string;
   joinCode: string;
   drawIntervalSec: number;
+  voicePack: VoicePackId;
   gameId: string;
   createdAt: Date;
   expiresAt: Date;
@@ -75,6 +78,7 @@ export function roomFromDoc(id: string, doc: RoomDoc): RoomRecord {
     inviteCode: doc.invite_code,
     joinCode: doc.join_code,
     drawIntervalSec: doc.draw_interval_sec,
+    voicePack: voicePackOf(doc.voice_pack),
     calledNumbers: [...(doc.called_numbers ?? [])],
     currentGameId: doc.current_game_id,
     gameCount: doc.game_count,
@@ -122,6 +126,7 @@ export function newRoomDocs(room: NewRoom): NewRoomDocs {
       invite_expires_at: expiresAt,
       expires_at: expiresAt,
       draw_interval_sec: room.drawIntervalSec,
+      voice_pack: room.voicePack,
       called_numbers: [],
       current_game_id: room.gameId,
       game_count: 1,
@@ -174,6 +179,7 @@ export function toRoomCreated(room: NewRoom, inviteUrl: string): RoomCreated {
     inviteUrl,
     currentGameId: room.gameId,
     drawIntervalSec: room.drawIntervalSec,
+    voicePack: room.voicePack,
     expiresAt: room.expiresAt.toISOString(),
   };
 }

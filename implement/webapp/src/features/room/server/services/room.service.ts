@@ -1,5 +1,6 @@
 import "server-only";
 
+import { voicePackOf } from "@/features/room/shared/domain/voice-pack";
 import { AppError } from "@/core/server/action";
 import { now } from "@/core/server/clock";
 import { logError } from "@/core/server/log";
@@ -101,6 +102,7 @@ export async function createRoom(
       inviteCode,
       joinCode,
       drawIntervalSec: DEFAULT_DRAW_INTERVAL_SEC,
+      voicePack: voicePackOf(input.voicePack),
       gameId,
       createdAt,
       expiresAt: new Date(createdAt.getTime() + ROOM_TTL_MS),

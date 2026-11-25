@@ -31,6 +31,7 @@ export function makeRoom(over: Partial<RoomView> = {}): RoomView {
     currentGameId: "g1",
     gameCount: 1,
     drawIntervalSec: 5,
+    voicePack: "v1",
     calledNumbers: [],
     closeReason: null,
     lastEvent: null,

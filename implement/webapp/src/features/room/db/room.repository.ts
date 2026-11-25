@@ -243,6 +243,12 @@ export function kickMemberInTx(tx: Transaction, roomId: string, uid: string, mem
   });
 }
 
+/** updateRoom: đổi bộ giọng rao (không ghi `last_event`). */
+export function setVoicePackInTx(tx: Transaction, roomId: string, voicePack: string, now: Date): void {
+  const patch: Partial<RoomDoc> = { voice_pack: voicePack, updated_at: Timestamp.fromDate(now) };
+  tx.update(roomRef(roomId), patch);
+}
+
 /** updateRoom (BR-15): `draw_interval_sec` + `last_event = interval_changed`. */
 export function setDrawIntervalInTx(tx: Transaction, roomId: string, drawIntervalSec: number, event: RoomEvent): void {
   const at = Timestamp.fromDate(event.now);

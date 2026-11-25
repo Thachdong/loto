@@ -2,6 +2,7 @@
 
 import "client-only";
 
+import { voicePackOf } from "@/features/room/shared/domain/voice-pack";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { DocumentData } from "firebase/firestore";
 import { useDocListener, type DocListenerStatus } from "@/core/client/hooks/use-doc-listener";
@@ -58,6 +59,7 @@ export function mapRoomDoc(data: DocumentData, id: string): RoomView {
     currentGameId: str(data.current_game_id),
     gameCount: num(data.game_count),
     drawIntervalSec: num(data.draw_interval_sec) || 5,
+    voicePack: voicePackOf(data.voice_pack),
     calledNumbers: Array.isArray(data.called_numbers) ? (data.called_numbers as unknown[]).filter((n): n is number => typeof n === "number") : [],
     closeReason: (typeof data.close_reason === "string" ? data.close_reason : null) as CloseReason | null,
     lastEvent:

@@ -13,6 +13,7 @@ const input: NewRoom = {
   inviteCode: "4kT9xQ2LmB7vRz1NcP8sWd",
   joinCode: "K7M2QX",
   drawIntervalSec: 5,
+  voicePack: "v1",
   gameId: "g_1",
   createdAt,
   expiresAt,
@@ -86,6 +87,7 @@ describe("newRoomDocs", () => {
       inviteUrl: "http://localhost:3000/join/x",
       currentGameId: "g_1",
       drawIntervalSec: 5,
+      voicePack: "v1",
       expiresAt: "2026-11-21T18:00:00.000Z",
     });
   });

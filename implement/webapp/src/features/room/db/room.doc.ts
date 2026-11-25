@@ -24,6 +24,8 @@ export type RoomDoc = {
   invite_expires_at: Timestamp;
   expires_at: Timestamp;
   draw_interval_sec: number;
+  /** Bộ giọng rao (`public/audio/<id>/`), thiếu ở phòng cũ → mặc định. */
+  voice_pack?: string;
   called_numbers: number[];
   current_game_id: string;
   game_count: number;

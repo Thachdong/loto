@@ -1,4 +1,5 @@
 import type { TICKET_COLORS } from "./constants";
+import type { VoicePackId } from "./domain/voice-pack";
 
 /** database.md › TBL-02 `status`. */
 export type RoomStatus = "active" | "closing" | "closed";
@@ -29,6 +30,7 @@ export type RoomCreated = {
   inviteUrl: string;
   currentGameId: string;
   drawIntervalSec: number;
+  voicePack: VoicePackId;
   /** ISO 8601, created_at + 8 giờ. */
   expiresAt: string;
 };
@@ -47,6 +49,8 @@ export type RoomView = {
   gameCount: number;
   /** Nhịp quay (giây/số), BR-15. */
   drawIntervalSec: number;
+  /** Bộ giọng rao (stream server phát theo bộ này). */
+  voicePack: VoicePackId;
   /** Số đã rao của ván hiện tại theo thứ tự (TBL-02). */
   calledNumbers: number[];
   closeReason: CloseReason | null;
@@ -105,4 +109,4 @@ export type LeaveReasonRecord = { reason: LeaveReason; roomName: string | null }
 export type KickResult = { uid: string; ticketsFreedNow: boolean; gameStatus: GameStatus };
 
 /** api-contract › RoomSettings. */
-export type RoomSettings = { roomId: string; drawIntervalSec: number };
+export type RoomSettings = { roomId: string; drawIntervalSec: number; voicePack: VoicePackId };
