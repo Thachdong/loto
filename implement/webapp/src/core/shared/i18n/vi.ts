@@ -120,6 +120,8 @@ export const vi = {
     sheetTitle: "Báo KINH vé nào?",
     ticket: "Kinh vé {color} {side}",
     claimed: "Đã KINH vé này",
+    /** Nhãn ngắn trên nút KINH (ô 1/4 thanh) — câu đầy đủ ở `claimed`. */
+    claimedShort: "Đã KINH",
     closed: "KINH (đã đóng)",
     check: "Check",
     checkWait: "Check ({n}s)",

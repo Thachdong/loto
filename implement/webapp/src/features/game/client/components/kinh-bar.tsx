@@ -132,12 +132,15 @@ export function KinhBar({ status, myTickets, claims, pending, onClaim, height, s
         type="button"
         variant="destructive"
         data-testid="btn-kinh"
-        className="h-full text-base font-extrabold tracking-wide"
+        // Ô 1/4 thanh: không cho chữ/spinner giãn nút làm vỡ lưới (nhãn ngắn, câu đầy đủ ở aria-label/title).
+        className={`h-full min-w-0 gap-1 overflow-hidden whitespace-nowrap px-1 font-extrabold ${allClaimed ? "text-xs" : "text-base tracking-wide"}`}
         disabled={allClaimed || locked || busy}
+        aria-label={allClaimed ? t("kinh.claimed") : undefined}
+        title={allClaimed ? t("kinh.claimed") : undefined}
         onClick={press}
       >
-        {busy && <Loader2Icon className="animate-spin" aria-hidden="true" />}
-        {allClaimed ? t("kinh.claimed") : t("kinh.button")}
+        {busy && <Loader2Icon className="size-4 shrink-0 animate-spin" aria-hidden="true" />}
+        <span className="truncate">{allClaimed ? t("kinh.claimedShort") : t("kinh.button")}</span>
       </Button>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

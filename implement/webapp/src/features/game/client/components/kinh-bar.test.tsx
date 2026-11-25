@@ -136,9 +136,10 @@ describe("KinhBar", () => {
     expect(onClaim).toHaveBeenCalledWith("blue_b");
   });
 
-  it("ticket already in claims → 'Đã KINH vé này' and locked (1 ticket)", () => {
+  it("ticket already in claims → short 'Đã KINH' label (full text in aria-label), locked, no layout overflow (1 ticket)", () => {
     setup({ status: "awaiting_confirm", claims: [claim("red_a")] });
-    expect(screen.getByTestId("btn-kinh")).toHaveTextContent(dict.kinh.claimed);
+    expect(screen.getByTestId("btn-kinh")).toHaveTextContent(dict.kinh.claimedShort);
+    expect(screen.getByTestId("btn-kinh")).toHaveAttribute("aria-label", dict.kinh.claimed);
     expect(screen.getByTestId("btn-kinh")).toBeDisabled();
   });
 
@@ -152,10 +153,11 @@ describe("KinhBar", () => {
     expect(onClaim).toHaveBeenCalledWith("blue_b");
   });
 
-  it("2 tickets both claimed → bar locked with 'Đã KINH vé này'", () => {
+  it("2 tickets both claimed → bar locked with short 'Đã KINH' label", () => {
     setup({ status: "awaiting_confirm", tickets: [blueA, blueB], claims: [claim("blue_a"), claim("blue_b")] });
     expect(screen.getByTestId("btn-kinh")).toBeDisabled();
-    expect(screen.getByTestId("btn-kinh")).toHaveTextContent(dict.kinh.claimed);
+    expect(screen.getByTestId("btn-kinh")).toHaveTextContent(dict.kinh.claimedShort);
+    expect(screen.getByTestId("btn-kinh")).toHaveAttribute("aria-label", dict.kinh.claimed);
   });
 
   it("while a claim is pending the button is disabled", () => {
