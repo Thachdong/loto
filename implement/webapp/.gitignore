@@ -53,3 +53,9 @@ pubsub-debug.log*
 # functions
 /functions/lib/
 /functions/node_modules/
+
+# raw audio source + split drafts (only public/audio/v1 is committed)
+/public/audio/audio.mp3
+/public/audio/chunk_*.mp3
+/public/audio/silence_log.txt
+/public/audio/split.md
